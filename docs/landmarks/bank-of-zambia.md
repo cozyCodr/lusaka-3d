@@ -11,6 +11,9 @@ Head office off Cairo Road, north of Independence Avenue. Model:
   lawn). Two are **not** this building and were not used: one is labelled
   "Ndola the Friendly City" (the Ndola regional office, stepped terraced
   floors), and one shows the same stepped design.
+- **Founder's photo of the south block (2026-09-27)** — the pair from the
+  south-west: the south block's chamfered corner, dark gridded podium with a
+  shop fascia, and slotted sand facade, with both skybridges.
 - **OpenStreetMap** — way 283005464 (`building=commercial`, 8 levels,
   "Bank of Zambia"): a 54.3 × 28.4 m rectangle, long sides at 350° / 170°.
   The 8-level block 16 m to the south (way 283005457, unnamed in OSM) is
@@ -32,11 +35,11 @@ Head office off Cairo Road, north of Independence Avenue. Model:
 | Entrance | south half: glazing, canopy on slim posts, flags | high |
 | Skybridges | two enclosed bridges from the south end at floors 3 and 6, 16 m to the neighbour | medium |
 | Forecourt | fountain lawn and palms in front of the entrance | medium |
-| South block | OSM outline; shops at street level, 8 floors of 3.5 m with projecting sand floor bands over ribbon glazing, deep top band; low west annex | footprint high, facade medium (from photo edges) |
+| South block | OSM outline with the north-west corner chamfered 4 m; podium 11 m (shops, fascia band, dark gridded curtain wall); 8 floors of 3.5 m of solid sand concrete cut by deep window slots; 3.5 m top band (39 m overall); low west annex | footprint high, form high, height medium |
 
 ## Known gaps
 
 - The fin rhythm is uniform; the real facade pairs windows between wider piers.
 - The rear (east) facade and roof plant are inferred.
-- The south block is built from the edges of the head-office photos; its top
-  floor's chamfered corner and street-level shopfronts are simplified.
+- The south block's shop fascia is a plain band (no brand), and its top floors'
+  details are simplified; its height is estimated from floor counts in photos.
