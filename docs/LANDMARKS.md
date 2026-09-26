@@ -31,10 +31,10 @@ up in the wider export.
 |---|---|---|---|---|---|
 | National Assembly of Zambia | government | 0 | ✓ | ✓ | v1 built — [notes](landmarks/national-assembly.md) |
 | Findeco House | building | 4.46 | ✓ | ✓ | v1 built — [notes](landmarks/findeco-house.md) |
-| Freedom Statue | monument | 3.93 | — |  | Independence Ave; a figure, harder to model — low-poly sculpt |
+| Freedom Statue | monument | 3.93 | ✓ |  | v1 built — stands in front of Government Complex, not at the museum; [notes](landmarks/independence-avenue.md) |
 | Cathedral of the Holy Cross | worship | 2.99 | — |  | Anglican cathedral, distinctive roofline |
-| Lusaka National Museum | culture | 3.79 | — | ✓ | |
-| Government Complex | government | 3.88 | — |  | Next to the Freedom Statue |
+| Lusaka National Museum | culture | 3.79 | ✓ | ✓ | v1 built, with the steel figure in front — [notes](landmarks/independence-avenue.md) |
+| Government Complex | government | 3.88 | ✓ |  | v1 built — [notes](landmarks/independence-avenue.md) |
 | Bank of Zambia | building | 4.22 | — |  | Cairo Road |
 | Cabinet Office | government | 3.4 | — |  | Independence Ave |
 | Embassy Park Presidential Burial Site | monument | 3.26 | — | ✓ | Three presidential mausoleums |

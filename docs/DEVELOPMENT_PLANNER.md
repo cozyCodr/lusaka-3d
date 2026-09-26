@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P6 — Tier 1 landmarks: Freedom Statue next** (founder call, 2026-09-26: Tier 1 order approved, build in order).
+**Current priority: P6 — Tier 1 landmarks: Cathedral of the Holy Cross next** (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
 
 ---
 
@@ -88,10 +88,10 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 
 - [x] National Assembly of Zambia (v1)
 - [x] Findeco House (v2, rebuilt from the founder's reference photos: notes in docs/landmarks/findeco-house.md)
-- [ ] Freedom Statue
+- [x] Freedom Statue (v1, from the founder's photos: notes in docs/landmarks/independence-avenue.md)
 - [ ] Cathedral of the Holy Cross
-- [ ] Lusaka National Museum
-- [ ] Government Complex
+- [x] Lusaka National Museum, with the steel figure (v1)
+- [x] Government Complex (v1)
 - [ ] Bank of Zambia
 - [ ] Cabinet Office
 - [ ] Embassy Park and the presidential mausoleums

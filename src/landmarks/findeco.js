@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { CITY_Y } from '../geo.js';
 import { rng, tag } from '../util.js';
+import { beam, canvasTex, faced } from './lib.js';
 
 // OSM way 1069663212, world metres (x east, z south).
 export const FOOTPRINT = [
@@ -40,17 +41,6 @@ D.roof = D.parapetBase + D.parapetH;
 const BAY = 1.25;
 const TILE_BAYS = 8, TILE_FLOORS = 6;
 
-function canvasTex(w, h, draw, repeat = true) {
-  const c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
-  draw(c.getContext('2d'), w, h);
-  const t = new THREE.CanvasTexture(c);
-  if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.anisotropy = 8;
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
 
 // Shaft facade tile: 8 bays x 6 floors. Each floor is a sand spandrel with a
 // row of projecting fins (lit from the upper left) over dark ribbon glazing.
@@ -127,18 +117,7 @@ function repeatMat(base, emissiveBase, width, height, tileW, tileH, extra = {}) 
   return new THREE.MeshStandardMaterial(opts);
 }
 
-function faced(w, h, d, side, cap) {
-  return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [side, side, cap, cap, side, side]);
-}
 
-// A beam between two points (tower frame), for corbels and brackets.
-function beam(a, b, thickness, mat) {
-  const dir = new THREE.Vector3().subVectors(b, a);
-  const m = new THREE.Mesh(new THREE.BoxGeometry(thickness, dir.length(), thickness), mat);
-  m.position.copy(a).addScaledVector(dir, 0.5);
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-  return m;
-}
 
 // For each of the four faces, call fn(frame) where frame maps (along, out) to
 // a point on that face: along runs across the face, out is distance from centre.

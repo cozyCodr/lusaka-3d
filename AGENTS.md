@@ -17,7 +17,9 @@ procedural detail, and hand-built landmarks with honest confidence tags.
 - `src/` — ES modules, no build step (three.js from jsDelivr via importmap).
   `main.js` wires renderer, sky, camera and UI; `city.js` builds the OSM city;
   `building.js` + `site.js` are the Parliament; `landmarks/<slug>.js` are the
-  other hand-built landmarks; `geo.js` owns the world frame.
+  other hand-built landmarks, registered in `landmarks/index.js` (menu entry,
+  camera view, night lighting) with shared helpers in `landmarks/lib.js`;
+  `geo.js` owns the world frame.
 - `data/` — generated city and landmark data (committed); `data/raw/` holds
   Overpass exports (ignored).
 - `tools/` — OSM converters, Overpass queries, and the no-cache dev server.

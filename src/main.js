@@ -8,7 +8,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildAssembly } from './building.js';
 import { buildCity } from './city.js';
 import { SITE, sunVector } from './geo.js';
-import { buildFindeco } from './landmarks/findeco.js';
+import { buildLandmarks } from './landmarks/index.js';
 import { buildSite } from './site.js';
 import { menuItem, menuToggle, setupMenu } from './ui.js';
 import { lerp, smoothstep } from './util.js';
@@ -36,8 +36,8 @@ parliament.rotation.y = SITE.rotY;
 parliament.updateMatrixWorld(true);
 scene.add(parliament);
 
-const findeco = buildFindeco();
-scene.add(findeco.group);
+const landmarks = buildLandmarks();
+for (const lm of landmarks) scene.add(lm.group);
 
 const status = document.getElementById('status');
 buildCity().then(({ group, stats }) => {
@@ -114,7 +114,7 @@ function setTime(t) {
 
   assembly.setNight(night);
   site.setNight(night);
-  findeco.setNight(night);
+  for (const lm of landmarks) lm.setNight(night);
 }
 
 // ---------- post ----------
@@ -181,11 +181,7 @@ function glideTo(position, target, seconds = 5) {
   flyAlong(new THREE.CatmullRomCurve3([from, mid, position]), controls.target, target, seconds);
 }
 const CITY_VIEW = { position: new THREE.Vector3(300, 1900, 5200), target: new THREE.Vector3(-1000, -4.5, 2100) };
-// Findeco from the south-east, across Independence Ave.
-const FINDECO_VIEW = {
-  position: findeco.centre.clone().add(new THREE.Vector3(120, 5, 150)),
-  target: findeco.centre.clone().add(new THREE.Vector3(0, 5, 0)),
-};
+
 
 // ---------- confidence view ----------
 const CONF_COLORS = { high: 0x3fbf6a, med: 0xf0b429, low: 0xe5484d, ground: 0x6d6d6a };
@@ -222,7 +218,7 @@ document.getElementById('actions').append(
   menuItem('Replay flyover', go(startFlyover)),
   menuItem('City view', go(() => glideTo(CITY_VIEW.position, CITY_VIEW.target))),
   menuItem('National Assembly', go(() => glideTo(path.getPointAt(1), assemblyLook))),
-  menuItem('Findeco House', go(() => glideTo(FINDECO_VIEW.position, FINDECO_VIEW.target))),
+  ...landmarks.map((lm) => menuItem(lm.name, go(() => glideTo(lm.view.position, lm.view.target)))),
 );
 document.getElementById('layers').append(menuToggle('Confidence view', setConfidence));
 
@@ -250,9 +246,11 @@ renderer.setAnimationLoop((now) => {
 setTime(slider.value / 100);
 refreshEnvironment();
 // #still skips the intro and opens on the flyover's final framing.
-if (location.hash === '#findeco') {
-  camera.position.copy(FINDECO_VIEW.position);
-  controls.target.copy(FINDECO_VIEW.target);
+// #<landmark-slug> (e.g. #findeco-house) opens on that landmark's view.
+const opening = landmarks.find((lm) => location.hash === `#${lm.name.toLowerCase().replace(/\s+/g, '-')}`);
+if (opening) {
+  camera.position.copy(opening.view.position);
+  controls.target.copy(opening.view.target);
 } else if (location.hash === '#still') {
   camera.position.copy(path.getPointAt(1));
   controls.target.copy(assemblyLook);
