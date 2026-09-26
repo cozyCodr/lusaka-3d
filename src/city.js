@@ -91,11 +91,12 @@ function pick(list, r) {
   return new THREE.Color(list[Math.floor(r() * list.length)]);
 }
 
-function buildings(data) {
+function buildings(data, footprints) {
   const chunks = new Chunks();
   const r = rng(101);
   for (const b of data.buildings) {
     const [type, h] = b;
+    footprints?.add(b.slice(2));
     let pts = toPoints(b, 2);
     // Walls face outward when the ring has positive signed area in x/z.
     if (signedArea(pts) < 0) pts = pts.reverse();
@@ -207,10 +208,11 @@ function ground() {
   return m;
 }
 
-export async function buildCity(url = './data/core.json') {
+// footprints: optional collision index (see collide.js) filled as buildings are made.
+export async function buildCity(url = './data/core.json', footprints = null) {
   const data = await (await fetch(url)).json();
   const g = new THREE.Group();
   g.name = 'city';
-  g.add(ground(), areas(data), ...roads(data), ...buildings(data));
+  g.add(ground(), areas(data), ...roads(data), ...buildings(data, footprints));
   return { group: g, stats: { buildings: data.buildings.length, roads: data.roads.length } };
 }

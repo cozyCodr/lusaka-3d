@@ -64,3 +64,70 @@ export function setupMenu() {
   });
   return { close: () => set(false) };
 }
+
+const MODE_LABELS = { map: 'Map', fly: 'Fly', walk: 'Walk' };
+
+// Segmented Map / Fly / Walk switch bound to the store.
+export function modeSwitch(store, onPick) {
+  const wrap = document.createElement('div');
+  wrap.className = 'mx-4 my-1.5 grid grid-cols-3 gap-1 rounded-xl bg-white/5 p-1';
+  wrap.setAttribute('role', 'radiogroup');
+  wrap.setAttribute('aria-label', 'Camera mode');
+  const buttons = Object.entries(MODE_LABELS).map(([mode, label], i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'radio');
+    b.title = `${label} (${i + 1})`;
+    b.textContent = label;
+    b.addEventListener('click', () => {
+      onPick?.();
+      store.getState().setMode(mode);
+    });
+    wrap.append(b);
+    return [mode, b];
+  });
+  const render = ({ mode }) => {
+    for (const [m, b] of buttons) {
+      const on = m === mode;
+      b.setAttribute('aria-checked', String(on));
+      b.className = `rounded-lg px-2 py-1.5 text-sm transition-colors ${on ? 'bg-amber-500 text-stone-950 font-medium' : 'text-stone-300 hover:bg-white/10'}`;
+    }
+  };
+  render(store.getState());
+  store.subscribe(render);
+  return wrap;
+}
+
+// Help overlay (toggle with ?) and a short hint whenever the mode changes.
+export function setupHelp() {
+  const panel = document.getElementById('help');
+  const set = (open) => panel.classList.toggle('hidden', !open);
+  document.getElementById('help-close').addEventListener('click', () => set(false));
+  const backdrop = document.getElementById('help-backdrop');
+  backdrop.addEventListener('click', (e) => e.target === backdrop && set(false));
+  addEventListener('keydown', (e) => e.key === 'Escape' && set(false));
+  return { toggle: (open) => set(open ?? panel.classList.contains('hidden')) };
+}
+
+const HINTS = {
+  map: 'Map · drag to pan · right-drag to rotate · scroll to zoom · ? for help',
+  fly: 'Fly · drag to look · WASD to move · Space / C up and down · Shift to boost',
+  walk: 'Walk · drag to look · WASD to move · Shift to run · double-click to jump there',
+};
+
+export function modeHint(store) {
+  const el = document.getElementById('mode-hint');
+  let timer;
+  const show = ({ mode }) => {
+    el.textContent = HINTS[mode];
+    el.classList.remove('opacity-0');
+    clearTimeout(timer);
+    timer = setTimeout(() => el.classList.add('opacity-0'), 4000);
+  };
+  let last = store.getState().mode;
+  store.subscribe((s) => {
+    if (s.mode !== last) show(s);
+    last = s.mode;
+  });
+  return { show: () => show(store.getState()) };
+}

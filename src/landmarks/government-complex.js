@@ -124,6 +124,7 @@ export function buildGovernmentComplex() {
   return {
     group: world,
     frame: f,
+    footprints: [OUTER.flat()],
     setNight(n) {
       glass.emissiveIntensity = n * 1.2;
     },

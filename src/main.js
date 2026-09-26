@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -7,10 +6,13 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildAssembly } from './building.js';
 import { buildCity } from './city.js';
-import { SITE, sunVector } from './geo.js';
+import { createFootprintIndex } from './collide.js';
+import { createRig } from './controls/rig.js';
+import { heightAt, SITE, sunVector } from './geo.js';
 import { buildLandmarks } from './landmarks/index.js';
 import { buildSite } from './site.js';
-import { menuItem, menuToggle, setupMenu } from './ui.js';
+import { store } from './store.js';
+import { menuItem, menuToggle, modeHint, modeSwitch, setupHelp, setupMenu } from './ui.js';
 import { lerp, smoothstep } from './util.js';
 
 // ---------- renderer, scene, camera ----------
@@ -39,8 +41,14 @@ scene.add(parliament);
 const landmarks = buildLandmarks();
 for (const lm of landmarks) scene.add(lm.group);
 
+// Walk-mode collisions: every OSM footprint plus the hand-built landmarks.
+const footprints = createFootprintIndex();
+for (const lm of landmarks) for (const fp of lm.footprints) footprints.add(fp);
+// National Assembly ring, from its OSM outline.
+footprints.add([-18.8, -36.0, 44.8, -1.9, 20.2, 43.2, -43.3, 9.1]);
+
 const status = document.getElementById('status');
-buildCity().then(({ group, stats }) => {
+buildCity('./data/core.json', footprints).then(({ group, stats }) => {
   scene.add(group);
   if (confidenceOn) setConfidence(true);
   status.textContent = `${stats.buildings.toLocaleString()} buildings and ${stats.roads.toLocaleString()} roads from OpenStreetMap`;
@@ -83,10 +91,13 @@ function refreshEnvironment() {
 
 const sunDir = new THREE.Vector3();
 
-// Keep the shadow map centred on whatever the camera is looking at.
+// Keep the shadow map centred on what the camera is looking at.
+const focus = new THREE.Vector3();
 function placeSun() {
-  sun.target.position.copy(controls.target);
-  sun.position.copy(controls.target).addScaledVector(sunDir, 700);
+  if (rig.mode === 'map' || fly) focus.copy(controls.target);
+  else focus.copy(camera.position).addScaledVector(camera.getWorldDirection(new THREE.Vector3()), 60);
+  sun.target.position.copy(focus);
+  sun.position.copy(focus).addScaledVector(sunDir, 700);
 }
 
 const warm = new THREE.Color(0xffa860);
@@ -125,12 +136,11 @@ composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
 // ---------- controls and flyover ----------
-const controls = new OrbitControls(camera, renderer.domElement);
+// Map bounds: the OSM export box (see tools/queries/query.overpassql) plus a margin.
+const BOUNDS = { minX: -4500, maxX: 2550, minZ: -1800, maxZ: 6150 };
+const rig = createRig({ camera, dom: renderer.domElement, heightAt, collide: footprints, bounds: BOUNDS, store });
+const controls = rig.map;
 controls.target.set(0, 8, 0);
-controls.enableDamping = true;
-controls.maxPolarAngle = Math.PI * 0.49;
-controls.minDistance = 12;
-controls.maxDistance = 4000;
 
 // Flyover path in the site's local frame, then carried into the world.
 const W = site.walk;
@@ -150,14 +160,15 @@ let fly = null;
 
 // Move the camera along a curve while easing the look-at point.
 function flyAlong(curve, look0, look1, seconds) {
+  store.getState().setMode('map'); // scripted moves end in map mode, looking at a target
   fly = { curve, look0: look0.clone(), look1: look1.clone(), seconds, t0: performance.now() };
-  controls.enabled = false;
+  rig.setEnabled(false);
 }
 function endFly() {
   if (!fly) return;
   controls.target.copy(fly.look1);
   fly = null;
-  controls.enabled = true;
+  rig.setEnabled(true);
 }
 renderer.domElement.addEventListener('pointerdown', endFly);
 renderer.domElement.addEventListener('wheel', endFly, { passive: true });
@@ -181,6 +192,46 @@ function glideTo(position, target, seconds = 5) {
   flyAlong(new THREE.CatmullRomCurve3([from, mid, position]), controls.target, target, seconds);
 }
 const CITY_VIEW = { position: new THREE.Vector3(300, 1900, 5200), target: new THREE.Vector3(-1000, -4.5, 2100) };
+
+// ---------- double-click to go somewhere ----------
+const raycaster = new THREE.Raycaster();
+const pickables = [parliament, ...landmarks.map((lm) => lm.group)];
+// Hand-built landmarks by raycast; everywhere else by marching the ray to the ground.
+function pickPoint(clientX, clientY) {
+  const ndc = new THREE.Vector2((clientX / innerWidth) * 2 - 1, -(clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  const hit = raycaster.intersectObjects(pickables, true)[0];
+  if (hit) return hit.point;
+  const { origin, direction } = raycaster.ray;
+  const p = origin.clone();
+  for (let t = 0, step = 2; t < 8000; t += step, step *= 1.02) {
+    p.copy(origin).addScaledVector(direction, t);
+    if (p.y <= heightAt(p.x, p.z)) return p.setY(heightAt(p.x, p.z));
+  }
+  return null;
+}
+renderer.domElement.addEventListener('dblclick', (e) => {
+  const p = pickPoint(e.clientX, e.clientY);
+  if (!p) return;
+  if (rig.mode === 'walk') return rig.walkTo(p);
+  // Glide in, keeping the current viewing direction, to a comfortable distance.
+  const off = camera.position.clone().sub(controls.target);
+  const dist = THREE.MathUtils.clamp(off.length() * 0.45, 60, 600);
+  glideTo(p.clone().add(off.setLength(dist)), p, 2.2);
+});
+
+// ---------- keyboard shortcuts ----------
+const help = setupHelp();
+modeHint(store);
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+  const modes = { Digit1: 'map', Digit2: 'fly', Digit3: 'walk' };
+  if (modes[e.code]) {
+    endFly();
+    store.getState().setMode(modes[e.code]);
+  }
+  if (e.key === '?') help.toggle();
+});
 
 
 // ---------- confidence view ----------
@@ -221,6 +272,10 @@ document.getElementById('actions').append(
   ...landmarks.map((lm) => menuItem(lm.name, go(() => glideTo(lm.view.position, lm.view.target)))),
 );
 document.getElementById('layers').append(menuToggle('Confidence view', setConfidence));
+document.getElementById('controls').append(
+  modeSwitch(store, () => endFly()),
+  menuItem('Keyboard & mouse', go(() => help.toggle(true))),
+);
 
 // ---------- loop ----------
 addEventListener('resize', () => {
@@ -231,13 +286,14 @@ addEventListener('resize', () => {
 });
 
 // Debug handle for inspecting views from the console.
-window.lusaka = { camera, controls };
+window.lusaka = { camera, controls, rig, store };
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop((now) => {
-  site.update(clock.getElapsedTime());
+  const dt = Math.min(clock.getDelta(), 0.1);
+  site.update(clock.elapsedTime);
   if (fly) stepFly(now);
-  else controls.update();
+  else rig.update(dt);
   sky.position.copy(camera.position); // the dome is finite; keep the camera inside it
   placeSun();
   composer.render();

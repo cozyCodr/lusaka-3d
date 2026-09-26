@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { zambiaFlagTexture } from '../textures.js';
 import { tag } from '../util.js';
-import { canvasTex, chain, limb, siteFrame } from './lib.js';
+import { canvasTex, chain, limb, rectFootprint, siteFrame } from './lib.js';
 
 // OSM node 1150426134; faces the avenue (bearing 171).
 export const STATUE = { x: -1997.2, z: 3389.5, bearing: 171 };
@@ -197,5 +197,5 @@ export function buildFreedomStatue() {
   crown.scale.set(1, 0.7, 1);
   crown.position.set(7.5, 7.5, 2);
 
-  return { group: f };
+  return { group: f, footprints: [rectFootprint(f, 9, 9)] };
 }

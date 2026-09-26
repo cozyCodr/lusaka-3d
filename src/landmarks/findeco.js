@@ -244,6 +244,7 @@ export function buildFindeco() {
   const glowMats = [matWide, matNarrow];
   return {
     group: world,
+    footprints: [FOOTPRINT.flat()],
     centre: new THREE.Vector3(CENTRE.x, CITY_Y + 45, CENTRE.z),
     setNight(nt) {
       for (const m of glowMats) m.emissiveIntensity = nt * 1.3;

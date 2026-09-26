@@ -7,7 +7,7 @@
 // Sources: docs/landmarks/independence-avenue.md.
 import * as THREE from 'three';
 import { tag } from '../util.js';
-import { beam, canvasTex, faced, limb, siteFrame, windowGlow } from './lib.js';
+import { beam, canvasTex, faced, limb, rectFootprint, siteFrame, windowGlow } from './lib.js';
 
 // OSM outline: 48.9 m wide (south face, bearing 79°) x 50.3 m deep.
 export const MUSEUM = { x: -1904.2, z: 3272.0, bearing: 169, w: 48.9, d: 50.3 };
@@ -161,6 +161,7 @@ export function buildNationalMuseum() {
 
   return {
     group: f,
+    footprints: [rectFootprint(f, w + 4, d + 4), rectFootprint(f, 4, 4, -6, d / 2 + 8)],
     setNight(n) {
       glass.emissiveIntensity = n * 1.4;
     },

@@ -48,6 +48,12 @@ const REGISTRY = [
 export function buildLandmarks() {
   return REGISTRY.map((entry) => {
     const lm = entry.build();
-    return { name: entry.name, group: lm.group, setNight: lm.setNight ?? (() => {}), view: entry.view(lm) };
+    return {
+      name: entry.name,
+      group: lm.group,
+      footprints: lm.footprints ?? [],
+      setNight: lm.setNight ?? (() => {}),
+      view: entry.view(lm),
+    };
   });
 }

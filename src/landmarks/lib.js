@@ -82,6 +82,15 @@ export function siteFrame(x, z, frontBearing) {
   return g;
 }
 
+// A w x d rectangle in a landmark frame, as a flat world footprint [x0, z0, ...].
+export function rectFootprint(frame, w, d, cx = 0, cz = 0) {
+  frame.updateMatrixWorld(true);
+  return [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]].flatMap(([x, z]) => {
+    const p = frame.localToWorld(new THREE.Vector3(cx + x, 0, cz + z));
+    return [p.x, p.z];
+  });
+}
+
 // Instanced vertical fins along local x, centred, at the given z.
 export function finRow(mat, { length, height, spacing, depth, thickness, y, z }) {
   const count = Math.floor(length / spacing) + 1;
