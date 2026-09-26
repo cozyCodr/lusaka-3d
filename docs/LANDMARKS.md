@@ -47,7 +47,7 @@ up in the wider export.
 | Manda Hill Mall | mall | 0.62 | ✓ |  | Inside the current map |
 | East Park Mall | mall | 1.39 | ✓ |  | Inside the current map |
 | Levy Junction Shopping Mall | mall | 3.44 | — |  |  |
-| National Heroes Stadium | venue | 4.64 | — | ✓ | Largest stadium; west of the CBD |
+| National Heroes Stadium | venue | 4.64 | ✓ | ✓ | v1 built, with the Gabon Disaster Memorial — [notes](landmarks/heroes-stadium.md) |
 | University of Zambia (UNZA) | education | 2.5 | — | ✓ | Great East Road campus; library block |
 | Kenneth Kaunda International Airport | transport | 17.06 | — | ✓ | 17 km out: separate "island" scene |
 | State House | building | 4.51 | — | ✓ | Satellite massing only: no ground photos sought (security) |
@@ -91,7 +91,7 @@ up in the wider export.
 | Evelyn Hone College | education | 3.45 | — | ✓ |  |
 | Cenotaph | monument | 3.34 | — |  |  |
 | Lusaka Memorial | monument | 4.33 | — |  |  |
-| Gabon Disaster Memorial | monument | 5.02 | — |  |  |
+| Gabon Disaster Memorial | monument | 5.02 | ✓ |  | built with the stadium — [notes](landmarks/heroes-stadium.md) |
 | E W Tarry's Building | monument | 3.95 | — |  |  |
 | Kenneth Kaunda Chilenje House National Monument | monument | 6.2 | — |  |  |
 | Kabwata Cultural Village | attraction | 4.51 | — |  |  |

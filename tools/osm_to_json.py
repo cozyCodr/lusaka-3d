@@ -16,7 +16,7 @@ KX = 111320 * math.cos(math.radians(LAT0))
 KZ = 110540
 
 # Buildings modelled by hand; skip their OSM footprint.
-HAND_MODELLED = {"National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex", "Cathedral of the Holy Cross", "Bank of Zambia"}
+HAND_MODELLED = {"National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex", "Cathedral of the Holy Cross", "Bank of Zambia", "National Heroes Stadium"}
 # Unnamed OSM buildings that are modelled by hand, by way id.
 HAND_MODELLED_IDS = {283005457}  # Bank of Zambia south block (skybridge partner)
 

@@ -137,7 +137,7 @@ composer.addPass(new OutputPass());
 
 // ---------- controls and flyover ----------
 // Map bounds: the OSM export box (see tools/queries/query.overpassql) plus a margin.
-const BOUNDS = { minX: -4500, maxX: 2550, minZ: -1800, maxZ: 6150 };
+const BOUNDS = { minX: -5300, maxX: 2550, minZ: -3800, maxZ: 6150 };
 const rig = createRig({
   camera, dom: renderer.domElement, heightAt, collide: footprints, bounds: BOUNDS, store,
   pick: (x, y) => pickPoint(x, y),

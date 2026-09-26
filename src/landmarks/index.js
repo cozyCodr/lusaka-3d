@@ -9,6 +9,7 @@ import { buildCathedral } from './cathedral.js';
 import { buildFindeco } from './findeco.js';
 import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
+import { buildGabonMemorial, buildHeroesStadium } from './heroes-stadium.js';
 import { buildNationalMuseum } from './national-museum.js';
 
 // A view in a landmark's local frame: camera position and look-at point.
@@ -49,6 +50,16 @@ const REGISTRY = [
     name: 'Bank of Zambia',
     build: buildBankOfZambia,
     view: (lm) => local(lm.frame, [-30, 16, 105], [14, 16, 0]),
+  },
+  {
+    name: 'National Heroes Stadium',
+    build: buildHeroesStadium,
+    view: (lm) => local(lm.group, [300, 95, 170], [0, 12, 0]),
+  },
+  {
+    name: 'Gabon Disaster Memorial',
+    build: buildGabonMemorial,
+    view: (lm) => local(lm.group, [-16, 3, 3], [12, 5, -1]),
   },
   {
     name: 'National Museum',

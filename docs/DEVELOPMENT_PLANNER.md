@@ -66,6 +66,7 @@ Most Tier 1 icons sit 2.5–4.5 km south of the current box, along Cairo Road
 and Independence Avenue.
 
 - [x] Widen the OSM export south to -15.445 (CBD, Independence Ave, Rhodes Park): 48k buildings, 4.5k roads
+- [x] Widen north to -15.36 and west to 28.262 for Heroes Stadium: 83.5k buildings, 6.3k roads, `data/core.json` now 7.7 MB (tiling below is now pressing)
 - [ ] Split city data into 1 km tiles (`data/tiles/x_z.json`) and load them by camera distance
 - [ ] Build geometry in a Web Worker so loading never freezes the page
 - [ ] Place landmark labels from `data/landmarks.json` for everything inside loaded tiles
@@ -98,7 +99,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [ ] Embassy Park and the presidential mausoleums
 - [ ] Mulungushi and Kenneth Kaunda International Conference Centres
 - [ ] Manda Hill Mall and East Park Mall
-- [ ] National Heroes Stadium
+- [x] National Heroes Stadium, with the Gabon Disaster Memorial (v1, from the founder's photos: notes in docs/landmarks/heroes-stadium.md)
 - [ ] **Verify:** each landmark checked against its reference photos and shown in confidence view
 
 ## P7 — Terrain
