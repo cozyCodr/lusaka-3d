@@ -17,6 +17,8 @@ KZ = 110540
 
 # Buildings modelled by hand; skip their OSM footprint.
 HAND_MODELLED = {"National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex", "Cathedral of the Holy Cross", "Bank of Zambia"}
+# Unnamed OSM buildings that are modelled by hand, by way id.
+HAND_MODELLED_IDS = {283005457}  # Bank of Zambia south block (skybridge partner)
 
 ROADS = {  # highway tag -> (kind index, width m)
     "primary": (0, 12), "primary_link": (0, 8), "trunk": (0, 14),
@@ -94,7 +96,7 @@ def main(core_path, rels_path):
             continue
         pts = ring(e["geometry"])
         if "building" in tags:
-            if tags.get("name") not in HAND_MODELLED:
+            if tags.get("name") not in HAND_MODELLED and e["id"] not in HAND_MODELLED_IDS:
                 add_building(tags, pts)
         elif "highway" in tags and tags["highway"] in ROADS:
             kind, width = ROADS[tags["highway"]]

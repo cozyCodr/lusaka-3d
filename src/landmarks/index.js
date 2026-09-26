@@ -48,7 +48,7 @@ const REGISTRY = [
   {
     name: 'Bank of Zambia',
     build: buildBankOfZambia,
-    view: (lm) => local(lm.group, [-30, 16, 105], [8, 16, 0]),
+    view: (lm) => local(lm.frame, [-30, 16, 105], [14, 16, 0]),
   },
   {
     name: 'National Museum',

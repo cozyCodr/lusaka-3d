@@ -5,10 +5,13 @@
 // concrete skirt is lettered BANK OF ZAMBIA over a red-brick base; the south
 // half is the glazed entrance with a canopy, flags, and a fountain lawn in
 // front. Two enclosed skybridges leave the south end for the neighbouring
-// block. Sources: docs/landmarks/bank-of-zambia.md.
+// block — the Bank's south block (OSM way 283005457, 8 levels): sand concrete
+// with projecting floor bands over recessed ribbon glazing, a deep solid top
+// band, shops at street level. Sources: docs/landmarks/bank-of-zambia.md.
 import * as THREE from 'three';
 import { palmFactory } from '../site.js';
 import { rng, tag } from '../util.js';
+import { CITY_Y } from '../geo.js';
 import { canvasTex, faced, finRow, rectFootprint, siteFrame, windowGlow } from './lib.js';
 
 // Frame on the OSM centroid; local +z faces the west front (bearing 260°),
@@ -16,7 +19,12 @@ import { canvasTex, faced, finRow, rectFootprint, siteFrame, windowGlow } from '
 export const BOZ = { x: -2762.95, z: 3187.35, bearing: 260, w: 54.3, d: 28.4 };
 const GROUND = 6.5, FLOOR = 3.5, FLOORS = 7;
 const TOP = GROUND + FLOORS * FLOOR; // 31 m
-const SOUTH_NEIGHBOUR_GAP = 16; // to OSM way 283005457
+const SOUTH_NEIGHBOUR_GAP = 16; // to the south block
+
+// South block, OSM way 283005457 (world x/z): main body and a low west annex.
+const SOUTH_BODY = [[-2795.6, 3235.0], [-2756.9, 3228.5], [-2751.7, 3253.8], [-2795.5, 3262.3]];
+const SOUTH_ANNEX = [[-2795.5, 3262.3], [-2794.7, 3267.1], [-2800.3, 3268.0], [-2800.8, 3264.9], [-2803.3, 3265.3], [-2805.0, 3255.2], [-2793.1, 3252.2]];
+const SOUTH_FLOORS = 8, SOUTH_FLOOR = 3.5, SOUTH_GROUND = 4.5;
 
 function letteringTexture() {
   return canvasTex(1024, 128, (g, w, h) => {
@@ -70,6 +78,61 @@ function facadeGrid(f, put, concrete, confFront) {
     }));
     f.add(tag(holder, face.conf));
   }
+}
+
+// Band facade tile (4 m x one floor): projecting sand band over dark ribbon glazing.
+function bandTexture() {
+  const t = canvasTex(128, 112, (g, w, h) => {
+    g.fillStyle = '#2b3137';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(160,180,200,0.12)';
+    g.fillRect(0, 0, w, h * 0.25);
+    g.fillStyle = '#4c4a45';
+    for (let x = 0; x < w; x += 32) g.fillRect(x, 0, 4, h);
+    g.fillStyle = '#c9ae86';
+    g.fillRect(0, h * 0.62, w, h * 0.38);
+    g.fillStyle = 'rgba(60,40,20,0.35)';
+    g.fillRect(0, h * 0.62, w, 3);
+  });
+  t.repeat.set(1 / 4, 1 / SOUTH_FLOOR);
+  return t;
+}
+
+// Extrude a world outline about its centroid, so it can be scaled for slab edges.
+function prism(outline, height, materials) {
+  const cx = outline.reduce((a, p) => a + p[0], 0) / outline.length;
+  const cz = outline.reduce((a, p) => a + p[1], 0) / outline.length;
+  const shape = new THREE.Shape(outline.map(([x, z]) => new THREE.Vector2(x - cx, -(z - cz))));
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
+  geo.rotateX(-Math.PI / 2);
+  const m = new THREE.Mesh(geo, materials);
+  m.position.set(cx, CITY_Y, cz);
+  return m;
+}
+
+function southBlock(glass, roof) {
+  const g = new THREE.Group();
+  g.name = 'bank-of-zambia-south-block';
+  const sand = new THREE.MeshStandardMaterial({ color: 0xc9ae86, roughness: 0.88 });
+  const bands = new THREE.MeshStandardMaterial({ map: bandTexture(), roughness: 0.6 });
+  const upperH = SOUTH_FLOORS * SOUTH_FLOOR;
+  // shops at street level, then the banded body, then a deep solid top band
+  g.add(tag(prism(SOUTH_BODY, SOUTH_GROUND, [roof, glass]), 'med'));
+  const body = tag(prism(SOUTH_BODY, upperH, [roof, bands]), 'med');
+  body.position.y += SOUTH_GROUND;
+  g.add(body);
+  for (let i = 0; i <= SOUTH_FLOORS; i++) {
+    const slab = tag(prism(SOUTH_BODY, 0.7, [sand, sand]), 'med');
+    slab.scale.set(1.035, 1, 1.05);
+    slab.position.y += SOUTH_GROUND + i * SOUTH_FLOOR - 0.35;
+    g.add(slab);
+  }
+  const top = tag(prism(SOUTH_BODY, 3.2, [roof, sand]), 'med');
+  top.scale.set(1.05, 1, 1.07);
+  top.position.y += SOUTH_GROUND + upperH;
+  g.add(top);
+  g.add(tag(prism(SOUTH_ANNEX, 9, [roof, sand]), 'low'));
+  return g;
 }
 
 export function buildBankOfZambia() {
@@ -163,9 +226,19 @@ export function buildBankOfZambia() {
     put(p, 'med');
   }
 
+  // The Bank's south block, reached by the skybridges (world coordinates).
+  const group = new THREE.Group();
+  group.name = 'bank-of-zambia-site';
+  group.add(f, southBlock(glass, roof));
+
   return {
-    group: f,
-    footprints: [rectFootprint(f, w + 2, d + 2), rectFootprint(f, wingLen, proj + 1, (wingX0 + wingX1) / 2, front + proj / 2)],
+    group,
+    frame: f,
+    footprints: [
+      rectFootprint(f, w + 2, d + 2),
+      rectFootprint(f, wingLen, proj + 1, (wingX0 + wingX1) / 2, front + proj / 2),
+      SOUTH_BODY.flat(), SOUTH_ANNEX.flat(),
+    ],
     setNight(n) {
       glass.emissiveIntensity = n * 1.2;
     },
