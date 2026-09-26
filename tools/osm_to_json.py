@@ -16,7 +16,7 @@ KX = 111320 * math.cos(math.radians(LAT0))
 KZ = 110540
 
 # Buildings modelled by hand; skip their OSM footprint.
-HAND_MODELLED = {"National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex", "Cathedral of the Holy Cross"}
+HAND_MODELLED = {"National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex", "Cathedral of the Holy Cross", "Bank of Zambia"}
 
 ROADS = {  # highway tag -> (kind index, width m)
     "primary": (0, 12), "primary_link": (0, 8), "trunk": (0, 14),

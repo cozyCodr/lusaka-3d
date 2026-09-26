@@ -35,7 +35,7 @@ up in the wider export.
 | Cathedral of the Holy Cross | worship | 2.99 | ✓ |  | v1 built — [notes](landmarks/cathedral-holy-cross.md) |
 | Lusaka National Museum | culture | 3.79 | ✓ | ✓ | v1 built, with the steel figure in front — [notes](landmarks/independence-avenue.md) |
 | Government Complex | government | 3.88 | ✓ |  | v1 built — [notes](landmarks/independence-avenue.md) |
-| Bank of Zambia | building | 4.22 | — |  | Cairo Road |
+| Bank of Zambia | building | 4.22 | ✓ |  | v1 built — [notes](landmarks/bank-of-zambia.md) |
 | Cabinet Office | government | 3.4 | — |  | Independence Ave |
 | Embassy Park Presidential Burial Site | monument | 3.26 | — | ✓ | Three presidential mausoleums |
 | Supreme Court | government | 2.95 | — |  |  |

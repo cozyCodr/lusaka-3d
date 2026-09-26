@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P6 — Tier 1 landmarks: Bank of Zambia next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
+**Current priority: P6 — Tier 1 landmarks: Cabinet Office next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
 
 ---
 
@@ -93,7 +93,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] Cathedral of the Holy Cross (v1, from the founder's photos: notes in docs/landmarks/cathedral-holy-cross.md)
 - [x] Lusaka National Museum, with the steel figure (v1)
 - [x] Government Complex (v1)
-- [ ] Bank of Zambia
+- [x] Bank of Zambia (v1, from the founder's photos: notes in docs/landmarks/bank-of-zambia.md)
 - [ ] Cabinet Office
 - [ ] Embassy Park and the presidential mausoleums
 - [ ] Mulungushi and Kenneth Kaunda International Conference Centres
