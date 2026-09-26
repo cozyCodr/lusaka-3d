@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>National Assembly · Lusaka</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body class="m-0 overflow-hidden bg-stone-900 font-sans antialiased">
+    <div id="stage" class="fixed inset-0"></div>
+
+    <div class="pointer-events-none fixed inset-0 flex flex-col justify-between p-4 sm:p-6">
+      <header class="pointer-events-auto max-w-sm rounded-2xl bg-stone-950/70 p-4 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-md">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-amber-300/90">Lusaka · 1967</p>
+        <h1 class="mt-1 text-xl font-semibold tracking-tight">National Assembly of Zambia</h1>
+        <p class="mt-1 text-sm text-stone-300">
+          Rebuilt from the satellite footprint and front photographs. Drag to orbit, scroll to zoom.
+        </p>
+      </header>
+
+      <footer class="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-stone-950/70 p-4 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-md sm:max-w-xl">
+        <label class="flex flex-col gap-2">
+          <span class="flex justify-between text-[11px] uppercase tracking-[0.18em] text-stone-400">
+            <span>Morning</span><span>Noon</span><span>Dusk</span>
+          </span>
+          <input id="time" type="range" min="0" max="100" value="12" class="w-full accent-amber-400" aria-label="Time of day" />
+        </label>
+        <div class="flex flex-wrap items-center gap-2" id="actions"></div>
+        <div id="legend" class="hidden">
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-300">
+            <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#3fbf6a]"></i> Measured or photographed</span>
+            <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#f0b429]"></i> Estimated</span>
+            <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#e5484d]"></i> Guessed</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
