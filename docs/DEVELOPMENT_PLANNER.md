@@ -87,7 +87,7 @@ One item per landmark, in the order in `docs/LANDMARKS.md`. Each follows the
 Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 
 - [x] National Assembly of Zambia (v1)
-- [x] Findeco House (v1: notes in docs/landmarks/findeco-house.md)
+- [x] Findeco House (v2, rebuilt from the founder's reference photos: notes in docs/landmarks/findeco-house.md)
 - [ ] Freedom Statue
 - [ ] Cathedral of the Holy Cross
 - [ ] Lusaka National Museum

@@ -21,7 +21,7 @@ Open http://localhost:5199 (append `#still` to skip the intro flyover).
 | Landmark | Status | Reference |
 |---|---|---|
 | National Assembly of Zambia | v1: OSM outline, front accurate, sides/rear guessed | [docs/landmarks/national-assembly.md](docs/landmarks/national-assembly.md) |
-| Findeco House | v1: 90 m, silhouette from photos, OSM podium | [docs/landmarks/findeco-house.md](docs/landmarks/findeco-house.md) |
+| Findeco House | v2: pedestal, finned shaft, bracketed crown from reference photos | [docs/landmarks/findeco-house.md](docs/landmarks/findeco-house.md) |
 
 ## City data
 

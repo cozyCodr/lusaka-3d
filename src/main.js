@@ -234,6 +234,9 @@ addEventListener('resize', () => {
   composer.setSize(innerWidth, innerHeight);
 });
 
+// Debug handle for inspecting views from the console.
+window.lusaka = { camera, controls };
+
 const clock = new THREE.Clock();
 renderer.setAnimationLoop((now) => {
   site.update(clock.getElapsedTime());

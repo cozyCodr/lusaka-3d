@@ -1,8 +1,10 @@
 // Findeco House (1978–79, Dušan Milenković & Branimir Ganović), Cairo Road at
-// Independence Ave: 90 m, 23 floors, Yugoslav modernism. A low podium on the
-// OSM footprint, a narrow neck that steps out into a notched-corner shaft of
-// banded floors, a crown that cantilevers wider still, and rooftop masts.
-// Sources and confidence: docs/landmarks/findeco-house.md.
+// Independence Ave: 23 floors, Yugoslav modernism. From the ground up: a low
+// podium on the OSM footprint; a narrow pedestal whose angled corbels carry a
+// thick base slab; an 18-floor shaft of sand-coloured finned spandrels over
+// dark ribbon glazing, corners notched; a setback glass floor with V-brackets
+// carrying a wider glazed crown floor; a battered parapet with raised corners
+// and the sign; lattice masts. Sources: docs/landmarks/findeco-house.md.
 import * as THREE from 'three';
 import { CITY_Y } from '../geo.js';
 import { rng, tag } from '../util.js';
@@ -16,86 +18,150 @@ export const FOOTPRINT = [
 export const CENTRE = { x: -2717.3, z: 3527.5 };
 const ROT_Y = THREE.MathUtils.degToRad(10); // footprint edges run at bearings 80° / 350°
 
-const DIM = {
-  podiumH: 7,
-  neck: 12, neckTop: 12,
-  steps: [16, 20, 23], stepH: 2.4, // floors stepping out from the neck to the shaft
-  shaft: 26, notch: 3, floorH: 3.4, floors: 15,
-  crown: [28, 30], crownFloorH: 3.6,
-  total: 90,
+// Heights are above the podium roof unless noted.
+const D = {
+  podiumH: 6, // above ground
+  pedestal: 11, pedestalH: 5.5,
+  baseSlabH: 1.4,
+  shaft: 28, notch: 2, floorH: 3.3, floors: 18,
+  topSlabH: 1.2,
+  setback: 22, setbackH: 3.2,
+  crown: 32, crownH: 3.8, crownSlabH: 0.9,
+  parapetBottom: 32.6, parapetTop: 35.4, parapetH: 4, earH: 1.6,
+  mastTop: 90, // quoted total height, above ground
 };
-DIM.shaftBase = DIM.neckTop + DIM.steps.length * DIM.stepH;
-DIM.shaftTop = DIM.shaftBase + DIM.floors * DIM.floorH;
-DIM.crownTop = DIM.shaftTop + DIM.crown.length * DIM.crownFloorH;
+D.shaftBase = D.pedestalH + D.baseSlabH;
+D.shaftTop = D.shaftBase + D.floors * D.floorH;
+D.setbackBase = D.shaftTop + D.topSlabH;
+D.crownBase = D.setbackBase + D.setbackH;
+D.parapetBase = D.crownBase + D.crownH;
+D.roof = D.parapetBase + D.parapetH;
 
-const BAY = 1.3;
+const BAY = 1.25;
 const TILE_BAYS = 8, TILE_FLOORS = 6;
 
-// One tile = 8 bays x 6 floors of spandrel bands, ribbon glazing and mullions.
-function facadeTextures() {
-  const w = 512, h = 384;
-  const color = document.createElement('canvas');
-  const glow = document.createElement('canvas');
-  color.width = glow.width = w;
-  color.height = glow.height = h;
-  const g = color.getContext('2d'), e = glow.getContext('2d');
+function canvasTex(w, h, draw, repeat = true) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// Shaft facade tile: 8 bays x 6 floors. Each floor is a sand spandrel with a
+// row of projecting fins (lit from the upper left) over dark ribbon glazing.
+function shaftTextures() {
+  const w = 512, h = 384, bw = w / TILE_BAYS, fh = h / TILE_FLOORS;
   const r = rng(58);
-  const bw = w / TILE_BAYS, fh = h / TILE_FLOORS;
-  g.fillStyle = '#6b5847';
-  g.fillRect(0, 0, w, h);
-  e.fillStyle = '#000';
-  e.fillRect(0, 0, w, h);
-  for (let f = 0; f < TILE_FLOORS; f++) {
-    const y = f * fh + fh * 0.36;
-    const gh = fh * 0.56;
-    const grad = g.createLinearGradient(0, y, 0, y + gh);
-    grad.addColorStop(0, '#39424a');
-    grad.addColorStop(1, '#22282d');
-    g.fillStyle = grad;
-    g.fillRect(0, y, w, gh);
-    for (let b = 0; b < TILE_BAYS; b++) {
-      if (r() < 0.55) {
-        const v = 150 + Math.floor(r() * 105);
-        e.fillStyle = `rgb(${v},${Math.floor(v * 0.82)},${Math.floor(v * 0.58)})`;
-        e.fillRect(b * bw + 3, y + 2, bw - 6, gh - 4);
+  const lit = [];
+  for (let i = 0; i < TILE_BAYS * TILE_FLOORS; i++) lit.push(r() < 0.5 ? 0 : 150 + Math.floor(r() * 105));
+  const glassTop = 0.02, glassH = 0.42; // fractions of a floor
+  const map = canvasTex(w, h, (g) => {
+    for (let f = 0; f < TILE_FLOORS; f++) {
+      const y0 = f * fh;
+      const gy = y0 + fh * glassTop, gh = fh * glassH;
+      const grad = g.createLinearGradient(0, gy, 0, gy + gh);
+      grad.addColorStop(0, '#3b4650');
+      grad.addColorStop(1, '#1f252b');
+      g.fillStyle = grad;
+      g.fillRect(0, gy, w, gh);
+      g.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let b = 0; b < TILE_BAYS; b++) g.fillRect(b * bw, gy, 2, gh);
+      // spandrel with fins
+      const sy = gy + gh, sh = y0 + fh - sy;
+      g.fillStyle = '#c2ae84';
+      g.fillRect(0, sy, w, sh);
+      for (let b = 0; b < TILE_BAYS; b++) {
+        for (const k of [0.25, 0.75]) {
+          const fx = b * bw + bw * k - 6;
+          g.fillStyle = '#e2d3ae';
+          g.fillRect(fx, sy + 2, 10, sh - 4);
+          g.fillStyle = 'rgba(40,30,15,0.45)';
+          g.fillRect(fx + 10, sy + 4, 5, sh - 6);
+        }
+      }
+      g.fillStyle = 'rgba(0,0,0,0.3)';
+      g.fillRect(0, sy, w, 3);
+    }
+  });
+  const emissive = canvasTex(w, h, (g) => {
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, w, h);
+    for (let f = 0; f < TILE_FLOORS; f++) {
+      for (let b = 0; b < TILE_BAYS; b++) {
+        const v = lit[f * TILE_BAYS + b];
+        if (!v) continue;
+        g.fillStyle = `rgb(${v},${Math.floor(v * 0.84)},${Math.floor(v * 0.6)})`;
+        g.fillRect(b * bw + 3, f * fh + fh * glassTop + 2, bw - 6, fh * glassH - 4);
       }
     }
-    // spandrel shading line
-    g.fillStyle = 'rgba(0,0,0,0.25)';
-    g.fillRect(0, y + gh, w, 3);
-  }
-  g.fillStyle = '#4a3d31';
-  for (let b = 0; b <= TILE_BAYS; b++) g.fillRect(b * bw - 3, 0, 6, h);
-  const mk = (c, srgb) => {
-    const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.anisotropy = 8;
-    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-    return t;
-  };
-  return { map: mk(color, true), emissive: mk(glow, true) };
-}
-
-function facadeMaterial(tex, width, height) {
-  const map = tex.map.clone();
-  const em = tex.emissive.clone();
-  const rx = width / (BAY * TILE_BAYS), ry = height / (DIM.floorH * TILE_FLOORS);
-  map.repeat.set(rx, ry);
-  em.repeat.set(rx, ry);
-  const side = new THREE.MeshStandardMaterial({
-    map, emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0, roughness: 0.55, metalness: 0.2,
   });
-  return side;
+  return { map, emissive };
 }
 
-// A box whose side faces carry the facade and whose top/bottom are plain.
+// Crown glazing: dark blue glass with close mullions, one floor tall.
+function crownGlassTexture() {
+  return canvasTex(256, 64, (g, w, h) => {
+    g.fillStyle = '#2d3c4c';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(160,190,220,0.18)';
+    g.fillRect(0, 0, w, h * 0.35);
+    g.fillStyle = '#5b6168';
+    for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 3, h);
+  });
+}
+
+function repeatMat(base, emissiveBase, width, height, tileW, tileH, extra = {}) {
+  const map = base.clone();
+  map.repeat.set(width / tileW, height / tileH);
+  const opts = { map, roughness: 0.55, metalness: 0.15, ...extra };
+  if (emissiveBase) {
+    const em = emissiveBase.clone();
+    em.repeat.copy(map.repeat);
+    Object.assign(opts, { emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0 });
+  }
+  return new THREE.MeshStandardMaterial(opts);
+}
+
 function faced(w, h, d, side, cap) {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [side, side, cap, cap, side, side]);
 }
 
+// A beam between two points (tower frame), for corbels and brackets.
+function beam(a, b, thickness, mat) {
+  const dir = new THREE.Vector3().subVectors(b, a);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(thickness, dir.length(), thickness), mat);
+  m.position.copy(a).addScaledVector(dir, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  return m;
+}
+
+// For each of the four faces, call fn(frame) where frame maps (along, out) to
+// a point on that face: along runs across the face, out is distance from centre.
+function aroundFaces(fn) {
+  for (let k = 0; k < 4; k++) {
+    const a = (k * Math.PI) / 2;
+    const c = Math.cos(a), s = Math.sin(a);
+    fn((along, out, y) => new THREE.Vector3(along * c + out * s, y, -along * s + out * c), a);
+  }
+}
+
+// Square frustum (battered parapet): open sides only.
+function frustum(bottomW, topW, h, mat) {
+  const geo = new THREE.CylinderGeometry(topW / Math.SQRT2, bottomW / Math.SQRT2, h, 4, 1, true);
+  geo.rotateY(Math.PI / 4);
+  const m = new THREE.Mesh(geo, mat);
+  m.material.side = THREE.DoubleSide;
+  return m;
+}
+
 function podium(mat) {
   const shape = new THREE.Shape(FOOTPRINT.map(([x, z]) => new THREE.Vector2(x, -z)));
-  const geo = new THREE.ExtrudeGeometry(shape, { depth: DIM.podiumH, bevelEnabled: false });
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: D.podiumH, bevelEnabled: false });
   geo.rotateX(-Math.PI / 2); // extrude upward; shape y (= -z) maps back to world z
   const m = new THREE.Mesh(geo, mat);
   m.position.y = CITY_Y - 0.3;
@@ -103,88 +169,103 @@ function podium(mat) {
 }
 
 export function buildFindeco() {
-  const tex = facadeTextures();
-  const concrete = new THREE.MeshStandardMaterial({ color: 0xcfc6b5, roughness: 0.85 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x3a3530, roughness: 0.8 });
-  const podiumMat = new THREE.MeshStandardMaterial({ color: 0xd7c4a3, roughness: 0.9 });
+  const shaftTex = shaftTextures();
+  const crownGlass = crownGlassTexture();
+  const concrete = new THREE.MeshStandardMaterial({ color: 0xcbbb98, roughness: 0.9 });
+  const concreteGrey = new THREE.MeshStandardMaterial({ color: 0xb9b3a6, roughness: 0.92 });
+  const podiumMat = new THREE.MeshStandardMaterial({ color: 0xd8cdb8, roughness: 0.9 });
   const roofMat = new THREE.MeshStandardMaterial({ color: 0x8f8a82, roughness: 0.9 });
-  const sign = new THREE.MeshStandardMaterial({ color: 0x8cc63f, roughness: 0.6, emissive: 0x8cc63f, emissiveIntensity: 0 });
-  const steel = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, roughness: 0.4, metalness: 0.8 });
+  const parapetMat = concreteGrey.clone();
+  const sign = new THREE.MeshStandardMaterial({
+    color: 0x8cc63f, roughness: 0.6, emissive: 0x8cc63f, emissiveIntensity: 0, side: THREE.DoubleSide,
+  });
+  const lattice = new THREE.MeshStandardMaterial({ color: 0xc9cdd1, metalness: 0.7, roughness: 0.4, wireframe: true });
 
   const world = new THREE.Group();
   world.name = 'findeco';
   world.add(podium(podiumMat));
 
-  // Tower in its own frame: origin at the footprint centre, city ground level.
+  // Tower frame: origin on the footprint centre at podium-roof level.
   const tower = new THREE.Group();
-  tower.position.set(CENTRE.x, CITY_Y + DIM.podiumH - 0.3, CENTRE.z);
+  tower.position.set(CENTRE.x, CITY_Y - 0.3 + D.podiumH, CENTRE.z);
   tower.rotation.y = ROT_Y;
   world.add(tower);
-  const at = (mesh, y, conf) => {
+  const add = (mesh, conf) => tower.add(tag(mesh, conf));
+  const put = (mesh, y, conf) => {
     mesh.position.y = y;
-    tower.add(tag(mesh, conf));
+    add(mesh, conf);
     return mesh;
   };
 
-  // Neck and the inverted steps out to the shaft.
-  at(new THREE.Mesh(new THREE.BoxGeometry(DIM.neck, DIM.neckTop - DIM.podiumH, DIM.neck), dark), (DIM.neckTop + DIM.podiumH) / 2 - DIM.podiumH, 'med');
-  DIM.steps.forEach((s, i) => {
-    at(new THREE.Mesh(new THREE.BoxGeometry(s, DIM.stepH, s), concrete), DIM.neckTop - DIM.podiumH + (i + 0.5) * DIM.stepH, 'med');
+  // Pedestal, and corbels angling out from it to the base slab.
+  put(new THREE.Mesh(new THREE.BoxGeometry(D.pedestal, D.pedestalH, D.pedestal), concrete), D.pedestalH / 2, 'med');
+  aroundFaces((p) => {
+    for (const along of [-D.pedestal / 2 + 1, D.pedestal / 2 - 1]) {
+      add(beam(p(along, D.pedestal / 2, 0.6), p(along * 1.6, D.shaft / 2 - 0.6, D.pedestalH), 0.7, concrete), 'med');
+    }
   });
+  put(new THREE.Mesh(new THREE.BoxGeometry(D.shaft + 0.8, D.baseSlabH, D.shaft + 0.8), concrete), D.pedestalH + D.baseSlabH / 2, 'high');
 
-  // Shaft: two crossed boxes make a square with notched corners.
-  const shaftH = DIM.floors * DIM.floorH;
-  const yShaft = DIM.shaftBase - DIM.podiumH + shaftH / 2;
-  const n = DIM.notch;
-  const matWide = facadeMaterial(tex, DIM.shaft, shaftH);
-  const matNarrow = facadeMaterial(tex, DIM.shaft - 2 * n, shaftH);
-  at(faced(DIM.shaft, shaftH, DIM.shaft - 2 * n, matWide, roofMat), yShaft, 'high');
-  at(faced(DIM.shaft - 2 * n, shaftH, DIM.shaft, matNarrow, roofMat), yShaft, 'high');
-  // Floor slabs expressed at every floor edge.
-  for (let f = 0; f <= DIM.floors; f += 1) {
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(DIM.shaft - 2 * n + 0.3, 0.25, DIM.shaft + 0.3), concrete);
-    at(slab, DIM.shaftBase - DIM.podiumH + f * DIM.floorH, 'med').castShadow = false;
-  }
+  // Shaft: two crossed boxes give a square with notched corners.
+  const shaftH = D.floors * D.floorH;
+  const yShaft = D.shaftBase + shaftH / 2;
+  const tileW = BAY * TILE_BAYS, tileH = D.floorH * TILE_FLOORS;
+  const matWide = repeatMat(shaftTex.map, shaftTex.emissive, D.shaft, shaftH, tileW, tileH);
+  const matNarrow = repeatMat(shaftTex.map, shaftTex.emissive, D.shaft - 2 * D.notch, shaftH, tileW, tileH);
+  put(faced(D.shaft, shaftH, D.shaft - 2 * D.notch, matWide, roofMat), yShaft, 'high');
+  put(faced(D.shaft - 2 * D.notch, shaftH, D.shaft, matNarrow, roofMat), yShaft, 'high');
 
-  // Crown: floors cantilever wider, with sign panels on each face.
-  DIM.crown.forEach((w, i) => {
-    const y = DIM.shaftTop - DIM.podiumH + (i + 0.5) * DIM.crownFloorH;
-    at(faced(w, DIM.crownFloorH, w, facadeMaterial(tex, w, DIM.crownFloorH), concrete), y, 'high');
-  });
-  const signH = DIM.crownFloorH * 1.6;
-  const signY = DIM.shaftTop - DIM.podiumH + DIM.crown.length * DIM.crownFloorH - signH / 2 - 0.4;
-  for (let k = 0; k < 4; k++) {
-    const p = new THREE.Mesh(new THREE.BoxGeometry(DIM.crown.at(-1) * 0.9, signH, 0.3), sign);
-    const holder = new THREE.Group();
-    holder.rotation.y = (k * Math.PI) / 2;
-    p.position.set(0, signY, DIM.crown.at(-1) / 2 + 0.25);
-    holder.add(tag(p, 'med'));
-    tower.add(holder);
-  }
-  const parapet = new THREE.Mesh(new THREE.BoxGeometry(DIM.crown.at(-1) + 0.4, 0.8, DIM.crown.at(-1) + 0.4), concrete);
-  at(parapet, DIM.crownTop - DIM.podiumH + 0.4, 'med');
-
-  // Rooftop plant and masts up to the quoted 90 m.
-  at(new THREE.Mesh(new THREE.BoxGeometry(10, 3.5, 8), roofMat), DIM.crownTop - DIM.podiumH + 1.75, 'low');
-  const mastTop = DIM.total - DIM.podiumH;
-  const mastBase = DIM.crownTop - DIM.podiumH + 3.5;
-  for (const [x, z, s] of [[-2.5, -1.5, 1], [3, 2, 0.8]]) {
-    const len = (mastTop - mastBase) * s;
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.25, len, 6), steel);
-    mast.position.set(x, mastBase + len / 2, z);
-    tower.add(tag(mast, 'med'));
-  }
-
-  const glowMats = [matWide, matNarrow];
-  tower.traverse((o) => {
-    if (o.isMesh && Array.isArray(o.material) && o.material[0].emissiveMap && !glowMats.includes(o.material[0])) {
-      glowMats.push(o.material[0]);
+  // Top slab, setback glass floor, and V-brackets out to the crown floor.
+  put(new THREE.Mesh(new THREE.BoxGeometry(D.shaft + 0.6, D.topSlabH, D.shaft + 0.6), concrete), D.shaftTop + D.topSlabH / 2, 'high');
+  const setbackGlass = repeatMat(crownGlass, null, D.setback, D.setbackH, 4, D.setbackH, { roughness: 0.2, metalness: 0.5 });
+  put(faced(D.setback, D.setbackH, D.setback, setbackGlass, roofMat), D.setbackBase + D.setbackH / 2, 'high');
+  aroundFaces((p) => {
+    for (const along of [-D.shaft / 4, D.shaft / 4]) {
+      const foot = p(along, D.shaft / 2 - 1.5, D.setbackBase);
+      for (const spread of [-3, 3]) {
+        add(beam(foot, p(along + spread, D.crown / 2 - 0.4, D.crownBase), 0.8, concreteGrey), 'high');
+      }
     }
   });
 
+  // Crown floor: thick slab under a glazed band, wider than the shaft.
+  put(new THREE.Mesh(new THREE.BoxGeometry(D.crown, D.crownSlabH, D.crown), concreteGrey), D.crownBase + D.crownSlabH / 2, 'high');
+  const crownGlassMat = repeatMat(crownGlass, null, D.crown - 0.6, D.crownH - D.crownSlabH, 4, D.crownH - D.crownSlabH, { roughness: 0.2, metalness: 0.5 });
+  put(faced(D.crown - 0.6, D.crownH - D.crownSlabH, D.crown - 0.6, crownGlassMat, roofMat), D.crownBase + D.crownSlabH + (D.crownH - D.crownSlabH) / 2, 'high');
+
+  // Battered parapet, raised corners, roof deck, and the sign on each face.
+  put(frustum(D.parapetBottom, D.parapetTop, D.parapetH, parapetMat), D.parapetBase + D.parapetH / 2, 'high');
+  put(new THREE.Mesh(new THREE.BoxGeometry(D.parapetBottom - 0.5, 0.4, D.parapetBottom - 0.5), roofMat), D.parapetBase + 0.2, 'med');
+  for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    const ear = new THREE.Mesh(new THREE.BoxGeometry(3.2, D.earH, 3.2), parapetMat);
+    ear.position.set(sx * (D.parapetTop / 2 - 1.4), D.roof + D.earH / 2 - 0.2, sz * (D.parapetTop / 2 - 1.4));
+    add(ear, 'high');
+  }
+  const batter = Math.atan2((D.parapetTop - D.parapetBottom) / 2, D.parapetH);
+  const signW = D.parapetBottom * 0.72, signH = D.parapetH * 0.8;
+  aroundFaces((p, a) => {
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(signW, signH), sign);
+    s.position.copy(p(0, (D.parapetBottom + D.parapetTop) / 4 + 0.12, D.parapetBase + D.parapetH / 2));
+    s.rotation.set(0, a, 0, 'YXZ');
+    s.rotateX(batter); // lean the top outward with the parapet
+    add(s, 'med');
+  });
+
+  // Rooftop plant and lattice masts reaching the quoted 90 m.
+  put(new THREE.Mesh(new THREE.BoxGeometry(9, 3, 7), roofMat), D.roof + 1.5, 'low');
+  const roofAbsolute = D.podiumH + D.roof;
+  for (const [x, z, frac, base] of [[-8, -6, 1, 3], [6, -9, 0.7, 2.4], [9, 7, 0.55, 2], [-10, 8, 0.45, 2], [1, 2, 0.8, 2.6]]) {
+    const h = (D.mastTop - roofAbsolute) * frac;
+    const geo = new THREE.CylinderGeometry(0.25, base / 2, h, 4, Math.max(3, Math.round(h / 2)));
+    const mast = new THREE.Mesh(geo, lattice);
+    mast.position.set(x, D.roof + h / 2, z);
+    add(mast, 'med');
+  }
+
+  const glowMats = [matWide, matNarrow];
   return {
     group: world,
-    centre: new THREE.Vector3(CENTRE.x, CITY_Y + DIM.total / 2, CENTRE.z),
+    centre: new THREE.Vector3(CENTRE.x, CITY_Y + 45, CENTRE.z),
     setNight(nt) {
       for (const m of glowMats) m.emissiveIntensity = nt * 1.3;
       sign.emissiveIntensity = nt * 0.8;
