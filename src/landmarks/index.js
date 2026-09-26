@@ -4,6 +4,7 @@
 // menu. To add a landmark: write src/landmarks/<slug>.js, register it here,
 // and add its OSM name to HAND_MODELLED in tools/osm_to_json.py.
 import * as THREE from 'three';
+import { buildCathedral } from './cathedral.js';
 import { buildFindeco } from './findeco.js';
 import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
@@ -37,6 +38,11 @@ const REGISTRY = [
     name: 'Government Complex',
     build: buildGovernmentComplex,
     view: (lm) => local(lm.frame, [-40, 35, 170], [0, 28, 0]),
+  },
+  {
+    name: 'Cathedral of the Holy Cross',
+    build: buildCathedral,
+    view: (lm) => local(lm.group, [-38, 10, 100], [0, 14, 20]),
   },
   {
     name: 'National Museum',

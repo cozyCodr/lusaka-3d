@@ -108,7 +108,7 @@ function shrubs() {
 }
 
 // Low-poly palm: tapered, slightly leaning trunk and drooping fronds.
-function palmFactory() {
+export function palmFactory() {
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6e5a45, roughness: 1 });
   const frondMat = new THREE.MeshStandardMaterial({ color: 0x3f6e2a, roughness: 0.9, side: THREE.DoubleSide });
   const frondGeo = new THREE.PlaneGeometry(1.1, 5, 1, 8);
