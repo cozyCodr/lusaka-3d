@@ -1,7 +1,7 @@
 // The National Assembly: a hollow podium ring (72 x 51.5 m, from the OSM
 // outline) around a tall copper-finned chamber block (37 x 28 m) flanked by
 // two light wells. Local frame: +z is the front (faces bearing 28°, toward the
-// walkway), +x is the NW end. Dimensions: REFERENCE.md.
+// walkway), +x is the NW end. Dimensions: docs/landmarks/national-assembly.md.
 import * as THREE from 'three';
 import { tag } from './util.js';
 import { copperTexture, letteringTexture, windowGlowTexture } from './textures.js';

@@ -11,11 +11,16 @@ python3 tools/serve.py
 
 Open http://localhost:5199 (append `#still` to skip the intro flyover).
 
+## Docs
+
+- [Development planner](docs/DEVELOPMENT_PLANNER.md) — what's next and what's done
+- [Landmarks](docs/LANDMARKS.md) — every well-known place, by tier
+
 ## Landmarks
 
 | Landmark | Status | Reference |
 |---|---|---|
-| National Assembly of Zambia | v1: OSM outline, front accurate, sides/rear guessed | [REFERENCE.md](REFERENCE.md) |
+| National Assembly of Zambia | v1: OSM outline, front accurate, sides/rear guessed | [docs/landmarks/national-assembly.md](docs/landmarks/national-assembly.md) |
 
 ## City data
 
