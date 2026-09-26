@@ -1,6 +1,8 @@
 // Camera rig: one camera, three modes, keyboard and pointer input.
-//   map  — drag to pan, right-drag / two fingers to rotate and tilt, wheel
-//          zooms to the cursor; WASD / arrows move, Q / E turn, R / F tilt.
+//   map  — drag to pan, wheel zooms to the cursor, WASD / arrows move;
+//          right-drag (or Ctrl / Shift-drag) and Q / E / R / F turn and tilt
+//          the camera in place, from where you stand. Two-finger touch
+//          rotates around a point just ahead.
 //   fly  — drone: drag to look, WASD move, Space / C up and down, Shift boost;
 //          speed grows with altitude.
 //   walk — eye height on the ground, drag to look, WASD, Shift to run;
@@ -14,7 +16,8 @@ const BODY = 0.6; // walker radius: keeps walls beyond the near clip plane
 const NEAR = { map: 0.5, fly: 0.5, walk: 0.1 };
 const UP = new THREE.Vector3(0, 1, 0);
 
-export function createRig({ camera, dom, heightAt, collide, bounds, store }) {
+// pick(clientX, clientY) -> world point under the screen position, or null.
+export function createRig({ camera, dom, heightAt, collide, bounds, store, pick }) {
   const map = new MapControls(camera, dom);
   Object.assign(map, {
     enableDamping: true,
@@ -41,6 +44,62 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store }) {
   });
   addEventListener('keyup', (e) => keys.delete(e.code));
   addEventListener('blur', () => keys.clear());
+
+  // Map mode, mouse: turning happens in place. We take the rotate gesture
+  // before MapControls sees it, turn the camera about its own position, and
+  // keep the orbit target straight ahead at the same distance.
+  let turning = null;
+  function turnInPlace(dYaw, dPitch) {
+    const dist = camera.position.distanceTo(map.target);
+    anglesFromCamera();
+    yaw += dYaw;
+    pitch = THREE.MathUtils.clamp(pitch + dPitch, -1.5, -0.04); // keep looking down a little
+    const dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
+    map.target.copy(camera.position).addScaledVector(dir, dist);
+    camera.lookAt(map.target);
+  }
+  dom.addEventListener('pointerdown', (e) => {
+    if (mode !== 'map' || !enabled || e.pointerType === 'touch') return;
+    const rotating = e.button === 2 || (e.button === 0 && (e.ctrlKey || e.metaKey || e.shiftKey));
+    if (!rotating) return;
+    e.stopImmediatePropagation(); // MapControls would orbit around a distant target
+    e.preventDefault();
+    turning = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    dom.setPointerCapture(e.pointerId);
+  }, { capture: true });
+  dom.addEventListener('pointermove', (e) => {
+    if (!turning || e.pointerId !== turning.id) return;
+    turnInPlace(-(e.clientX - turning.x) * 0.004, -(e.clientY - turning.y) * 0.004);
+    turning.x = e.clientX;
+    turning.y = e.clientY;
+  });
+  const endTurn = (e) => {
+    if (turning && e.pointerId === turning.id) turning = null;
+  };
+  dom.addEventListener('pointerup', endTurn);
+  dom.addEventListener('pointercancel', endTurn);
+  dom.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // Map mode, touch: two-finger rotate orbits a point just ahead, not a
+  // pivot left far away by panning.
+  const touches = new Map();
+  dom.addEventListener('pointerdown', (e) => {
+    if (mode !== 'map' || !enabled || e.pointerType !== 'touch') return;
+    touches.set(e.pointerId, [e.clientX, e.clientY]);
+    if (touches.size !== 2) return;
+    const [[x0, y0], [x1, y1]] = [...touches.values()];
+    const r = dom.getBoundingClientRect();
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2((((x0 + x1) / 2 - r.left) / r.width) * 2 - 1, -(((y0 + y1) / 2 - r.top) / r.height) * 2 + 1), camera);
+    const hit = pick?.((x0 + x1) / 2, (y0 + y1) / 2);
+    const altitude = camera.position.y - heightAt(camera.position.x, camera.position.z);
+    const cap = THREE.MathUtils.clamp(altitude, map.minDistance + 4, 80);
+    const dist = Math.min(hit ? hit.distanceTo(camera.position) : cap, cap);
+    map.target.copy(ray.ray.origin).addScaledVector(ray.ray.direction, dist);
+  }, { capture: true });
+  const dropTouch = (e) => touches.delete(e.pointerId);
+  dom.addEventListener('pointerup', dropTouch);
+  dom.addEventListener('pointercancel', dropTouch);
 
   // Look-drag for fly and walk (map mode uses MapControls' own handlers).
   dom.addEventListener('pointerdown', (e) => {
@@ -142,16 +201,10 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store }) {
         camera.position.add(move);
         map.target.add(move);
       }
-      const turn = axis('KeyE', 'KeyQ') * dt * 1.2;
-      const tilt = axis('KeyF', 'KeyR') * dt * 0.8;
-      if (turn || tilt) {
-        const off = camera.position.clone().sub(map.target);
-        const sph = new THREE.Spherical().setFromVector3(off);
-        sph.theta -= turn;
-        sph.phi = THREE.MathUtils.clamp(sph.phi + tilt, 0.05, map.maxPolarAngle);
-        camera.position.copy(map.target).add(off.setFromSpherical(sph));
-      }
-      map.update();
+      const turn = axis('KeyQ', 'KeyE') * dt * 1.2;
+      const tilt = axis('KeyR', 'KeyF') * dt * 0.8;
+      if (turn || tilt) turnInPlace(turn, tilt);
+      if (!turning) map.update();
       // Keep the target on the map and the camera above ground.
       const before = map.target.clone();
       clampToMap(map.target);

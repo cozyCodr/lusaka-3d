@@ -28,7 +28,7 @@ single camera rig with modes, and keep the mode, selection and time of day in
 a small `zustand/vanilla` store that both the engine and the HUD read.
 
 - [x] Camera rig with a mode state machine (`src/controls/rig.js`); mode lives in a `zustand/vanilla` store (`src/store.js`) shared with the menu
-- [x] **Map** (default, replaces Orbit): drag to pan, right-drag / two fingers to rotate and tilt, zoom to cursor, WASD / arrows to move, Q / E turn, R / F tilt; never below ground, target kept on the map
+- [x] **Map** (default, replaces Orbit): drag to pan, zoom to cursor, WASD / arrows to move; right-drag and Q / E / R / F turn and tilt in place (founder feedback 2026-09-26: rotation swung the view around a distant pivot); two-finger touch orbits a point just ahead; never below ground, target kept on the map
 - [x] **Fly**: drag to look, WASD / arrows, Space / C up and down, Shift boost, speed scales with altitude
 - [x] **Walk**: eye height on the ground, drag to look, WASD, Shift to run, slides along building footprints (OSM + hand-built landmarks)
 - [x] Double-click the ground or a landmark to glide there (walk mode: jump there)

@@ -110,7 +110,7 @@ export function setupHelp() {
 }
 
 const HINTS = {
-  map: 'Map · drag to pan · right-drag to rotate · scroll to zoom · ? for help',
+  map: 'Map · drag to pan · right-drag to turn in place · scroll to zoom · ? for help',
   fly: 'Fly · drag to look · WASD to move · Space / C up and down · Shift to boost',
   walk: 'Walk · drag to look · WASD to move · Shift to run · double-click to jump there',
 };
