@@ -18,7 +18,10 @@ KZ = 110540
 # Buildings modelled by hand; skip their OSM footprint.
 HAND_MODELLED = {"National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex", "Cathedral of the Holy Cross", "Bank of Zambia", "National Heroes Stadium", "Hilton Garden Inn Lusaka Society Business Park"}
 # Unnamed OSM buildings that are modelled by hand, by way id.
-HAND_MODELLED_IDS = {283005457}  # Bank of Zambia south block (skybridge partner)
+HAND_MODELLED_IDS = {
+    283005457,  # Bank of Zambia south block (skybridge partner)
+    625074826,  # retail box inside the Society Business Park podium
+}
 
 ROADS = {  # highway tag -> (kind index, width m)
     "primary": (0, 12), "primary_link": (0, 8), "trunk": (0, 14),

@@ -1,56 +1,87 @@
-// Society Business Park, west of Cairo Road: the Hilton Garden Inn tower and
-// the curved "shell" building beside it.
+// Society Business Park, west of Cairo Road: one building. A mall podium runs
+// from a curved frontage on Cairo Road back to the rounded six-storey "shell"
+// at its west end; the Hilton Garden Inn tower stands on the podium roof.
 //
-// Tower (OSM way 1185077883, 25 x 18 m): a slab with faceted corners, every
-// floor a projecting rose-cream spandrel over dark bronze glass; the east end
-// is a shallow curve of gold glass running full height; on the roof a set-back
-// box with the red Hilton sign, and behind it two curved gold-glass fins that
-// sweep up from the east end to a tall point over the west end.
-// Shell (not in OSM; measured on imagery): a racetrack-plan block, six floors
-// of rounded cream bands with louvred glass between, over shops, lettered
-// SOCIETY BUSINESS PARK on top. Sources: docs/landmarks/hilton-garden-inn.md.
+// Podium: rounded cream floor bands over louvred glass, shops at street level,
+// a roof garden around the tower. Tower (OSM way 1185077883, 25 x 18 m): 18
+// hotel floors of rose-cream canted spandrels over bronze glass, faceted
+// corners; a glass spine runs up the middle of the east end and, above the
+// roof, arcs back over the tower into a raked glass sail that peaks over the
+// west end. Sources: docs/landmarks/hilton-garden-inn.md.
 import * as THREE from 'three';
 import { tag } from '../util.js';
 import { canvasTex, siteFrame, windowGlow } from './lib.js';
 
-// Frames: local +z points east along the long axis (bearing 80), +x north.
+// One frame for the whole building: origin on the tower's OSM centroid, local
+// +z east along the long axis (bearing 80) towards Cairo Road, +x north.
 export const HGI = { x: -2970.0, z: 2816.0, bearing: 80, w: 18, len: 25 };
-export const SHELL = { x: -3050.0, z: 2822.0, bearing: 80, len: 56, w: 34 };
-const LOBBY = 5.5, FLOOR = 3.3, FLOORS = 21;
-const TOP = LOBBY + FLOORS * FLOOR; // ~75 m
-const GLASS_END = 9.5; // where the banded slab meets the curved glass east end
+const PODIUM = 16.1; // shops (5 m) + three mall levels
+const FLOOR = 3.3, FLOORS = 18;
+const BASE = PODIUM, TOP = PODIUM + FLOORS * FLOOR; // ~75.5 m
+const SHELL = { x: 8, z: -80, len: 56, w: 34, levels: 6, level: 3.8 }; // from imagery
+// Podium wings (local), measured on imagery against the OSM neighbours.
+const FRONT_WING = { x0: -14, x1: 30, z0: -55, z1: 34 }; // Cairo Road wing, under the tower
+const REAR_WING = { x0: -8, x1: 50, z0: -108, z1: -48 }; // links to the shell
 
 // ---------- shapes (local x/z, extruded upward) ----------
+const V2 = (x, z) => new THREE.Vector2(x, -z);
+
 function extrudeUp(shape, height, materials) {
-  const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false, curveSegments: 24 });
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false, curveSegments: 20 });
   geo.rotateX(-Math.PI / 2); // shape (x, y) -> local (x, -z), extruded up
   return new THREE.Mesh(geo, materials);
 }
 
-// Chamfered rectangle: x half-width hw, z from z0 to z1, corners cut by c.
-function chamfered(hw, z0, z1, c) {
-  const pts = [[-hw + c, z0], [hw - c, z0], [hw, z0 + c], [hw, z1 - c], [hw - c, z1], [-hw + c, z1], [-hw, z1 - c], [-hw, z0 + c]];
-  return new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
+// Rectangle with per-corner radii: [south-west, north-west, north-east, south-east]
+// (x0/x1 = south/north, z0/z1 = west/east).
+function roundedRect({ x0, x1, z0, z1 }, [rsw, rnw, rne, rse], grow = 0) {
+  x0 -= grow; x1 += grow; z0 -= grow; z1 += grow;
+  const s = new THREE.Shape();
+  s.moveTo(...V2(x0, z0 + rsw).toArray());
+  s.lineTo(...V2(x0, z1 - rse).toArray());
+  s.quadraticCurveTo(...V2(x0, z1).toArray(), ...V2(x0 + rse, z1).toArray());
+  s.lineTo(...V2(x1 - rne, z1).toArray());
+  s.quadraticCurveTo(...V2(x1, z1).toArray(), ...V2(x1, z1 - rne).toArray());
+  s.lineTo(...V2(x1, z0 + rnw).toArray());
+  s.quadraticCurveTo(...V2(x1, z0).toArray(), ...V2(x1 - rnw, z0).toArray());
+  s.lineTo(...V2(x0 + rsw, z0).toArray());
+  s.quadraticCurveTo(...V2(x0, z0).toArray(), ...V2(x0, z0 + rsw).toArray());
+  return s;
 }
 
-// Racetrack: straight length along z, semicircular ends of radius r.
-function racetrack(len, r) {
-  const half = len / 2 - r;
+// Racetrack centred on (cx, cz): straight length along z, round ends.
+function racetrack(cx, cz, len, r, grow = 0) {
+  r += grow;
+  const half = len / 2 - (r - grow);
   const s = new THREE.Shape();
-  s.moveTo(-r, half);
-  s.absarc(0, half, r, Math.PI, 0, true);
-  s.lineTo(r, -half);
-  s.absarc(0, -half, r, 0, Math.PI, true);
+  s.moveTo(...V2(cx - r, cz - half).toArray());
+  s.absarc(cx, -(cz - half), r, Math.PI, 0, true);
+  s.lineTo(...V2(cx + r, cz + half).toArray());
+  s.absarc(cx, -(cz + half), r, 0, Math.PI, true);
   s.closePath();
   return s;
+}
+
+function chamfered(hw, z0, z1, c) {
+  const pts = [[-hw + c, z0], [hw - c, z0], [hw, z0 + c], [hw, z1 - c], [hw - c, z1], [-hw + c, z1], [-hw, z1 - c], [-hw, z0 + c]];
+  return new THREE.Shape(pts.map(([x, z]) => V2(x, z)));
+}
+
+// A shape in the local y/z plane, extruded across x from -w/2 to w/2.
+function sideProfile(points, width, mat) {
+  const s = new THREE.Shape(points.map(([z, y]) => new THREE.Vector2(z, y)));
+  const geo = new THREE.ExtrudeGeometry(s, { depth: width, bevelEnabled: false, curveSegments: 24 });
+  geo.rotateY(-Math.PI / 2); // shape x -> local +z, extrusion -> local -x
+  geo.translate(width / 2, 0, 0);
+  return new THREE.Mesh(geo, mat);
 }
 
 // ---------- textures (extrude UVs are in metres) ----------
 function slabTexture() {
   const t = canvasTex(128, 110, (g, w, h) => {
-    g.fillStyle = '#2e2522'; // bronze glass
+    g.fillStyle = '#2e2522';
     g.fillRect(0, 0, w, h);
-    const grad = g.createLinearGradient(0, 0, 0, h * 0.5);
+    const grad = g.createLinearGradient(0, 0, 0, h * 0.38);
     grad.addColorStop(0, 'rgba(220,170,120,0.35)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = grad;
@@ -59,7 +90,7 @@ function slabTexture() {
     for (let x = 0; x < w; x += 32) g.fillRect(x, 0, 2, h * 0.38);
     const band = g.createLinearGradient(0, h * 0.38, 0, h);
     band.addColorStop(0, '#dcb9a6');
-    band.addColorStop(1, '#b88e7c'); // canted spandrel: lit above, shaded below
+    band.addColorStop(1, '#b88e7c');
     g.fillStyle = band;
     g.fillRect(0, h * 0.38, w, h * 0.62);
   });
@@ -67,27 +98,28 @@ function slabTexture() {
   return t;
 }
 
-function goldGlass(sx, sy) {
+// Champagne glass for the spine, arc and sail: mullion grid, soft gradient.
+function spineTexture() {
   const t = canvasTex(64, 64, (g, w, h) => {
     const grad = g.createLinearGradient(0, 0, w, h);
-    grad.addColorStop(0, '#d9a45a');
-    grad.addColorStop(0.5, '#a8743c');
-    grad.addColorStop(1, '#6f4a2c');
+    grad.addColorStop(0, '#d8c3a2');
+    grad.addColorStop(0.5, '#a89274');
+    grad.addColorStop(1, '#7c6a58');
     g.fillStyle = grad;
     g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(60,40,25,0.8)';
+    g.fillStyle = 'rgba(70,58,48,0.8)';
     g.fillRect(0, 0, w, 2);
     g.fillRect(0, 0, 2, h);
   });
-  t.repeat.set(sx, sy);
+  t.repeat.set(1 / 1.5, 1 / FLOOR);
   return t;
 }
 
-function shellBandTexture() {
+function louvreTexture() {
   const t = canvasTex(64, 128, (g, w, h) => {
     g.fillStyle = '#39424a';
     g.fillRect(0, 0, w, h);
-    g.fillStyle = '#b8b2a4'; // vertical louvres
+    g.fillStyle = '#b8b2a4';
     for (let x = 0; x < w; x += 8) g.fillRect(x, 0, 3, h);
     g.fillStyle = 'rgba(0,0,0,0.25)';
     g.fillRect(0, 0, w, 10);
@@ -97,7 +129,7 @@ function shellBandTexture() {
 }
 
 function lettersTexture(text, colour, font) {
-  const t = canvasTex(1024, 128, (g, w, h) => {
+  return canvasTex(1024, 128, (g, w, h) => {
     g.clearRect(0, 0, w, h);
     g.fillStyle = colour;
     g.font = font;
@@ -105,158 +137,125 @@ function lettersTexture(text, colour, font) {
     g.textBaseline = 'middle';
     g.fillText(text, w / 2, h / 2);
   }, { repeat: false });
-  return t;
 }
 
-// A thin vertical fin in the local y/z plane, profile y = f(z) over [z0, z1].
-function fin(z0, z1, profile, thickness, mat) {
-  const s = new THREE.Shape();
-  s.moveTo(z0, 0);
-  const n = 32;
-  for (let i = 0; i <= n; i++) {
-    const z = z0 + ((z1 - z0) * i) / n;
-    s.lineTo(z, profile(z));
-  }
-  s.lineTo(z1, 0);
-  s.closePath();
-  const geo = new THREE.ExtrudeGeometry(s, { depth: thickness, bevelEnabled: false });
-  geo.rotateY(-Math.PI / 2); // shape x -> local z, extrusion -> local -x
-  return new THREE.Mesh(geo, mat);
-}
-
-// ---------- tower ----------
-function tower() {
+// ---------- the building ----------
+export function buildHiltonGardenInn() {
   const f = siteFrame(HGI.x, HGI.z, HGI.bearing);
-  f.name = 'hilton-garden-inn';
+  f.name = 'society-business-park';
   const put = (mesh, conf, y = 0) => {
     mesh.position.y += y;
     f.add(tag(mesh, conf));
     return mesh;
   };
+
+  const roof = new THREE.MeshStandardMaterial({ color: 0xa9a399, roughness: 0.9 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xe6dcc6, roughness: 0.7 });
+  const creamRose = new THREE.MeshStandardMaterial({ color: 0xd7b8a6, roughness: 0.7 });
+  const louvres = new THREE.MeshStandardMaterial({ map: louvreTexture(), roughness: 0.5, metalness: 0.2, emissive: 0xffd9a0, emissiveIntensity: 0 });
+  const shops = new THREE.MeshStandardMaterial({ color: 0x33393f, roughness: 0.2, metalness: 0.4, emissive: 0xffd9a0, emissiveIntensity: 0 });
+  const garden = new THREE.MeshStandardMaterial({ color: 0x5e8f43, roughness: 1 });
+
+  // ---- mall podium: two wings, shops at street level, rounded cream bands ----
+  const wings = [
+    { shape: (g) => roundedRect(FRONT_WING, [3, 3, 16, 16], g), conf: 'med' }, // curved Cairo Road front
+    { shape: (g) => roundedRect(REAR_WING, [4, 4, 4, 4], g), conf: 'low' },
+  ];
+  const levels = [5, 8.7, 12.4, PODIUM];
+  for (const wg of wings) {
+    put(extrudeUp(wg.shape(-1.2), 5, [roof, shops]), wg.conf);
+    put(extrudeUp(wg.shape(-0.8), PODIUM - 5, [roof, louvres]), wg.conf, 5);
+    levels.forEach((y, i) => {
+      put(extrudeUp(wg.shape(i === 0 ? 1.8 : 0.6), 1.0, [cream, cream]), wg.conf, y - 0.5);
+    });
+  }
+  // Roof garden around the tower.
+  put(extrudeUp(roundedRect({ x0: -12, x1: 28, z0: -40, z1: 30 }, [2, 2, 12, 12]), 0.3, [garden, cream]), 'med', PODIUM + 0.5);
+  const sbp = put(new THREE.Mesh(new THREE.PlaneGeometry(22, 1.6), new THREE.MeshStandardMaterial({
+    map: lettersTexture('SOCIETY BUSINESS PARK', '#8a3b2e', '600 64px "Helvetica Neue", Arial, sans-serif'),
+    transparent: true, alphaTest: 0.3,
+  })), 'med', 6.6);
+  sbp.position.set((FRONT_WING.x0 + FRONT_WING.x1) / 2, sbp.position.y, FRONT_WING.z1 + 1.9);
+
+  // ---- the shell: the mall's rounded west end, six levels ----
+  const S = SHELL;
+  put(extrudeUp(racetrack(S.x, S.z, S.len - 3, S.w / 2 - 1.5), 5, [roof, shops]), 'med');
+  put(extrudeUp(racetrack(S.x, S.z, S.len - 2.4, S.w / 2 - 1.2), S.levels * S.level, [roof, louvres]), 'high', 5);
+  for (let i = 0; i <= S.levels; i++) {
+    const grow = i === 0 ? 1.1 : 0.4;
+    put(extrudeUp(racetrack(S.x, S.z, S.len, S.w / 2, grow), 1.1, [cream, cream]), 'high', 5 + i * S.level - 0.55);
+  }
+  const shellTop = 5 + S.levels * S.level + 0.55;
+  put(extrudeUp(racetrack(S.x, S.z, S.len * 0.55, S.w * 0.35), 3, [roof, cream]), 'low', shellTop);
+  const shellWords = put(new THREE.Mesh(new THREE.PlaneGeometry(30, 2.4), new THREE.MeshStandardMaterial({
+    map: lettersTexture('SOCIETY BUSINESS PARK', '#8a3b2e', '600 64px "Helvetica Neue", Arial, sans-serif'),
+    transparent: true, alphaTest: 0.3, side: THREE.DoubleSide,
+  })), 'med', shellTop + 1.4);
+  shellWords.rotation.y = -Math.PI / 2; // along the south long face
+  shellWords.position.set(S.x - S.w / 2 + 0.5, shellWords.position.y, S.z + 2);
+
+  // ---- the tower, standing on the podium roof ----
   const hw = HGI.w / 2, z0 = -HGI.len / 2, z1 = HGI.len / 2;
-  const roof = new THREE.MeshStandardMaterial({ color: 0x8f8a82, roughness: 0.9 });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xd7b8a6, roughness: 0.7 });
   const glow = windowGlow(32, FLOORS, 61, { litFraction: 0.6, glassTop: 0.04, glassH: 0.32 });
   glow.repeat.set(1 / 64, 1 / (FLOORS * FLOOR));
   const slabMat = new THREE.MeshStandardMaterial({
     map: slabTexture(), roughness: 0.45, metalness: 0.25, emissive: 0xffffff, emissiveMap: glow, emissiveIntensity: 0,
   });
-  const gold = new THREE.MeshStandardMaterial({
-    map: goldGlass(1 / 2, 1 / 2.4), roughness: 0.15, metalness: 0.7, emissive: 0xffb866, emissiveIntensity: 0, side: THREE.DoubleSide,
+  const spineMat = new THREE.MeshStandardMaterial({
+    map: spineTexture(), roughness: 0.18, metalness: 0.6, emissive: 0xffd8a8, emissiveIntensity: 0, side: THREE.DoubleSide,
   });
+  put(extrudeUp(chamfered(hw, z0, z1, 1.6), FLOORS * FLOOR, [roof, slabMat]), 'high', BASE);
+  const ledge = chamfered(hw + 0.6, z0 - 0.6, z1 + 0.6, 1.9);
+  for (let i = 0; i <= FLOORS; i++) put(extrudeUp(ledge, 0.28, [creamRose, creamRose]), 'med', BASE + i * FLOOR - 0.1);
 
-  // Banded slab with faceted corners, and a projecting ledge at every floor.
-  put(extrudeUp(chamfered(hw, z0, GLASS_END, 1.6), FLOORS * FLOOR, [roof, slabMat]), 'high', LOBBY);
-  const ledge = chamfered(hw + 0.6, z0 - 0.6, GLASS_END, 1.9);
-  for (let i = 0; i <= FLOORS; i++) put(extrudeUp(ledge, 0.28, [cream, cream]), 'med', LOBBY + i * FLOOR - 0.1);
+  // Spine up the middle of the east end, proud of the face.
+  const SPINE_W = 6, SPINE_OUT = 2.5;
+  put(extrudeUp(roundedRect({ x0: -SPINE_W / 2, x1: SPINE_W / 2, z0: z1 - 1, z1: z1 + SPINE_OUT }, [0, 0, 1.2, 1.2]), FLOORS * FLOOR, [roof, spineMat]), 'high', BASE);
 
-  // Curved gold-glass east end, full height.
-  const arc = new THREE.Shape();
-  arc.moveTo(-hw, -GLASS_END);
-  arc.quadraticCurveTo(0, -(z1 + 1.5), hw, -GLASS_END);
-  arc.closePath();
-  put(extrudeUp(arc, FLOORS * FLOOR + 3, [roof, gold]), 'high', LOBBY);
-
-  // Roof: set-back box with the red sign on the south face, then the fins.
-  const box = put(new THREE.Mesh(new THREE.BoxGeometry(12, 5, 14), new THREE.MeshStandardMaterial({ color: 0x2f2926, roughness: 0.6 })), 'med', TOP + 2.5);
-  box.position.z = -3;
-  const sign = put(new THREE.Mesh(new THREE.PlaneGeometry(9, 2.2), new THREE.MeshStandardMaterial({
-    map: lettersTexture('Hilton', '#e0312f', 'bold 96px Georgia, serif'), transparent: true, alphaTest: 0.3,
-    emissive: 0xff3b30, emissiveIntensity: 0,
-  })), 'med', TOP + 2.8);
-  sign.rotation.y = -Math.PI / 2; // south face is local -x
-  sign.position.set(-6.05, sign.position.y, -3);
-  // Outer fin: rises from the east end to a tall point over the west end.
-  const outer = (z) => 24 * Math.sqrt(Math.max(0, 1 - ((z - (z0 + 1.5)) / (z1 + 3 - (z0 + 1.5))) ** 2));
-  put(fin(z0 + 1.5, z1 + 3, outer, 0.9, gold), 'high', TOP).position.x = hw - 0.5;
-  // West edge of the outer fin: near-vertical from the roof up to the point.
-  put(fin(z0, z0 + 1.5, (z) => 24 * ((z - z0) / 1.5), 0.9, gold), 'med', TOP).position.x = hw - 0.5;
-  // Inner fin: lower and rounder, set in from the south face.
-  const inner = (z) => 15 * Math.sqrt(Math.max(0, 1 - ((z - (z0 + 7)) / (z1 + 2 - (z0 + 7))) ** 2));
-  const innerFin = put(fin(z0 + 7, z1 + 2, inner, 0.7, gold), 'med', TOP);
-  innerFin.position.x = -hw + 3.5;
-  // Lattice ribs tying the fins together.
-  for (let z = z0 + 4; z < z1; z += 3) {
-    const h = Math.min(outer(z), inner(z) || outer(z)) - 0.5;
-    if (h <= 1) continue;
-    const rib = put(new THREE.Mesh(new THREE.BoxGeometry(HGI.w - 4, 0.25, 0.25), gold), 'low', TOP + h);
-    rib.position.set(1, rib.position.y, z);
+  // Above the roof the spine arcs back over the tower (a quarter-ellipse band)...
+  const zc = z0 + 12, ARC_H = 20, BAND = 3.2;
+  const aOut = z1 + SPINE_OUT - zc, aIn = aOut - BAND, bOut = ARC_H, bIn = ARC_H - BAND;
+  const arcPts = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = (i / 24) * (Math.PI / 2);
+    arcPts.push([zc + aOut * Math.cos(t), bOut * Math.sin(t)]);
   }
-
-  // Lobby and canopy with the hotel lettering (south side).
-  const lobbyGlass = new THREE.MeshStandardMaterial({ color: 0x2c3238, roughness: 0.15, metalness: 0.5, emissive: 0xffd9a0, emissiveIntensity: 0 });
-  put(extrudeUp(chamfered(hw + 2, z0 - 1, z1 + 1, 2), LOBBY, [roof, lobbyGlass]), 'med');
-  const canopy = put(new THREE.Mesh(new THREE.BoxGeometry(3, 1.3, 16), cream), 'low', 4.8);
-  canopy.position.x = -hw - 3.5;
-  const words = put(new THREE.Mesh(new THREE.PlaneGeometry(14, 1.2), new THREE.MeshStandardMaterial({
-    map: lettersTexture('Hilton Garden Inn', '#c8102e', 'italic 600 80px Georgia, serif'), transparent: true, alphaTest: 0.3,
-  })), 'low', 4.8);
-  words.rotation.y = -Math.PI / 2;
-  words.position.set(-hw - 5.05, words.position.y, 0);
-
-  const glowMats = { slabMat, gold, lobbyGlass, sign: sign.material };
-  return { frame: f, glowMats };
-}
-
-// ---------- shell building ----------
-function shell() {
-  const f = siteFrame(SHELL.x, SHELL.z, SHELL.bearing);
-  f.name = 'society-business-park-shell';
-  const put = (mesh, conf, y = 0) => {
-    mesh.position.y += y;
-    f.add(tag(mesh, conf));
-    return mesh;
-  };
-  const r = SHELL.w / 2;
-  const cream = new THREE.MeshStandardMaterial({ color: 0xe6dcc6, roughness: 0.7 });
-  const roof = new THREE.MeshStandardMaterial({ color: 0xa9a399, roughness: 0.9 });
-  const bands = new THREE.MeshStandardMaterial({ map: shellBandTexture(), roughness: 0.5, metalness: 0.2, emissive: 0xffd9a0, emissiveIntensity: 0 });
-  const shops = new THREE.MeshStandardMaterial({ color: 0x33393f, roughness: 0.2, metalness: 0.4, emissive: 0xffd9a0, emissiveIntensity: 0 });
-  const GROUND = 5, SF = 3.8, N = 6;
-
-  put(extrudeUp(racetrack(SHELL.len - 3, r - 1.5), GROUND, [roof, shops]), 'med');
-  put(extrudeUp(racetrack(SHELL.len - 2.4, r - 1.2), N * SF, [roof, bands]), 'high', GROUND);
-  for (let i = 0; i <= N; i++) {
-    // rounded cream bands, the lowest deepest (the curved balconies at street level)
-    const grow = i === 0 ? 2.2 : 0.8;
-    put(extrudeUp(racetrack(SHELL.len + grow, r + grow / 2), 1.1, [cream, cream]), 'high', GROUND + i * SF - 0.55);
+  for (let i = 24; i >= 0; i--) {
+    const t = (i / 24) * (Math.PI / 2);
+    arcPts.push([zc + aIn * Math.cos(t), Math.max(0, bIn * Math.sin(t))]);
   }
-  const top = GROUND + N * SF + 0.55;
-  put(extrudeUp(racetrack(SHELL.len * 0.55, r * 0.7), 3, [roof, cream]), 'low', top);
-  const letters = put(new THREE.Mesh(new THREE.PlaneGeometry(30, 2.4), new THREE.MeshStandardMaterial({
-    map: lettersTexture('SOCIETY BUSINESS PARK', '#8a3b2e', '600 64px "Helvetica Neue", Arial, sans-serif'),
-    transparent: true, alphaTest: 0.3, side: THREE.DoubleSide,
-  })), 'med', top + 1.4);
-  letters.rotation.y = -Math.PI / 2; // along the south long face
-  letters.position.set(-r + 0.5, letters.position.y, 2);
+  put(sideProfile(arcPts, SPINE_W, spineMat), 'high', TOP);
+  // ...into a raked glass sail rising to its peak over the west end.
+  const PEAK = 25;
+  put(sideProfile([[z0 + 1, 0], [zc + 0.5, 0], [zc + 0.5, ARC_H], [z0 + 1, PEAK]], SPINE_W - 2.5, spineMat), 'high', TOP);
 
-  // Footprint for walk collisions (local racetrack -> world).
+  // Roof box with the red Hilton sign, under the arc.
+  const box = put(new THREE.Mesh(new THREE.BoxGeometry(HGI.w - 4, 3.5, 9), new THREE.MeshStandardMaterial({ color: 0x2f2926, roughness: 0.6 })), 'med', TOP + 1.75);
+  box.position.z = 5.5;
+  const signMat = new THREE.MeshStandardMaterial({
+    map: lettersTexture('Hilton', '#e0312f', 'bold 96px Georgia, serif'), transparent: true, alphaTest: 0.3, emissive: 0xff3b30, emissiveIntensity: 0,
+  });
+  const sign = put(new THREE.Mesh(new THREE.PlaneGeometry(7, 1.7), signMat), 'med', TOP + 1.9);
+  sign.rotation.y = -Math.PI / 2; // south face
+  sign.position.set(-(HGI.w - 4) / 2 - 0.05, sign.position.y, 5.5);
+
+  // Collision footprints in world coordinates: the two wings and the shell.
   f.updateMatrixWorld(true);
-  const footprint = racetrack(SHELL.len + 2, r + 1).getPoints(8).flatMap((p) => {
+  const toWorld = (shape) => shape.getPoints(6).flatMap((p) => {
     const w = f.localToWorld(new THREE.Vector3(p.x, 0, -p.y));
     return [w.x, w.z];
   });
-  return { frame: f, footprint, glowMats: { bands, shops } };
-}
 
-export function buildHiltonGardenInn() {
-  const group = new THREE.Group();
-  group.name = 'society-business-park';
-  const t = tower();
-  const s = shell();
-  group.add(t.frame, s.frame);
-  const towerFootprint = [[-2984.1, 2809.3], [-2980.8, 2827.1], [-2955.8, 2822.5], [-2959.1, 2804.7]].flat();
   return {
-    group,
-    frame: t.frame,
-    footprints: [towerFootprint, s.footprint],
+    group: f,
+    frame: f,
+    footprints: [toWorld(wings[0].shape(0)), toWorld(wings[1].shape(0)), toWorld(racetrack(S.x, S.z, S.len, S.w / 2))],
     setNight(n) {
-      t.glowMats.slabMat.emissiveIntensity = n * 1.2;
-      t.glowMats.gold.emissiveIntensity = n * 0.25;
-      t.glowMats.lobbyGlass.emissiveIntensity = n * 0.8;
-      t.glowMats.sign.emissiveIntensity = n * 2;
-      s.glowMats.bands.emissiveIntensity = n * 0.3;
-      s.glowMats.shops.emissiveIntensity = n * 0.8;
+      slabMat.emissiveIntensity = n * 1.2;
+      spineMat.emissiveIntensity = n * 0.25;
+      signMat.emissiveIntensity = n * 2;
+      louvres.emissiveIntensity = n * 0.3;
+      shops.emissiveIntensity = n * 0.8;
     },
   };
 }
