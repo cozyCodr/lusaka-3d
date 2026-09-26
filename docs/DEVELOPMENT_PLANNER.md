@@ -97,7 +97,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] Bank of Zambia (v1, from the founder's photos: notes in docs/landmarks/bank-of-zambia.md)
 - [ ] Cabinet Office
 - [ ] Embassy Park and the presidential mausoleums
-- [x] Hilton Garden Inn, Society Business Park (added to Tier 1 by the founder, 2026-09-27; v1 from web photos)
+- [x] Society Business Park: Hilton Garden Inn tower and the shell building (added to Tier 1 by the founder, 2026-09-27; v2 from the founder's photos)
 - [ ] Mulungushi and Kenneth Kaunda International Conference Centres
 - [ ] Manda Hill Mall and East Park Mall
 - [x] National Heroes Stadium, with the Gabon Disaster Memorial (v1, from the founder's photos: notes in docs/landmarks/heroes-stadium.md)

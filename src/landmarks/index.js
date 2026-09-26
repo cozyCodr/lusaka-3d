@@ -65,7 +65,7 @@ const REGISTRY = [
   {
     name: 'Hilton Garden Inn',
     build: buildHiltonGardenInn,
-    view: (lm) => local(lm.group, [-120, 25, 75], [0, 40, 0]),
+    view: (lm) => local(lm.frame, [-240, 30, 70], [0, 38, -40]),
   },
   {
     name: 'National Museum',
