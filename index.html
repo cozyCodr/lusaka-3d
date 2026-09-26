@@ -17,34 +17,63 @@
   <body class="m-0 overflow-hidden bg-stone-900 font-sans antialiased">
     <div id="stage" class="fixed inset-0"></div>
 
-    <div class="pointer-events-none fixed inset-0 flex flex-col justify-between p-4 sm:p-6">
-      <header class="pointer-events-auto max-w-sm rounded-2xl bg-stone-950/70 p-4 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-md">
-        <p class="text-[11px] uppercase tracking-[0.18em] text-amber-300/90">Lusaka · 1967</p>
-        <h1 class="mt-1 text-xl font-semibold tracking-tight">National Assembly of Zambia</h1>
-        <p class="mt-1 text-sm text-stone-300">
-          Rebuilt from the satellite footprint and front photographs. Drag to orbit, scroll to zoom.
-        </p>
-        <p id="status" class="mt-2 text-xs text-stone-400">Loading the city…</p>
-      </header>
+    <!-- Top-right menu: everything lives here so the scene stays clear. -->
+    <nav class="fixed right-4 top-4 z-10 flex flex-col items-end gap-2 sm:right-6 sm:top-6">
+      <button
+        id="menu-toggle"
+        type="button"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="menu"
+        class="grid h-11 w-11 place-items-center rounded-full bg-stone-950/60 text-stone-100 shadow-lg ring-1 ring-white/10 backdrop-blur-md transition-colors hover:bg-stone-950/80"
+      >
+        <svg id="icon-open" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+        <svg id="icon-close" class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
 
-      <footer class="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-stone-950/70 p-4 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-md sm:max-w-xl">
-        <label class="flex flex-col gap-2">
-          <span class="flex justify-between text-[11px] uppercase tracking-[0.18em] text-stone-400">
-            <span>Morning</span><span>Noon</span><span>Dusk</span>
-          </span>
-          <input id="time" type="range" min="0" max="100" value="12" class="w-full accent-amber-400" aria-label="Time of day" />
-        </label>
-        <div class="flex flex-wrap items-center gap-2" id="actions"></div>
-        <p class="text-[11px] text-stone-500">Map data © OpenStreetMap contributors (ODbL)</p>
-        <div id="legend" class="hidden">
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-300">
-            <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#3fbf6a]"></i> Measured or photographed</span>
-            <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#f0b429]"></i> Estimated</span>
-            <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#e5484d]"></i> Guessed</span>
-          </div>
+      <div
+        id="menu"
+        class="hidden w-72 origin-top-right overflow-hidden rounded-2xl bg-stone-950/80 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl"
+      >
+        <div class="border-b border-white/10 px-4 py-3">
+          <p class="text-sm font-semibold tracking-tight">Lusaka 3D</p>
+          <p id="status" class="mt-0.5 text-xs text-stone-400">Loading the city…</p>
         </div>
-      </footer>
-    </div>
+
+        <section class="border-b border-white/10 px-4 py-3">
+          <label class="flex flex-col gap-2">
+            <span class="text-[11px] uppercase tracking-[0.16em] text-stone-400">Time of day</span>
+            <input id="time" type="range" min="0" max="100" value="12" class="w-full accent-amber-400" aria-label="Time of day" />
+            <span class="flex justify-between text-[11px] text-stone-500"><span>Morning</span><span>Noon</span><span>Dusk</span></span>
+          </label>
+        </section>
+
+        <section class="border-b border-white/10 py-1.5">
+          <p class="px-4 pb-1 pt-1.5 text-[11px] uppercase tracking-[0.16em] text-stone-400">Go to</p>
+          <div id="actions" class="flex flex-col"></div>
+        </section>
+
+        <section class="py-1.5">
+          <p class="px-4 pb-1 pt-1.5 text-[11px] uppercase tracking-[0.16em] text-stone-400">Layers</p>
+          <div id="layers" class="flex flex-col"></div>
+          <div id="legend" class="hidden">
+            <div class="flex flex-col gap-1 px-4 pb-2 pt-1 text-xs text-stone-300">
+              <span><i class="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[#3fbf6a]"></i>Measured or photographed</span>
+              <span><i class="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[#f0b429]"></i>Estimated</span>
+              <span><i class="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-[#e5484d]"></i>Guessed</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </nav>
+
+    <p class="pointer-events-none fixed bottom-2 right-3 text-[10px] text-white/70 [text-shadow:0_1px_2px_rgb(0_0_0/0.6)]">
+      © OpenStreetMap contributors
+    </p>
 
     <script type="module" src="./src/main.js"></script>
   </body>

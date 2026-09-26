@@ -9,7 +9,7 @@ import { buildAssembly } from './building.js';
 import { buildCity } from './city.js';
 import { SITE, sunVector } from './geo.js';
 import { buildSite } from './site.js';
-import { button, setOn } from './ui.js';
+import { menuItem, menuToggle, setupMenu } from './ui.js';
 import { lerp, smoothstep } from './util.js';
 
 // ---------- renderer, scene, camera ----------
@@ -202,20 +202,18 @@ const slider = document.getElementById('time');
 slider.addEventListener('input', () => setTime(slider.value / 100));
 slider.addEventListener('change', refreshEnvironment);
 
-const actions = document.getElementById('actions');
-actions.append(
-  button('Replay flyover', startFlyover),
-  button('City view', () => glideTo(CITY_VIEW.position, CITY_VIEW.target)),
-  button('Parliament', () => glideTo(path.getPointAt(1), assemblyLook)),
-  (() => {
-    const b = button('Confidence view', () => {
-      setConfidence(!confidenceOn);
-      setOn(b, confidenceOn);
-    });
-    setOn(b, false);
-    return b;
-  })(),
+const menu = setupMenu();
+// Close the menu when a camera move starts, so the view is unobstructed.
+const go = (fn) => () => {
+  menu.close();
+  fn();
+};
+document.getElementById('actions').append(
+  menuItem('Replay flyover', go(startFlyover)),
+  menuItem('City view', go(() => glideTo(CITY_VIEW.position, CITY_VIEW.target))),
+  menuItem('National Assembly', go(() => glideTo(path.getPointAt(1), assemblyLook))),
 );
+document.getElementById('layers').append(menuToggle('Confidence view', setConfidence));
 
 // ---------- loop ----------
 addEventListener('resize', () => {

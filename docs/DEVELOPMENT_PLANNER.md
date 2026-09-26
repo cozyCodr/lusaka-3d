@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P1 — Landmark catalogue** (two open items need founder input; P2 can start in parallel)
+**Current priority: P6 — Findeco House** (founder call, 2026-09-26: Tier 1 order approved, start building). Needs P4's first item, the CBD widening, to give it a city around it.
 
 ---
 
@@ -18,7 +18,7 @@ Know every well-known place, where it is, and how much detail it deserves.
 - [x] Build `data/landmarks.json`: 451 places with world coordinates, category, Wikidata id (`tools/landmarks_catalog.py`)
 - [x] Curate `docs/LANDMARKS.md`: Tier 1 icons (22), Tier 2 notable (~50), Tier 3 category generators
 - [ ] Confirm the "not in OSM yet" list (Kwacha House, Zanaco, ZESCO, Showgrounds…) on satellite and add coordinates
-- [ ] Founder review: reorder Tier 1 by what matters most to you
+- [x] Founder review: Tier 1 order approved as is (2026-09-26)
 - [ ] **Verify:** every Tier 1 row has coordinates that land on the right building in the app
 
 ## P2 — Controls and movement
@@ -40,18 +40,19 @@ a small `zustand/vanilla` store that both the engine and the HUD read.
 
 ## P3 — On-screen interface redesign
 
-The current panels are heavy, cover the scene, and say "National Assembly"
-even when you are looking at the whole city. Aim for scene-first, minimal
-chrome, and a visual language drawn from Zambia (copper, flag green, orange).
+Founder direction (2026-09-26): no floating panels over the scene; controls
+live in a collapsible top-right hamburger menu; clicking a place should show
+more about it (details to come). Keep a visual language drawn from Zambia
+(copper, flag green, orange).
 
-- [ ] Mock up 2–3 directions as throwaway prototypes; founder picks one
+- [x] Replace the title card and control panel with a collapsible top-right menu (time of day, go to, layers); OSM credit as a small corner line
 - [ ] Design tokens in a Tailwind `@theme` (colour, type, radius, blur); shared component class module
 - [ ] Top-left: compact wordmark and a live location line (district / nearest landmark)
 - [ ] Search / command palette (`⌘K` or `/`) over the landmark catalogue: type, pick, glide there
 - [ ] Bottom toolbar of icon buttons with tooltips: mode switch, time of day, layers, confidence
 - [ ] Time of day as a compact popover (presets: sunrise, noon, golden hour, dusk, night + slider)
 - [ ] Layers popover: buildings, roads, labels, landmarks only, confidence view
-- [ ] Landmark info card on selection: name, type, confidence breakdown, sources, "fly here"
+- [ ] Click a place to get more info on it (founder to detail the contents); first cut: name, type, confidence breakdown, sources, "fly here"
 - [ ] Floating 3D labels for landmarks that fade with distance
 - [ ] Compass with north arrow and a minimap
 - [ ] Loading screen with progress while city data streams in
