@@ -11,7 +11,12 @@ import { canvasTex, chain, limb, rectFootprint, siteFrame } from './lib.js';
 
 // OSM node 1150426134; faces the avenue (bearing 171).
 export const STATUE = { x: -1997.2, z: 3389.5, bearing: 171 };
-const WALK_LEN = 49; // to the kerb of Independence Avenue
+// Kayombo Road runs in front of the statue (Independence Avenue's carriageways
+// are beyond it, 61 m and 73 m out). Its north kerb, in the statue's frame,
+// from the OSM centreline (37.2 m out on the axis, skewed ~8°) minus half its
+// 6 m width and a verge.
+const roadKerb = (x) => 37.2 - 0.138 * x - 3.5;
+const WALK_LEN = roadKerb(0); // walkway runs out to the kerb
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
@@ -174,8 +179,9 @@ export function buildFreedomStatue() {
   }
   const lawn = new THREE.MeshStandardMaterial({ color: 0x5d8f3a, roughness: 1 });
   for (const x of [-15, 15]) {
-    const l = put(new THREE.Mesh(new THREE.BoxGeometry(22, 0.1, WALK_LEN - 4), lawn), 'med');
-    l.position.set(x, 0.05, 4 + (WALK_LEN - 4) / 2);
+    const len = Math.min(roadKerb(x - 11), roadKerb(x + 11)) - 4; // stop short of the kerb
+    const l = put(new THREE.Mesh(new THREE.BoxGeometry(22, 0.1, len), lawn), 'med');
+    l.position.set(x, 0.05, 4 + len / 2);
   }
   const pole = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, metalness: 0.4, roughness: 0.4 });
   const flag = new THREE.MeshStandardMaterial({ map: zambiaFlagTexture(), side: THREE.DoubleSide, roughness: 0.8 });

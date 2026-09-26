@@ -32,6 +32,7 @@ Models: `src/landmarks/government-complex.js`, `freedom-statue.js`,
 | Figure height | ~3.1 m on a rock base | medium |
 | Pedestal | white, 2.4 × 2.4 × 1.8 m, FREEDOM in dark letters, plaque below, bronze relief panels on the sides, two white steps | high form, medium size |
 | Setting | railing with spear bars and a gate, square concrete gateposts, brick paving, white-trunked tree, walkway with flagpoles to the avenue | high |
+| Walkway length | ~34 m, to the north kerb of Kayombo Road (OSM centreline 37 m out, skewed ~8°); Independence Avenue's carriageways lie beyond, 61 m and 73 m out | high |
 
 ## Government Complex
 
