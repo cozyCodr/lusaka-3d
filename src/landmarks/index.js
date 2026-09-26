@@ -10,6 +10,7 @@ import { buildFindeco } from './findeco.js';
 import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
 import { buildGabonMemorial, buildHeroesStadium } from './heroes-stadium.js';
+import { buildHiltonGardenInn } from './hilton-garden-inn.js';
 import { buildNationalMuseum } from './national-museum.js';
 
 // A view in a landmark's local frame: camera position and look-at point.
@@ -60,6 +61,11 @@ const REGISTRY = [
     name: 'Gabon Disaster Memorial',
     build: buildGabonMemorial,
     view: (lm) => local(lm.group, [-16, 3, 3], [12, 5, -1]),
+  },
+  {
+    name: 'Hilton Garden Inn',
+    build: buildHiltonGardenInn,
+    view: (lm) => local(lm.group, [-120, 25, 75], [0, 40, 0]),
   },
   {
     name: 'National Museum',

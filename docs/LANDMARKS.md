@@ -30,6 +30,7 @@ up in the wider export.
 | Place | Type | km from Parliament | In current map | Wikidata | Notes |
 |---|---|---|---|---|---|
 | National Assembly of Zambia | government | 0 | ✓ | ✓ | v1 built — [notes](landmarks/national-assembly.md) |
+| Hilton Garden Inn (Society Business Park) | hotel | 4.1 | ✓ |  | built on the founder's request — [notes](landmarks/hilton-garden-inn.md) |
 | Findeco House | building | 4.46 | ✓ | ✓ | v1 built — [notes](landmarks/findeco-house.md) |
 | Freedom Statue | monument | 3.93 | ✓ |  | v1 built — stands in front of Government Complex, not at the museum; [notes](landmarks/independence-avenue.md) |
 | Cathedral of the Holy Cross | worship | 2.99 | ✓ |  | v1 built — [notes](landmarks/cathedral-holy-cross.md) |
@@ -63,7 +64,6 @@ up in the wider export.
 | Radisson Blu | hotel | 0.87 | ✓ |  |  |
 | Protea Hotel Towers | hotel | 0.93 | ✓ |  |  |
 | Protea Hotel Cairo Road | hotel | 4.27 | — |  |  |
-| Hilton Garden Inn Lusaka Society Business Park | hotel | 4.09 | — |  |  |
 | Lusaka Grand Hotel | hotel | 3.02 | — |  |  |
 | Arcades Shopping Mall | mall | 0.84 | ✓ |  |  |
 | Longacres Mall | mall | 2.3 | — |  |  |
