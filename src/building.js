@@ -1,22 +1,25 @@
-// The National Assembly: a hollow podium ring (~77 x 60 m) around a tall
-// copper-finned chamber block (~33 x 28 m). Local frame: +z is the front
-// (faces NE, toward the walkway), +x is the NW end. Dimensions: REFERENCE.md.
+// The National Assembly: a hollow podium ring (72 x 51.5 m, from the OSM
+// outline) around a tall copper-finned chamber block (37 x 28 m) flanked by
+// two light wells. Local frame: +z is the front (faces bearing 28°, toward the
+// walkway), +x is the NW end. Dimensions: REFERENCE.md.
 import * as THREE from 'three';
 import { tag } from './util.js';
 import { copperTexture, letteringTexture, windowGlowTexture } from './textures.js';
 
 export const DIM = {
-  ringW: 77,
-  ringD: 60,
-  wing: 14,
+  ringW: 72,
+  ringD: 51.5,
+  wing: 11.7, // front and back wings
+  endWing: 8.7, // NW and SE wings
   groundH: 4.5,
   fasciaH: 1.2,
   upperH: 4.3,
-  chamberW: 33,
+  chamberW: 37,
   chamberD: 28,
   chamberH: 24,
 };
 DIM.podiumH = DIM.groundH + DIM.fasciaH + DIM.upperH + 0.6;
+DIM.wellW = (DIM.ringW - 2 * DIM.endWing - DIM.chamberW) / 2;
 
 function materials() {
   const copperMap = copperTexture();
@@ -152,17 +155,17 @@ function chamber(M) {
 export function buildAssembly() {
   const M = materials();
   const root = new THREE.Group();
-  const { ringW, ringD, wing: wd } = DIM;
+  const { ringW, ringD, wing: wd, endWing: ed } = DIM;
   const sideLen = ringD - 2 * wd;
 
   const wings = [
     { length: ringW, rot: 0, x: 0, z: ringD / 2 - wd / 2, conf: 'high', lettering: true },
     { length: ringW, rot: Math.PI, x: 0, z: -(ringD / 2 - wd / 2), conf: 'low' },
-    { length: sideLen, rot: Math.PI / 2, x: ringW / 2 - wd / 2, z: 0, conf: 'low' },
-    { length: sideLen, rot: -Math.PI / 2, x: -(ringW / 2 - wd / 2), z: 0, conf: 'low' },
+    { length: sideLen, depth: ed, rot: Math.PI / 2, x: ringW / 2 - ed / 2, z: 0, conf: 'low' },
+    { length: sideLen, depth: ed, rot: -Math.PI / 2, x: -(ringW / 2 - ed / 2), z: 0, conf: 'low' },
   ];
   for (const w of wings) {
-    const g = wing(M, { length: w.length, depth: wd, conf: w.conf, lettering: w.lettering });
+    const g = wing(M, { length: w.length, depth: w.depth ?? wd, conf: w.conf, lettering: w.lettering });
     g.rotation.y = w.rot;
     g.position.set(w.x, 0, w.z);
     root.add(g);
@@ -172,7 +175,7 @@ export function buildAssembly() {
 
   // Courtyard floor and the planted light well on the SE side (-x).
   const court = new THREE.Mesh(
-    new THREE.PlaneGeometry(ringW - 2 * wd, ringD - 2 * wd),
+    new THREE.PlaneGeometry(ringW - 2 * ed, ringD - 2 * wd),
     new THREE.MeshStandardMaterial({ color: 0xa9a293, roughness: 0.95 }),
   );
   court.rotation.x = -Math.PI / 2;
@@ -180,11 +183,11 @@ export function buildAssembly() {
   root.add(tag(court, 'high', { cast: false }));
 
   const lawn = new THREE.Mesh(
-    new THREE.PlaneGeometry(6, ringD - 2 * wd - 2),
+    new THREE.PlaneGeometry(DIM.wellW - 1.5, ringD - 2 * wd - 1.5),
     new THREE.MeshStandardMaterial({ color: 0x4f7a34, roughness: 1 }),
   );
   lawn.rotation.x = -Math.PI / 2;
-  lawn.position.set(-(DIM.chamberW / 2 + 4.5), 0.04, 0);
+  lawn.position.set(-(DIM.chamberW / 2 + DIM.wellW / 2), 0.04, 0);
   root.add(tag(lawn, 'high', { cast: false }));
 
   return {

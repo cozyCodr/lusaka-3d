@@ -8,6 +8,9 @@ What the model is built from, and how sure we are of each part.
   (20 m scale bar ≈ 53 px). Lusaka has no Google 3D mesh, so no heights.
 - **Front photo** — Wikimedia Commons, `File:Zambia_National_Assembly_Building.jpg`,
   plus ~20 near-identical press/stock shots from the bottom of the walkway.
+- **OpenStreetMap** — relation "National Assembly" (wikidata Q1784088): an
+  outer ring and two inner light wells, traced from imagery. Supersedes the
+  scale-bar estimates below where they differ.
 - **Official history** — parliament.gov.zm/node/111: hilltop site (former
   homestead of headman Lusaka), ~1 ha, four levels (lower ground, podium,
   first floor with chamber for 120, gallery level). Opened 1967.
@@ -16,14 +19,13 @@ What the model is built from, and how sure we are of each part.
 
 | Element | Value | Confidence |
 |---|---|---|
-| Podium ring footprint | ~77 m × 60 m, hollow rectangle | high |
-| Ring wing depth | ~14 m | medium |
-| Long-axis bearing | ~120° (WNW–ESE); front faces ~30° (NNE/NE) | high |
-| Chamber block footprint | ~33 m × 28 m, inside the ring | high |
-| Light wells | either side of the chamber along the long axis; one planted | high |
+| Podium ring footprint | 72 m × 51.5 m (OSM; scale bar read ~77 × 60) | high |
+| Wing depths | front/back 11.7 m, NW/SE ends 8.7 m (OSM light wells) | high |
+| Long-axis bearing | 118° (WNW–ESE); front faces 28° (NNE) | high |
+| Chamber block footprint | 37 m × 28 m, filling the gap between the light wells | high |
+| Light wells | 8.8 m × 28 m either side of the chamber; the SE one planted | high |
 | Approach walkway | ~55 m, straight, from Parliament Rd turning circle down to the front | high |
-| SW neighbour | courtyard office block ~68 × 57 m, ~110 m away | medium |
-| S neighbour | newer octagonal building, green pyramidal roof, ~45 m across | medium |
+| Neighbours | now taken from OSM footprints (see data/core.json) | high |
 
 ## Heights (estimated from front photos by floor count)
 

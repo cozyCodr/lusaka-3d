@@ -24,6 +24,7 @@
         <p class="mt-1 text-sm text-stone-300">
           Rebuilt from the satellite footprint and front photographs. Drag to orbit, scroll to zoom.
         </p>
+        <p id="status" class="mt-2 text-xs text-stone-400">Loading the city…</p>
       </header>
 
       <footer class="pointer-events-auto flex flex-col gap-3 rounded-2xl bg-stone-950/70 p-4 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-md sm:max-w-xl">
@@ -34,6 +35,7 @@
           <input id="time" type="range" min="0" max="100" value="12" class="w-full accent-amber-400" aria-label="Time of day" />
         </label>
         <div class="flex flex-wrap items-center gap-2" id="actions"></div>
+        <p class="text-[11px] text-stone-500">Map data © OpenStreetMap contributors (ODbL)</p>
         <div id="legend" class="hidden">
           <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-300">
             <span><i class="inline-block h-2.5 w-2.5 rounded-full bg-[#3fbf6a]"></i> Measured or photographed</span>

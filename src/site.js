@@ -1,5 +1,6 @@
 // The hilltop site: sloping lawns, the terraced approach walkway with red lamp
-// posts, palms, flagpoles, the Parliament Rd turning circle, and neighbours.
+// posts, palms and flagpoles. Surrounding streets and buildings come from OSM
+// (see city.js); this hill sits WALK.drop metres above the city ground.
 import * as THREE from 'three';
 import { DIM } from './building.js';
 import { pavingTexture, zambiaFlagTexture } from './textures.js';
@@ -8,15 +9,19 @@ import { rng, smoothstep, tag } from './util.js';
 const FRONT = DIM.ringD / 2; // z of the front facade
 const WALK = { start: FRONT + 6, end: FRONT + 62, width: 9, drop: 4.5, steps: 14 };
 
-// Ground height: flat hilltop, falling toward the road in front.
+export const HILL = { flat: 85, foot: 150, size: 340 };
+
+// Ground height in the site's local frame: a flat hilltop that falls steeply
+// toward the road in front and gently everywhere else, down to city level.
 export function groundHeight(x, z) {
-  const slope = -WALK.drop * smoothstep((z - WALK.start) / (WALK.end - WALK.start));
-  const roll = Math.sin(x * 0.03) * Math.cos(z * 0.025) * 0.6 * smoothstep((Math.abs(x) - 60) / 60);
-  return slope + roll;
+  const front = -WALK.drop * smoothstep((z - WALK.start) / (WALK.end - WALK.start));
+  const r = Math.hypot(x * 0.8, z);
+  const around = -WALK.drop * smoothstep((r - HILL.flat) / (HILL.foot - HILL.flat));
+  return Math.min(front, around);
 }
 
 function terrain() {
-  const size = 520, seg = 160;
+  const size = HILL.size, seg = 120;
   const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
@@ -26,8 +31,10 @@ function terrain() {
   const dry = new THREE.Color(0x9a9a55);
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
-    pos.setY(i, groundHeight(x, z));
-    const c = base.clone().lerp(dry, Math.min(1, Math.max(0, (Math.hypot(x, z) - 90) / 160)) * 0.8 + r() * 0.12);
+    // Past the foot of the hill, tuck under the city ground plane.
+    const outside = Math.hypot(x * 0.8, z) > HILL.foot + 10;
+    pos.setY(i, outside ? -WALK.drop - 0.3 : groundHeight(x, z));
+    const c = base.clone().lerp(dry, smoothstep((Math.hypot(x, z) - 90) / 90) * 0.7 + r() * 0.12);
     colors.push(c.r, c.g, c.b);
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -191,91 +198,8 @@ function flags() {
   };
 }
 
-function road() {
-  const mat = new THREE.MeshStandardMaterial({ color: 0x3b3b3d, roughness: 0.95 });
-  const g = new THREE.Group();
-  const y = -WALK.drop + 0.06;
-  const zc = WALK.end + 14;
-  const ring = new THREE.Mesh(new THREE.RingGeometry(9, 16, 48), mat);
-  ring.rotation.x = -Math.PI / 2;
-  ring.position.set(0, y, zc);
-  const island = new THREE.Mesh(
-    new THREE.CircleGeometry(9, 48),
-    new THREE.MeshStandardMaterial({ color: 0x5f8f3c, roughness: 1 }),
-  );
-  island.rotation.x = -Math.PI / 2;
-  island.position.set(0, y - 0.01, zc);
-  const link = new THREE.Mesh(new THREE.PlaneGeometry(8, 9), mat);
-  link.rotation.x = -Math.PI / 2;
-  link.position.set(0, y + 0.01, WALK.end + 2);
-  // Parliament Rd running across the front, parallel to the facade.
-  const rd = new THREE.Mesh(new THREE.PlaneGeometry(400, 10), mat);
-  rd.rotation.x = -Math.PI / 2;
-  rd.position.set(0, y - 0.02, zc + 22);
-  g.add(ring, island, link, rd);
-  return tag(g, 'high', { cast: false });
-}
 
-// Neighbours from the satellite view, as plain massing.
-function neighbours() {
-  const g = new THREE.Group();
-  const wall = new THREE.MeshStandardMaterial({ color: 0xd9d2c4, roughness: 0.9 });
 
-  // SW courtyard office block: behind and toward the NW end (+x).
-  const office = new THREE.Group();
-  const [ow, od, oh, ot] = [68, 57, 12, 13];
-  for (const [w, d, x, z] of [
-    [ow, ot, 0, od / 2 - ot / 2], [ow, ot, 0, -od / 2 + ot / 2],
-    [ot, od - 2 * ot, ow / 2 - ot / 2, 0], [ot, od - 2 * ot, -ow / 2 + ot / 2, 0],
-  ]) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(w, oh, d), wall);
-    b.position.set(x, oh / 2, z);
-    office.add(b);
-  }
-  office.position.set(92, 0, -68);
-  office.rotation.y = 0.12;
-  g.add(office);
-
-  // Newer octagonal building with a green pyramidal roof: behind, toward -x.
-  const oct = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(22, 22, 10, 8), wall);
-  base.position.y = 5;
-  const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(24, 9, 8),
-    new THREE.MeshStandardMaterial({ color: 0x7fa88a, roughness: 0.6, metalness: 0.2 }),
-  );
-  roof.position.y = 14.5;
-  oct.add(base, roof);
-  oct.position.set(-38, 0, -95);
-  oct.rotation.y = Math.PI / 8;
-  g.add(oct);
-  return tag(g, 'low');
-}
-
-function trees(avoid) {
-  const g = new THREE.Group();
-  const r = rng(33);
-  const leaf = new THREE.MeshStandardMaterial({ color: 0x2e5325, roughness: 1, flatShading: true });
-  const bark = new THREE.MeshStandardMaterial({ color: 0x4b3a2b, roughness: 1 });
-  const canopy = new THREE.IcosahedronGeometry(1, 1);
-  const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 1, 6);
-  let placed = 0;
-  while (placed < 140) {
-    const x = (r() - 0.5) * 420, z = (r() - 0.5) * 420;
-    if (avoid(x, z)) continue;
-    const s = 3 + r() * 4;
-    const y = groundHeight(x, z);
-    const t = new THREE.Mesh(trunkGeo, bark);
-    t.scale.y = s * 0.8;
-    t.position.set(x, y + s * 0.4, z);
-    const c = new THREE.Mesh(canopy, leaf);
-    c.scale.set(s, s * 0.8, s);
-    c.position.set(x, y + s * 1.2, z);
-    g.add(t, c);
-    placed++;
-  }
-  return tag(g, 'low');
-}
 
 export function buildSite() {
   const g = new THREE.Group();
@@ -283,13 +207,7 @@ export function buildSite() {
   const lampSet = lamps();
   const flagSet = flags();
 
-  const avoid = (x, z) =>
-    (Math.abs(x) < 62 && z > -52 && z < WALK.end + 45) || // building, lawns, walkway, road
-    (x > 45 && x < 140 && z < -25 && z > -110) || // office block
-    (Math.hypot(x + 38, z + 95) < 32) || // octagon
-    Math.abs(z - (WALK.end + 36)) < 8; // Parliament Rd
-
-  g.add(terrain(), walkway(paving), lampSet.group, shrubs(), palms(), flagSet.group, road(), neighbours(), trees(avoid));
+  g.add(terrain(), walkway(paving), lampSet.group, shrubs(), palms(), flagSet.group);
 
   return {
     group: g,

@@ -6,7 +6,7 @@ city from open data, procedural detail, and hand-built landmarks.
 ## Run
 
 ```bash
-python3 -m http.server 5199
+python3 tools/serve.py
 ```
 
 Open http://localhost:5199 (append `#still` to skip the intro flyover).
@@ -15,7 +15,18 @@ Open http://localhost:5199 (append `#still` to skip the intro flyover).
 
 | Landmark | Status | Reference |
 |---|---|---|
-| National Assembly of Zambia | v1: front accurate, sides/rear guessed | [REFERENCE.md](REFERENCE.md) |
+| National Assembly of Zambia | v1: OSM outline, front accurate, sides/rear guessed | [REFERENCE.md](REFERENCE.md) |
+
+## City data
+
+`data/core.json` covers ~5 × 3 km from Cairo Road to the Parliament
+(16k buildings, 1.5k roads). Rebuild it from a fresh Overpass export:
+
+```bash
+python3 tools/osm_to_json.py data/raw/core.json data/raw/rels.json > data/core.json
+```
+
+The Overpass queries live in `tools/queries/`.
 
 ## Approach
 

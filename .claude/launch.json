@@ -4,7 +4,7 @@
     {
       "name": "lusaka-3d",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "5199"],
+      "runtimeArgs": ["tools/serve.py", "5199"],
       "port": 5199
     }
   ]

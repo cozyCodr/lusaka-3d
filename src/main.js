@@ -6,6 +6,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildAssembly } from './building.js';
+import { buildCity } from './city.js';
+import { SITE, sunVector } from './geo.js';
 import { buildSite } from './site.js';
 import { button, setOn } from './ui.js';
 import { lerp, smoothstep } from './util.js';
@@ -20,16 +22,31 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.getElementById('stage').appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xcfd6d8, 180, 520);
-const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.5, 2000);
+scene.fog = new THREE.Fog(0xcfd6d8, 500, 5000);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.5, 9000);
 
+// The hand-built Parliament site, placed on its OSM outline and bearing.
 const assembly = buildAssembly();
 const site = buildSite();
-scene.add(assembly.group, site.group);
+const parliament = new THREE.Group();
+parliament.add(assembly.group, site.group);
+parliament.position.set(SITE.x, 0, SITE.z);
+parliament.rotation.y = SITE.rotY;
+parliament.updateMatrixWorld(true);
+scene.add(parliament);
+
+const status = document.getElementById('status');
+buildCity().then(({ group, stats }) => {
+  scene.add(group);
+  if (confidenceOn) setConfidence(true);
+  status.textContent = `${stats.buildings.toLocaleString()} buildings and ${stats.roads.toLocaleString()} roads from OpenStreetMap`;
+});
 
 // ---------- sky and light ----------
 const sky = new Sky();
 sky.scale.setScalar(1500);
+sky.renderOrder = -1; // drawn first without depth, so the city beyond it still shows
+sky.frustumCulled = false;
 scene.add(sky);
 sky.material.uniforms.turbidity.value = 6;
 sky.material.uniforms.rayleigh.value = 1.6;
@@ -39,7 +56,7 @@ sky.material.uniforms.mieDirectionalG.value = 0.85;
 const sun = new THREE.DirectionalLight(0xffffff, 3);
 sun.castShadow = true;
 sun.shadow.mapSize.set(4096, 4096);
-Object.assign(sun.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 1, far: 600 });
+Object.assign(sun.shadow.camera, { left: -350, right: 350, top: 350, bottom: -350, near: 1, far: 1600 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.04;
 scene.add(sun, sun.target);
@@ -60,12 +77,12 @@ function refreshEnvironment() {
   scene.environmentIntensity = 0.45;
 }
 
-// The front faces a bearing of ~30°; +x points roughly NW (see REFERENCE.md).
-const FRONT_BEARING = 30;
-function sunDirection(bearing, elevation) {
-  const a = THREE.MathUtils.degToRad(bearing - FRONT_BEARING);
-  const e = THREE.MathUtils.degToRad(elevation);
-  return new THREE.Vector3(-Math.sin(a) * Math.cos(e), Math.sin(e), Math.cos(a) * Math.cos(e));
+const sunDir = new THREE.Vector3();
+
+// Keep the shadow map centred on whatever the camera is looking at.
+function placeSun() {
+  sun.target.position.copy(controls.target);
+  sun.position.copy(controls.target).addScaledVector(sunDir, 700);
 }
 
 const warm = new THREE.Color(0xffa860);
@@ -77,11 +94,9 @@ const fogDusk = new THREE.Color(0x3b3445);
 function setTime(t) {
   const bearing = 85 - 170 * t;
   const elevation = lerp(14, -4, t) + 58 * Math.sin(Math.PI * t);
-  const dir = sunDirection(bearing, elevation);
-
-  sky.material.uniforms.sunPosition.value.copy(dir);
-  sun.position.copy(dir).multiplyScalar(250);
-  sun.target.position.set(0, 0, 0);
+  sunVector(bearing, elevation, sunDir);
+  sky.material.uniforms.sunPosition.value.copy(sunDir);
+  placeSun();
 
   const day = smoothstep(elevation / 12);
   const low = 1 - smoothstep((elevation - 5) / 30);
@@ -110,8 +125,9 @@ controls.target.set(0, 8, 0);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.49;
 controls.minDistance = 12;
-controls.maxDistance = 380;
+controls.maxDistance = 4000;
 
+// Flyover path in the site's local frame, then carried into the world.
 const W = site.walk;
 const path = new THREE.CatmullRomCurve3([
   new THREE.Vector3(0, -W.drop + 1.7, W.end + 8),
@@ -123,32 +139,43 @@ const path = new THREE.CatmullRomCurve3([
   new THREE.Vector3(-40, 44, -72),
   new THREE.Vector3(-88, 30, 22),
   new THREE.Vector3(-52, 20, 96),
-], false, 'centripetal');
-const lookFrom = new THREE.Vector3(0, 10, 0);
-const lookTo = new THREE.Vector3(0, 8, 0);
-const FLY_SECONDS = 26;
+].map((p) => p.applyMatrix4(parliament.matrixWorld)), false, 'centripetal');
+const assemblyLook = new THREE.Vector3(0, 8, 0).applyMatrix4(parliament.matrixWorld);
 let fly = null;
 
-function startFlyover() {
-  fly = { t0: performance.now() };
+// Move the camera along a curve while easing the look-at point.
+function flyAlong(curve, look0, look1, seconds) {
+  fly = { curve, look0: look0.clone(), look1: look1.clone(), seconds, t0: performance.now() };
   controls.enabled = false;
 }
-function endFlyover() {
+function endFly() {
   if (!fly) return;
+  controls.target.copy(fly.look1);
   fly = null;
-  controls.target.copy(lookTo);
   controls.enabled = true;
 }
-renderer.domElement.addEventListener('pointerdown', endFlyover);
-renderer.domElement.addEventListener('wheel', endFlyover, { passive: true });
+renderer.domElement.addEventListener('pointerdown', endFly);
+renderer.domElement.addEventListener('wheel', endFly, { passive: true });
 
-function stepFlyover(now) {
-  const raw = Math.min(1, (now - fly.t0) / (FLY_SECONDS * 1000));
+function stepFly(now) {
+  const raw = Math.min(1, (now - fly.t0) / (fly.seconds * 1000));
   const u = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-  camera.position.copy(path.getPointAt(u));
-  camera.lookAt(lookFrom.clone().lerp(lookTo, u));
-  if (raw >= 1) endFlyover();
+  camera.position.copy(fly.curve.getPointAt(u));
+  controls.target.copy(fly.look0).lerp(fly.look1, u);
+  camera.lookAt(controls.target);
+  if (raw >= 1) endFly();
 }
+
+const startFlyover = () => flyAlong(path, new THREE.Vector3(0, 10, 0).applyMatrix4(parliament.matrixWorld), assemblyLook, 26);
+
+// Glide between the current view and a destination via a raised midpoint.
+function glideTo(position, target, seconds = 5) {
+  const from = camera.position.clone();
+  const mid = from.clone().lerp(position, 0.5);
+  mid.y = Math.max(from.y, position.y) + from.distanceTo(position) * 0.25;
+  flyAlong(new THREE.CatmullRomCurve3([from, mid, position]), controls.target, target, seconds);
+}
+const CITY_VIEW = { position: new THREE.Vector3(200, 1300, 1900), target: new THREE.Vector3(-900, -4.5, 0) };
 
 // ---------- confidence view ----------
 const CONF_COLORS = { high: 0x3fbf6a, med: 0xf0b429, low: 0xe5484d, ground: 0x6d6d6a };
@@ -178,6 +205,8 @@ slider.addEventListener('change', refreshEnvironment);
 const actions = document.getElementById('actions');
 actions.append(
   button('Replay flyover', startFlyover),
+  button('City view', () => glideTo(CITY_VIEW.position, CITY_VIEW.target)),
+  button('Parliament', () => glideTo(path.getPointAt(1), assemblyLook)),
   (() => {
     const b = button('Confidence view', () => {
       setConfidence(!confidenceOn);
@@ -199,8 +228,9 @@ addEventListener('resize', () => {
 const clock = new THREE.Clock();
 renderer.setAnimationLoop((now) => {
   site.update(clock.getElapsedTime());
-  if (fly) stepFlyover(now);
+  if (fly) stepFly(now);
   else controls.update();
+  placeSun();
   composer.render();
 });
 
@@ -209,7 +239,7 @@ refreshEnvironment();
 // #still skips the intro and opens on the flyover's final framing.
 if (location.hash === '#still') {
   camera.position.copy(path.getPointAt(1));
-  controls.target.copy(lookTo);
+  controls.target.copy(assemblyLook);
 } else {
   startFlyover();
 }
