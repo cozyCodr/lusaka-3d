@@ -253,8 +253,10 @@ export function buildCathedral() {
   }
   const terrace = put(new THREE.Mesh(new THREE.BoxGeometry(26, 1.5, 6), stepMat), 'med');
   terrace.position.set(-1, 0.75, 44);
-  const lawn = put(new THREE.Mesh(new THREE.BoxGeometry(70, 0.08, 40), new THREE.MeshStandardMaterial({ color: 0x7c9a48, roughness: 1 })), 'med');
-  lawn.position.set(-1, 0.04, 70);
+  // Lawn out to Chikwa Road / High Court Roundabout, whose nearest kerb (OSM,
+  // running diagonally) is ~80 m out at the south-west corner.
+  const lawn = put(new THREE.Mesh(new THREE.BoxGeometry(70, 0.08, 28), new THREE.MeshStandardMaterial({ color: 0x7c9a48, roughness: 1 })), 'med');
+  lawn.position.set(-1, 0.04, 64);
   const make = palmFactory();
   const r = rng(71);
   for (const [x, z] of [[-18, 60], [15, 58], [22, 66], [-26, 72]]) {
