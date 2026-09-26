@@ -19,18 +19,18 @@ python3 tools/landmarks_catalog.py data/raw/landmarks.json > data/landmarks.json
 | **2 · Notable** | Correct OSM footprint + measured height + a type-specific facade (hotel, mall, ministry, hospital…) and a floating label | 15–30 min each | ~50 |
 | **3 · Generated** | One procedural generator per category, applied to every OSM match | one generator each | hundreds |
 
-**Where things are:** the current map (`data/core.json`) covers the Parliament,
-Manda Hill, Mulungushi / KK Conference Centres and the northern tip of Cairo
-Road. **Most icons are 2.5–4.5 km south**, in the CBD along Cairo Road and
-Independence Avenue, so widening the map south comes before Tier 1 work
-(see the planner).
+**Where things are:** the map (`data/core.json`) now runs from the Parliament
+south through the CBD (Cairo Road, Independence Avenue) to -15.445, so the
+"In current map" column below is from the older, smaller box: most Tier 1
+icons are now inside. Kwacha House (Zamtel) and the ZESCO head office turned
+up in the wider export.
 
 ## Tier 1 — icons
 
 | Place | Type | km from Parliament | In current map | Wikidata | Notes |
 |---|---|---|---|---|---|
 | National Assembly of Zambia | government | 0 | ✓ | ✓ | v1 built — [notes](landmarks/national-assembly.md) |
-| Findeco House | building | 4.46 | — | ✓ | Tallest tower in the CBD; pairs with Parliament |
+| Findeco House | building | 4.46 | ✓ | ✓ | v1 built — [notes](landmarks/findeco-house.md) |
 | Freedom Statue | monument | 3.93 | — |  | Independence Ave; a figure, harder to model — low-poly sculpt |
 | Cathedral of the Holy Cross | worship | 2.99 | — |  | Anglican cathedral, distinctive roofline |
 | Lusaka National Museum | culture | 3.79 | — | ✓ | |
@@ -129,9 +129,7 @@ and **must be confirmed** (satellite + a photo) before any work.
 
 | Place | Expected location | Type |
 |---|---|---|
-| Kwacha House | Cairo Road | Office tower |
 | Zanaco head office | Cairo Road | Bank HQ |
-| ZESCO head office (Stand 6949) | Great East Road | Utility HQ |
 | Lusaka Showgrounds (A&C Show) | Great East Road, near Mulungushi | Showground |
 | Kulima Tower | CBD (bus station exists in OSM) | Office tower |
 | MTN, Airtel, Zamtel head offices | Various | Company offices |

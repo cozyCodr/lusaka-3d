@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P6 — Findeco House** (founder call, 2026-09-26: Tier 1 order approved, start building). Needs P4's first item, the CBD widening, to give it a city around it.
+**Current priority: P6 — Tier 1 landmarks: Freedom Statue next** (founder call, 2026-09-26: Tier 1 order approved, build in order).
 
 ---
 
@@ -17,7 +17,7 @@ Know every well-known place, where it is, and how much detail it deserves.
 - [x] Export named notable places across Greater Lusaka from OSM (`tools/queries/landmarks.overpassql`)
 - [x] Build `data/landmarks.json`: 451 places with world coordinates, category, Wikidata id (`tools/landmarks_catalog.py`)
 - [x] Curate `docs/LANDMARKS.md`: Tier 1 icons (22), Tier 2 notable (~50), Tier 3 category generators
-- [ ] Confirm the "not in OSM yet" list (Kwacha House, Zanaco, ZESCO, Showgrounds…) on satellite and add coordinates
+- [ ] Confirm the "not in OSM yet" list (Kwacha House and ZESCO head office turned up in the wider export) (Kwacha House, Zanaco, ZESCO, Showgrounds…) on satellite and add coordinates
 - [x] Founder review: Tier 1 order approved as is (2026-09-26)
 - [ ] **Verify:** every Tier 1 row has coordinates that land on the right building in the app
 
@@ -64,7 +64,7 @@ more about it (details to come). Keep a visual language drawn from Zambia
 Most Tier 1 icons sit 2.5–4.5 km south of the current box, along Cairo Road
 and Independence Avenue.
 
-- [ ] Widen the OSM export south to about -15.445 to take in the CBD, Independence Ave, Rhodes Park and Kabulonga edges
+- [x] Widen the OSM export south to -15.445 (CBD, Independence Ave, Rhodes Park): 48k buildings, 4.5k roads
 - [ ] Split city data into 1 km tiles (`data/tiles/x_z.json`) and load them by camera distance
 - [ ] Build geometry in a Web Worker so loading never freezes the page
 - [ ] Place landmark labels from `data/landmarks.json` for everything inside loaded tiles
@@ -87,7 +87,7 @@ One item per landmark, in the order in `docs/LANDMARKS.md`. Each follows the
 Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 
 - [x] National Assembly of Zambia (v1)
-- [ ] Findeco House
+- [x] Findeco House (v1: notes in docs/landmarks/findeco-house.md)
 - [ ] Freedom Statue
 - [ ] Cathedral of the Holy Cross
 - [ ] Lusaka National Museum
@@ -118,6 +118,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 
 ## P9 — Lighting and polish
 
+- [x] Sky dome follows the camera (it was black away from the Parliament)
 - [ ] Fix the pale sun smear in the sky at dusk
 - [ ] Night: street lights along primary roads, lit windows city-wide, stars
 - [ ] Brighter lamp glow on the Parliament walkway

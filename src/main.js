@@ -8,6 +8,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildAssembly } from './building.js';
 import { buildCity } from './city.js';
 import { SITE, sunVector } from './geo.js';
+import { buildFindeco } from './landmarks/findeco.js';
 import { buildSite } from './site.js';
 import { menuItem, menuToggle, setupMenu } from './ui.js';
 import { lerp, smoothstep } from './util.js';
@@ -34,6 +35,9 @@ parliament.position.set(SITE.x, 0, SITE.z);
 parliament.rotation.y = SITE.rotY;
 parliament.updateMatrixWorld(true);
 scene.add(parliament);
+
+const findeco = buildFindeco();
+scene.add(findeco.group);
 
 const status = document.getElementById('status');
 buildCity().then(({ group, stats }) => {
@@ -110,6 +114,7 @@ function setTime(t) {
 
   assembly.setNight(night);
   site.setNight(night);
+  findeco.setNight(night);
 }
 
 // ---------- post ----------
@@ -175,7 +180,12 @@ function glideTo(position, target, seconds = 5) {
   mid.y = Math.max(from.y, position.y) + from.distanceTo(position) * 0.25;
   flyAlong(new THREE.CatmullRomCurve3([from, mid, position]), controls.target, target, seconds);
 }
-const CITY_VIEW = { position: new THREE.Vector3(200, 1300, 1900), target: new THREE.Vector3(-900, -4.5, 0) };
+const CITY_VIEW = { position: new THREE.Vector3(300, 1900, 5200), target: new THREE.Vector3(-1000, -4.5, 2100) };
+// Findeco from the south-east, across Independence Ave.
+const FINDECO_VIEW = {
+  position: findeco.centre.clone().add(new THREE.Vector3(120, 5, 150)),
+  target: findeco.centre.clone().add(new THREE.Vector3(0, 5, 0)),
+};
 
 // ---------- confidence view ----------
 const CONF_COLORS = { high: 0x3fbf6a, med: 0xf0b429, low: 0xe5484d, ground: 0x6d6d6a };
@@ -212,6 +222,7 @@ document.getElementById('actions').append(
   menuItem('Replay flyover', go(startFlyover)),
   menuItem('City view', go(() => glideTo(CITY_VIEW.position, CITY_VIEW.target))),
   menuItem('National Assembly', go(() => glideTo(path.getPointAt(1), assemblyLook))),
+  menuItem('Findeco House', go(() => glideTo(FINDECO_VIEW.position, FINDECO_VIEW.target))),
 );
 document.getElementById('layers').append(menuToggle('Confidence view', setConfidence));
 
@@ -228,6 +239,7 @@ renderer.setAnimationLoop((now) => {
   site.update(clock.getElapsedTime());
   if (fly) stepFly(now);
   else controls.update();
+  sky.position.copy(camera.position); // the dome is finite; keep the camera inside it
   placeSun();
   composer.render();
 });
@@ -235,7 +247,10 @@ renderer.setAnimationLoop((now) => {
 setTime(slider.value / 100);
 refreshEnvironment();
 // #still skips the intro and opens on the flyover's final framing.
-if (location.hash === '#still') {
+if (location.hash === '#findeco') {
+  camera.position.copy(FINDECO_VIEW.position);
+  controls.target.copy(FINDECO_VIEW.target);
+} else if (location.hash === '#still') {
   camera.position.copy(path.getPointAt(1));
   controls.target.copy(assemblyLook);
 } else {

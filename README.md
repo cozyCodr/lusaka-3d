@@ -21,11 +21,12 @@ Open http://localhost:5199 (append `#still` to skip the intro flyover).
 | Landmark | Status | Reference |
 |---|---|---|
 | National Assembly of Zambia | v1: OSM outline, front accurate, sides/rear guessed | [docs/landmarks/national-assembly.md](docs/landmarks/national-assembly.md) |
+| Findeco House | v1: 90 m, silhouette from photos, OSM podium | [docs/landmarks/findeco-house.md](docs/landmarks/findeco-house.md) |
 
 ## City data
 
-`data/core.json` covers ~5 × 3 km from Cairo Road to the Parliament
-(16k buildings, 1.5k roads). Rebuild it from a fresh Overpass export:
+`data/core.json` covers ~6.4 × 7.3 km from the Parliament south through the
+CBD (48k buildings, 4.5k roads). Rebuild it from a fresh Overpass export:
 
 ```bash
 python3 tools/osm_to_json.py data/raw/core.json data/raw/rels.json > data/core.json
