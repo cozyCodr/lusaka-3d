@@ -15,14 +15,18 @@ procedural detail, and hand-built landmarks with honest confidence tags.
 ## Layout
 
 - `src/` — ES modules, no build step (three.js from jsDelivr via importmap).
-  `main.js` wires renderer, sky, camera and UI; `city.js` builds the OSM city;
+  `main.js` wires renderer, sky, camera and UI; `city/tiles.js` streams the
+  OSM city in 1 km tiles, built in `city/worker.js`; `terrain.js` is the
+  worker-safe ground height;
   `building.js` + `site.js` are the Parliament; `landmarks/<slug>.js` are the
   other hand-built landmarks, registered in `landmarks/index.js` (menu entry,
   camera view, night lighting) with shared helpers in `landmarks/lib.js`;
   `geo.js` owns the world frame.
-- `data/` — generated city and landmark data (committed); `data/raw/` holds
-  Overpass exports (ignored).
-- `tools/` — OSM converters, Overpass queries, and the no-cache dev server.
+- `data/tiles/` — generated city tiles (committed; rebuild with
+  `tools/osm_tiles.py`); `data/raw/` holds the OSM extract and other raw
+  exports (ignored).
+- `tools/` — the tiler (`osm_tiles.py`, which also skips hand-built
+  buildings), the landmark catalogue builder, and the no-cache dev server.
 - `docs/LANDMARKS.md` — what to build and at what tier;
   `docs/landmarks/<slug>.md` — reference notes per hand-built landmark.
 

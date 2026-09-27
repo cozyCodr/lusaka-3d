@@ -5,10 +5,10 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildAssembly } from './building.js';
-import { buildCity } from './city.js';
+import { cityGround, createTileManager } from './city/tiles.js';
 import { createFootprintIndex } from './collide.js';
 import { createRig } from './controls/rig.js';
-import { heightAt, SITE, sunVector } from './geo.js';
+import { CITY_Y, heightAt, SITE, sunVector } from './geo.js';
 import { buildLandmarks } from './landmarks/index.js';
 import { buildSite } from './site.js';
 import { store } from './store.js';
@@ -16,7 +16,7 @@ import { menuItem, menuToggle, modeHint, modeSwitch, setupHelp, setupMenu } from
 import { lerp, smoothstep } from './util.js';
 
 // ---------- renderer, scene, camera ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
@@ -26,7 +26,7 @@ document.getElementById('stage').appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xcfd6d8, 500, 5000);
-const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.5, 9000);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.5, 40000);
 
 // The hand-built Parliament site, placed on its OSM outline and bearing.
 const assembly = buildAssembly();
@@ -48,11 +48,23 @@ for (const lm of landmarks) for (const fp of lm.footprints) footprints.add(fp);
 footprints.add([-18.8, -36.0, 44.8, -1.9, 20.2, 43.2, -43.3, 9.1]);
 
 const status = document.getElementById('status');
-buildCity('./data/core.json', footprints).then(({ group, stats }) => {
-  scene.add(group);
-  if (confidenceOn) setConfidence(true);
-  status.textContent = `${stats.buildings.toLocaleString()} buildings and ${stats.roads.toLocaleString()} roads from OpenStreetMap`;
+// The OSM city streams in 1 km tiles around the camera (see city/tiles.js).
+scene.add(cityGround());
+const city = createTileManager({
+  scene,
+  footprints,
+  onMesh: (m) => {
+    if (!confidenceOn) return;
+    m.userData.orig = m.material;
+    m.material = confMats[m.userData.conf];
+  },
 });
+city.ready.then((ix) => Object.assign(BOUNDS, ix.bounds));
+function showStatus() {
+  const s = city.stats;
+  status.textContent = `${Math.round(s.buildings).toLocaleString()} buildings in ${s.full + s.far} of ${s.total} tiles` +
+    (s.queued ? ' · loading…' : '');
+}
 
 // ---------- sky and light ----------
 const sky = new Sky();
@@ -136,8 +148,8 @@ composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
 // ---------- controls and flyover ----------
-// Map bounds: the OSM export box (see tools/queries/query.overpassql) plus a margin.
-const BOUNDS = { minX: -5300, maxX: 2550, minZ: -3800, maxZ: 6150 };
+// Map bounds: the tiled OSM area (tools/osm_tiles.py BBOX).
+const BOUNDS = { minX: -13800, maxX: 22600, minZ: -12400, maxZ: 18500 }; // refined from data/tiles/index.json
 const rig = createRig({
   camera, dom: renderer.domElement, heightAt, collide: footprints, bounds: BOUNDS, store,
   pick: (x, y) => pickPoint(x, y),
@@ -194,7 +206,7 @@ function glideTo(position, target, seconds = 5) {
   mid.y = Math.max(from.y, position.y) + from.distanceTo(position) * 0.25;
   flyAlong(new THREE.CatmullRomCurve3([from, mid, position]), controls.target, target, seconds);
 }
-const CITY_VIEW = { position: new THREE.Vector3(300, 1900, 5200), target: new THREE.Vector3(-1000, -4.5, 2100) };
+const CITY_VIEW = { position: new THREE.Vector3(2500, 7500, 17000), target: new THREE.Vector3(3000, -4.5, 2500) }; // all of Lusaka from the south
 
 // ---------- double-click to go somewhere ----------
 const raycaster = new THREE.Raycaster();
@@ -289,7 +301,7 @@ addEventListener('resize', () => {
 });
 
 // Debug handle for inspecting views from the console.
-window.lusaka = { camera, controls, rig, store };
+window.lusaka = { camera, controls, rig, store, city };
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop((now) => {
@@ -297,6 +309,16 @@ renderer.setAnimationLoop((now) => {
   site.update(clock.elapsedTime);
   if (fly) stepFly(now);
   else rig.update(dt);
+  // Stream tiles around what the camera is looking at; see further when higher up.
+  const altitude = Math.max(0, camera.position.y - CITY_Y);
+  const focusPoint = rig.mode === 'map' || fly ? controls.target : camera.position;
+  city.update(focusPoint, altitude, now);
+  scene.fog.near = 500 + altitude * 1.5;
+  scene.fog.far = 5000 + altitude * 4;
+  if (now - (showStatus.t ?? 0) > 1000) {
+    showStatus.t = now;
+    showStatus();
+  }
   sky.position.copy(camera.position); // the dome is finite; keep the camera inside it
   placeSun();
   composer.render();

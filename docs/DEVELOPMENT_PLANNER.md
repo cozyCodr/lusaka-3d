@@ -67,10 +67,12 @@ and Independence Avenue.
 
 - [x] Widen the OSM export south to -15.445 (CBD, Independence Ave, Rhodes Park): 48k buildings, 4.5k roads
 - [x] Widen north to -15.36 and west to 28.262 for Heroes Stadium: 83.5k buildings, 6.3k roads, `data/core.json` now 7.7 MB (tiling below is now pressing)
-- [ ] Split city data into 1 km tiles (`data/tiles/x_z.json`) and load them by camera distance
-- [ ] Build geometry in a Web Worker so loading never freezes the page
+- [x] Cover all of Greater Lusaka (founder, 2026-09-27: Kabulonga, Ibex, Salama, Meanwood, the airport were missing): OSM Zambia extract → 1,330 × 1 km tiles, 466k buildings (`tools/osm_tiles.py`)
+- [x] Split city data into 1 km tiles and load them by camera distance: full detail near, a light far level, haze beyond; radii grow with altitude
+- [x] Build geometry in a pool of Web Workers so loading never freezes the page (60 fps while streaming)
 - [ ] Place landmark labels from `data/landmarks.json` for everything inside loaded tiles
-- [ ] **Verify:** fly from the Parliament to Findeco House with no hitch; memory stable after 5 minutes of flying
+- [x] Runways and taxiways from OSM aeroway lines
+- [ ] **Verify:** fly from the Parliament to Findeco House with no hitch; memory stable after 5 minutes of flying (a 6 s sweep held 60 fps, 138 MB heap; the 5-minute soak is still to do)
 
 ## P5 — Procedural detail
 

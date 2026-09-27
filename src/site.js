@@ -1,24 +1,16 @@
 // The hilltop site: sloping lawns, the terraced approach walkway with red lamp
 // posts, palms and flagpoles. Surrounding streets and buildings come from OSM
-// (see city.js); this hill sits WALK.drop metres above the city ground.
+// (see city/); this hill sits WALK.drop metres above the city ground.
 import * as THREE from 'three';
 import { DIM } from './building.js';
 import { pavingTexture, zambiaFlagTexture } from './textures.js';
+import { groundHeight, HILL, WALK } from './terrain.js';
 import { rng, smoothstep, tag } from './util.js';
 
 const FRONT = DIM.ringD / 2; // z of the front facade
-const WALK = { start: FRONT + 6, end: FRONT + 62, width: 9, drop: 4.5, steps: 14 };
+if (FRONT !== WALK.start - 6) throw new Error('terrain.js FRONT is out of step with DIM.ringD');
 
-export const HILL = { flat: 85, foot: 150, size: 340 };
-
-// Ground height in the site's local frame: a flat hilltop that falls steeply
-// toward the road in front and gently everywhere else, down to city level.
-export function groundHeight(x, z) {
-  const front = -WALK.drop * smoothstep((z - WALK.start) / (WALK.end - WALK.start));
-  const r = Math.hypot(x * 0.8, z);
-  const around = -WALK.drop * smoothstep((r - HILL.flat) / (HILL.foot - HILL.flat));
-  return Math.min(front, around);
-}
+export { HILL, groundHeight };
 
 function terrain() {
   const size = HILL.size, seg = 120;

@@ -34,19 +34,24 @@ Open any landmark directly with its slug, e.g. `#freedom-statue`, `#findeco-hous
 
 ## City data
 
-`data/core.json` covers ~7.3 × 9.4 km from Heroes Stadium south through the
-Parliament and the CBD (83.5k buildings, 6.3k roads). Rebuild it from a fresh Overpass export:
+All of Greater Lusaka (about 37 × 31 km, including the airport) is cut from
+the OpenStreetMap Zambia extract into 1,330 tiles of 1 km: 466k buildings,
+34k roads and runways. Tiles near the camera load in full; further out a
+light version (large buildings, main roads); beyond that, haze. Geometry is
+built in web workers.
+
+Rebuild the tiles from a fresh extract (Geofabrik, ~250 MB):
 
 ```bash
-python3 tools/osm_to_json.py data/raw/core.json data/raw/rels.json > data/core.json
+curl -L -o data/raw/zambia-latest.osm.pbf https://download.geofabrik.de/africa/zambia-latest.osm.pbf
+pip install osmium
+python3 tools/osm_tiles.py data/raw/zambia-latest.osm.pbf data/tiles
 ```
-
-The Overpass queries live in `tools/queries/`.
 
 ## Approach
 
 1. **Base sketch** — OpenStreetMap footprints and roads (© OpenStreetMap
-   contributors, ODbL), elevation from Copernicus DEM.
+   contributors, ODbL), streamed in 1 km tiles; elevation from Copernicus DEM (planned).
 2. **Procedural detail** — building types generated from OSM tags.
 3. **Hero landmarks** — modelled from reference photos, every part tagged
    high / medium / low confidence (toggle "Confidence view" in the app).

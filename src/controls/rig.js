@@ -26,7 +26,7 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store, pick 
     zoomToCursor: true,
     maxPolarAngle: Math.PI * 0.48,
     minDistance: 8,
-    maxDistance: 4500,
+    maxDistance: 16000,
     zoomSpeed: 1.2,
   });
 
@@ -227,7 +227,7 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store, pick 
       camera.position.addScaledVector(look, f * speed).addScaledVector(right, s * speed);
       camera.position.y += axis('Space', 'KeyC') * speed;
       clampToMap(camera.position);
-      camera.position.y = THREE.MathUtils.clamp(camera.position.y, heightAt(camera.position.x, camera.position.z) + 2, 2500);
+      camera.position.y = THREE.MathUtils.clamp(camera.position.y, heightAt(camera.position.x, camera.position.z) + 2, 9000);
     } else {
       const speed = (boost ? 9 : 3.5) * dt;
       const step = fwd.multiplyScalar(f * speed).addScaledVector(right, s * speed);

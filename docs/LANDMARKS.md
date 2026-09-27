@@ -19,11 +19,8 @@ python3 tools/landmarks_catalog.py data/raw/landmarks.json > data/landmarks.json
 | **2 · Notable** | Correct OSM footprint + measured height + a type-specific facade (hotel, mall, ministry, hospital…) and a floating label | 15–30 min each | ~50 |
 | **3 · Generated** | One procedural generator per category, applied to every OSM match | one generator each | hundreds |
 
-**Where things are:** the map (`data/core.json`) now runs from the Parliament
-south through the CBD (Cairo Road, Independence Avenue) to -15.445, so the
-"In current map" column below is from the older, smaller box: most Tier 1
-icons are now inside. Kwacha House (Zamtel) and the ZESCO head office turned
-up in the wider export.
+**Where things are:** the map now covers all of Greater Lusaka, so every
+place in the catalogue is inside it; the "In current map" column is historical.
 
 ## Tier 1 — icons
 
