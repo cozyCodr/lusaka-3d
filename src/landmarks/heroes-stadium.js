@@ -233,6 +233,47 @@ function onWall(mesh, t, proud = 0) {
   return mesh;
 }
 
+// A ramp that follows the wall's curve 6 m out, from the ground at t0 up to
+// the first concourse (5 m) at t1, with solid white balustrades and a
+// landing back to the wall at the top.
+function rampAlongWall(t0, t1, mat) {
+  const OUT = 6, W = 3.6, RISE = 5, WALL_H = 1.1, N = 24;
+  const pos = [];
+  const quad = (a, b, c, d) => pos.push(...a, ...b, ...c, ...a, ...c, ...d);
+  const at = (t, off, y) => {
+    const p = ell(WALL.a + off, WALL.b + off, t);
+    return [p.x, y, p.z];
+  };
+  for (let k = 0; k < N; k++) {
+    const u0 = k / N, u1 = (k + 1) / N;
+    const ta = t0 + (t1 - t0) * u0, tb = t0 + (t1 - t0) * u1;
+    const ya = 0.15 + RISE * u0, yb = 0.15 + RISE * u1;
+    const inA = at(ta, OUT - W / 2, ya), outA = at(ta, OUT + W / 2, ya);
+    const inB = at(tb, OUT - W / 2, yb), outB = at(tb, OUT + W / 2, yb);
+    quad(inA, outA, outB, inB); // deck
+    const drop = (p) => [p[0], p[1] - 0.5, p[2]];
+    quad(drop(inA), drop(outA), drop(outB), drop(inB)); // soffit
+    for (const [a, b] of [[inA, inB], [outA, outB]]) {
+      quad(drop(a), drop(b), [b[0], b[1] + WALL_H, b[2]], [a[0], a[1] + WALL_H, a[2]]); // balustrade
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(geo, mat.side === THREE.DoubleSide ? mat : Object.assign(mat.clone(), { side: THREE.DoubleSide })));
+  // Landing from the top of the ramp back to the wall, and a pier under it.
+  const landing = new THREE.Mesh(new THREE.BoxGeometry(W + 1, 0.5, OUT + W / 2), mat);
+  const top = ell(WALL.a + (OUT + W / 2) / 2, WALL.b + (OUT + W / 2) / 2, t1);
+  landing.position.set(top.x, RISE - 0.1, top.z);
+  landing.rotation.y = facing(WALL.a, WALL.b, t1);
+  const pier = new THREE.Mesh(new THREE.BoxGeometry(1.2, RISE - 0.35, 1.2), mat);
+  const base = ell(WALL.a + OUT, WALL.b + OUT, t1);
+  pier.position.set(base.x, (RISE - 0.35) / 2, base.z);
+  g.add(landing, pier);
+  return g;
+}
+
 function frontage(glassMat, orangeMat, white) {
   const g = new THREE.Group();
   for (const centre of [0, Math.PI]) { // east (main) and west fronts
@@ -248,15 +289,8 @@ function frontage(glassMat, orangeMat, white) {
       tower.position.y = 12;
       g.add(onWall(tower, centre + dt, 3));
     }
-    // ramps with white balustrades either side of the glass
-    for (const side of [-1, 1]) {
-      const ramp = new THREE.Mesh(new THREE.BoxGeometry(4, 0.6, 22), white);
-      const holder = onWall(new THREE.Group(), centre + side * 0.14, 12);
-      ramp.rotation.x = side * 0.22;
-      ramp.position.y = 2.6;
-      holder.add(ramp);
-      g.add(holder);
-    }
+    // ramps either side of the glass, rising along the facade to the concourse
+    for (const side of [-1, 1]) g.add(rampAlongWall(centre + side * 0.165, centre + side * 0.03, white));
   }
   return g;
 }
