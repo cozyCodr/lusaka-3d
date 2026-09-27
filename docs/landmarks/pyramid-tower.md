@@ -29,7 +29,7 @@ it Zambia's tallest building. Model: `src/landmarks/pyramid-tower.js`.
 | Position | tower centre (1452, 785) in world metres, faces at 10° / 100° | medium (imagery; roof displaced by height) |
 | Shaft | 32 m square, 100 m tall | medium: width from the roof on imagery, height from 27 floors and photo proportions |
 | Facade | folded: each face rises from its corners to a raised zigzag strip of pale silver glass (3.2 m proud), blue glass on a 27-floor grid; mirrored on alternate faces | high form, medium fold depth |
-| Crown | white cap overhanging the folded faces, a 3.5 m ring of windows, grey pyramid 18 m high (top ≈ 123 m) | high form, medium size |
+| Crown | flat roof to the edge of the folded outline; set back inside it, a 2.5 m plinth with a ring of windows and a grey pyramid on a base 82% of the shaft width, 22 m high (top ≈ 125 m) | high form (founder's photo), medium size |
 | Podium | quadrilateral ~130 × 85 m from imagery, 9 m (two storeys): blue glass under a white fascia; roof with white parapet, a raised block against the tower, a pale-blue glass roof (the lilac seen from above) and a round pool | form high, extent medium |
 
 ## Known gaps

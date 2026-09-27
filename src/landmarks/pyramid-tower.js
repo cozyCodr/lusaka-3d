@@ -1,8 +1,9 @@
 // Pyramid Tower ("Burj Kalingalinga", the Continental Pyramid Hotel), Thabo
 // Mbeki Road. A square tower whose four glass faces are folded: each face
 // rises from its corners to a raised zigzag strip of pale silver glass, so
-// the facets catch the light differently (blue by day, gold at sunset). A
-// white cap overhangs the shaft under a ring of windows and a grey pyramid.
+// the facets catch the light differently (blue by day, gold at sunset). The
+// roof is flat to the edge; set well back inside it, a low windowed plinth
+// carries a grey pyramid.
 // It stands at the north-west corner of a two-storey glass podium whose roof
 // carries white terraces, a pale-blue glass roof, a round pool and a raised
 // block against the tower. Not in OSM; placed from Esri imagery, shaped from
@@ -17,7 +18,8 @@ export const PYRAMID = { x: 1452, z: 785, bearing: 190 };
 const W = 32; // shaft width at the corners
 const FOLD = 3.2; // how far the zigzag strip stands out from the corners
 const BAND = 0.11; // half-width of the silver strip, as a fraction of W
-const SHAFT_TOP = 100, CROWN_H = 3.5, PEAK_H = 18;
+const SHAFT_TOP = 100, CROWN_H = 2.5, PEAK_H = 22;
+const INSET = 0.82; // the pyramid's base, as a fraction of the shaft width: it sits inside the roof edge
 const FLOORS = 27;
 // Zigzag centreline across a face: [height fraction, across fraction].
 const ZIGZAG = [[0, 0.7], [0.42, 0.28], [0.72, 0.62], [1, 0.46]];
@@ -172,25 +174,39 @@ export function buildPyramidTower() {
   };
   put(shaft(mats), 'high', 0);
 
-  // Crown: an overhanging white cap, a ring of windows, the pyramid.
-  const white = new THREE.MeshStandardMaterial({ color: 0xeceef0, roughness: 0.6 });
+  // Roof: a flat slab following the folded outline of the shaft top.
   const grey = new THREE.MeshStandardMaterial({ color: 0x8e9196, roughness: 0.6, metalness: 0.4 });
-  const capW = W + 2 * FOLD + 1.2;
-  put(new THREE.Mesh(new THREE.BoxGeometry(capW, 1.2, capW), white), 'high', SHAFT_TOP + 0.6);
+  const top = [];
+  for (let k = 0; k < 4; k++) {
+    const flip = k % 2 === 1, a = (k * Math.PI) / 2;
+    const f1 = ZIGZAG[ZIGZAG.length - 1][1], c = ((flip ? 1 - f1 : f1) - 0.5) * W, b = BAND * W;
+    // face-local (x across, z out) -> tower frame, walking each face left to right
+    for (const [x, z] of [[-W / 2, 0], [c - b, FOLD], [c + b, FOLD]]) {
+      const zz = W / 2 + z;
+      top.push([x * Math.cos(a) + zz * Math.sin(a), -x * Math.sin(a) + zz * Math.cos(a)]);
+    }
+  }
+  const roofShape = new THREE.Shape(top.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const roofSlab = new THREE.Mesh(new THREE.ExtrudeGeometry(roofShape, { depth: 0.8, bevelEnabled: false }), grey);
+  roofSlab.geometry.rotateX(-Math.PI / 2);
+  put(roofSlab, 'high', SHAFT_TOP);
+
+  // Inset plinth with a ring of windows, then the pyramid on the same base.
+  const base = W * INSET;
   const ringTex = canvasTex(256, 32, (g, w, h) => {
-    g.fillStyle = '#d0d4d9';
+    g.fillStyle = '#c3c8ce';
     g.fillRect(0, 0, w, h);
     g.fillStyle = '#2f5aa3';
     for (let x = 4; x < w; x += 16) g.fillRect(x, 6, 10, h - 12);
   });
   const ring = new THREE.MeshStandardMaterial({ map: ringTex, roughness: 0.4, emissive: 0xffd9a0, emissiveIntensity: 0 });
-  put(new THREE.Mesh(new THREE.BoxGeometry(W, CROWN_H, W), [ring, ring, grey, grey, ring, ring]), 'high', SHAFT_TOP + 1.2 + CROWN_H / 2);
+  put(new THREE.Mesh(new THREE.BoxGeometry(base, CROWN_H, base), [ring, ring, grey, grey, ring, ring]), 'high', SHAFT_TOP + 0.8 + CROWN_H / 2);
   const pyramid = new THREE.Mesh(
-    new THREE.ConeGeometry((capW * Math.SQRT2) / 2, PEAK_H, 4),
-    new THREE.MeshStandardMaterial({ color: 0xaeb2b8, roughness: 0.4, metalness: 0.6, flatShading: true }),
+    new THREE.ConeGeometry((base * Math.SQRT2) / 2, PEAK_H, 4),
+    new THREE.MeshStandardMaterial({ color: 0xb0b4ba, roughness: 0.4, metalness: 0.6, flatShading: true }),
   );
   pyramid.geometry.rotateY(Math.PI / 4);
-  put(pyramid, 'high', SHAFT_TOP + 1.2 + CROWN_H + PEAK_H / 2);
+  put(pyramid, 'high', SHAFT_TOP + 0.8 + CROWN_H + PEAK_H / 2);
 
   f.updateMatrixWorld(true);
   const toWorld = (pts) => pts.flatMap(([x, z]) => {
