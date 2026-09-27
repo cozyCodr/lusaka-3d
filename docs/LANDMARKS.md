@@ -37,7 +37,7 @@ up in the wider export.
 | Lusaka National Museum | culture | 3.79 | ✓ | ✓ | v1 built, with the steel figure in front — [notes](landmarks/independence-avenue.md) |
 | Government Complex | government | 3.88 | ✓ |  | v1 built — [notes](landmarks/independence-avenue.md) |
 | Bank of Zambia | building | 4.22 | ✓ |  | v1 built — [notes](landmarks/bank-of-zambia.md) |
-| Cabinet Office | government | 3.4 | — |  | Independence Ave |
+| Cabinet Office | government | 3.4 | ✓ |  | v1 built with the Cenotaph square — [notes](landmarks/cabinet-office.md) |
 | Embassy Park Presidential Burial Site | monument | 3.26 | — | ✓ | Three presidential mausoleums |
 | Supreme Court | government | 2.95 | — |  |  |
 | Lusaka City Council Civic Centre | government | 3.29 | — |  | Civic centre clock tower |
@@ -89,7 +89,7 @@ up in the wider export.
 | Lusaka Boma | government | 3.68 | — |  |  |
 | National Archives | building | 3.79 | — | ✓ |  |
 | Evelyn Hone College | education | 3.45 | — | ✓ |  |
-| Cenotaph | monument | 3.34 | — |  |  |
+| Cenotaph | monument | 3.34 | ✓ |  | built with the Cabinet Office — [notes](landmarks/cabinet-office.md) |
 | Lusaka Memorial | monument | 4.33 | — |  |  |
 | Gabon Disaster Memorial | monument | 5.02 | ✓ |  | built with the stadium — [notes](landmarks/heroes-stadium.md) |
 | E W Tarry's Building | monument | 3.95 | — |  |  |

@@ -5,6 +5,7 @@
 // and add its OSM name to HAND_MODELLED in tools/osm_to_json.py.
 import * as THREE from 'three';
 import { buildBankOfZambia } from './bank-of-zambia.js';
+import { buildCabinetOffice } from './cabinet-office.js';
 import { buildCathedral } from './cathedral.js';
 import { buildFindeco } from './findeco.js';
 import { buildFreedomStatue } from './freedom-statue.js';
@@ -66,6 +67,11 @@ const REGISTRY = [
     name: 'Hilton Garden Inn',
     build: buildHiltonGardenInn,
     view: (lm) => local(lm.frame, [-240, 30, 70], [0, 38, -40]),
+  },
+  {
+    name: 'Cabinet Office',
+    build: buildCabinetOffice,
+    view: (lm) => local(lm.group, [30, 14, 165], [-5, 9, 20]),
   },
   {
     name: 'National Museum',

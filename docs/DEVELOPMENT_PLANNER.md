@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P6 — Tier 1 landmarks: Cabinet Office next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
+**Current priority: P6 — Tier 1 landmarks: Embassy Park next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
 
 ---
 
@@ -95,7 +95,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] Lusaka National Museum, with the steel figure (v1)
 - [x] Government Complex (v1)
 - [x] Bank of Zambia (v1, from the founder's photos: notes in docs/landmarks/bank-of-zambia.md)
-- [ ] Cabinet Office
+- [x] Cabinet Office, with the Cenotaph square (v1, from the founder's photos: notes in docs/landmarks/cabinet-office.md)
 - [ ] Embassy Park and the presidential mausoleums
 - [x] Society Business Park: Hilton Garden Inn tower and the shell building (added to Tier 1 by the founder, 2026-09-27; v2 from the founder's photos)
 - [ ] Mulungushi and Kenneth Kaunda International Conference Centres
