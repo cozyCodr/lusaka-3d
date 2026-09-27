@@ -5,7 +5,7 @@ building in Greater Lusaka from open map data, with the city's landmarks —
 the National Assembly, Findeco House, the Freedom Statue, State House and
 more — modelled by hand from photographs.
 
-**▶ Explore it: [lusaka-3d.vercel.app](https://lusaka-3d.vercel.app)**
+**▶ Explore it: [lusaka3d.oapps.dev](https://lusaka3d.oapps.dev)**
 
 ![Lusaka from the south, the CBD and Cairo Road in view](docs/screenshots/city-overview.jpg)
 
@@ -32,8 +32,8 @@ more — modelled by hand from photographs.
 Each landmark has reference notes in [`docs/landmarks/`](docs/landmarks)
 saying what it was built from and which parts are measured, estimated or
 guessed. Open any of them directly by name, e.g.
-[`#findeco-house`](https://lusaka-3d.vercel.app/#findeco-house) or
-[`#state-house`](https://lusaka-3d.vercel.app/#state-house).
+[`#findeco-house`](https://lusaka3d.oapps.dev/#findeco-house) or
+[`#state-house`](https://lusaka3d.oapps.dev/#state-house).
 
 **What's next:** Embassy Park, the conference centres, Manda Hill and more —
 see the [landmark list](docs/LANDMARKS.md) and the

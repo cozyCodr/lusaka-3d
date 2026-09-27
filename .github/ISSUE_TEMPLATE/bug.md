@@ -7,6 +7,6 @@ labels: bug
 
 **What's wrong:**
 
-**Where** (paste the page address, e.g. `https://lusaka-3d.vercel.app/#state-house`, and add a screenshot):
+**Where** (paste the page address, e.g. `https://lusaka3d.oapps.dev/#state-house`, and add a screenshot):
 
 **Device and browser:**
