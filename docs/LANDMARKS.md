@@ -28,6 +28,7 @@ place in the catalogue is inside it; the "In current map" column is historical.
 |---|---|---|---|---|---|
 | National Assembly of Zambia | government | 0 | ✓ | ✓ | v1 built — [notes](landmarks/national-assembly.md) |
 | Hilton Garden Inn + Society Business Park shell | hotel | 4.1 | ✓ |  | v2 built from the founder's photos — [notes](landmarks/hilton-garden-inn.md) |
+| Pyramid Tower ("Burj Kalingalinga") | hotel | 1.7 | ✓ |  | v1 built on the founder's request — [notes](landmarks/pyramid-tower.md) |
 | Findeco House | building | 4.46 | ✓ | ✓ | v1 built — [notes](landmarks/findeco-house.md) |
 | Freedom Statue | monument | 3.93 | ✓ |  | v1 built — stands in front of Government Complex, not at the museum; [notes](landmarks/independence-avenue.md) |
 | Cathedral of the Holy Cross | worship | 2.99 | ✓ |  | v1 built — [notes](landmarks/cathedral-holy-cross.md) |

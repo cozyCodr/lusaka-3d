@@ -12,6 +12,7 @@ import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
 import { buildGabonMemorial, buildHeroesStadium } from './heroes-stadium.js';
 import { buildHiltonGardenInn } from './hilton-garden-inn.js';
+import { buildPyramidTower } from './pyramid-tower.js';
 import { buildStateHouse } from './state-house.js';
 import { buildNationalMuseum } from './national-museum.js';
 
@@ -78,6 +79,11 @@ const REGISTRY = [
     name: 'State House',
     build: buildStateHouse,
     view: (lm) => local(lm.group, [1935, 34, 4165], [1985, 10, 4060]),
+  },
+  {
+    name: 'Pyramid Tower',
+    build: buildPyramidTower,
+    view: (lm) => local(lm.frame, [120, 22, 250], [0, 55, 0]),
   },
   {
     name: 'National Museum',

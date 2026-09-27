@@ -2,7 +2,7 @@
 
 **Zambia's capital, rebuilt in 3D in your browser.** Every street and
 building in Greater Lusaka from open map data, with the city's landmarks —
-the National Assembly, Findeco House, the Freedom Statue, State House and
+the National Assembly, Findeco House, the Pyramid Tower, State House and
 more — modelled by hand from photographs.
 
 **▶ Explore it: [lusaka3d.oapps.dev](https://lusaka3d.oapps.dev)**
@@ -27,6 +27,7 @@ more — modelled by hand from photographs.
 | ![Cabinet Office and the Cenotaph](docs/screenshots/cabinet-office.jpg) **Cabinet Office** — the colonial block, its two eagle-crested slabs and the Cenotaph square | ![State House](docs/screenshots/state-house.jpg) **State House** — the curved portico and its wooded grounds |
 | ![Freedom Statue](docs/screenshots/freedom-statue.jpg) **Freedom Statue** — breaking the chains on Independence Avenue | ![Government Complex](docs/screenshots/government-complex.jpg) **Government Complex** — the finned slab behind the Freedom Statue |
 | ![Cathedral of the Holy Cross](docs/screenshots/cathedral-of-the-holy-cross.jpg) **Cathedral of the Holy Cross** — the prow tower and folded-plate nave | ![Bank of Zambia](docs/screenshots/bank-of-zambia.jpg) **Bank of Zambia** — the head office and its skybridges |
+| ![Pyramid Tower](docs/screenshots/pyramid-tower.jpg) **Pyramid Tower** — "Burj Kalingalinga", Zambia's new tallest building on Thabo Mbeki Road | ![Gabon Disaster Memorial](docs/screenshots/gabon-disaster-memorial.jpg) **Gabon Disaster Memorial** — for the 1993 national team, beside Heroes Stadium |
 | ![Lusaka National Museum](docs/screenshots/national-museum.jpg) **Lusaka National Museum** — with the steel figure out front | ![National Assembly at dusk](docs/screenshots/national-assembly-dusk.jpg) **At dusk** — lamps and windows come on |
 
 Each landmark has reference notes in [`docs/landmarks/`](docs/landmarks)

@@ -38,6 +38,7 @@ HAND_MODELLED = {
 HAND_MODELLED_WAYS = {
     283005457,  # Bank of Zambia south block (skybridge partner)
     625074826,  # retail box inside the Society Business Park podium
+    1061490855, 1061490873, 1062089194,  # Pyramid Tower podium (Microsoft footprints)
 }
 
 ROADS = {  # highway tag -> (kind, width m); kinds 0-1 are "main"
