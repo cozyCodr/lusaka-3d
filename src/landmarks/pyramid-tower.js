@@ -1,9 +1,9 @@
 // Pyramid Tower ("Burj Kalingalinga", the Continental Pyramid Hotel), Thabo
-// Mbeki Road. A square tower whose four glass faces are folded: each face
-// rises from its corners to a raised zigzag strip of pale silver glass, so
-// the facets catch the light differently (blue by day, gold at sunset). The
-// roof is flat to the edge; set well back inside it, a low windowed plinth
-// carries a grey pyramid.
+// Mbeki Road. A square tower with sharp corners whose four glass faces are
+// folded inward: each face falls back from its corners to a recessed zigzag
+// strip of pale silver glass, so the facets catch the light differently
+// (blue by day, gold at sunset). The pyramid sits straight on the flat roof,
+// set back inside the roof edge; there is no storey between them.
 // It stands at the north-west corner of a two-storey glass podium whose roof
 // carries white terraces, a pale-blue glass roof, a round pool and a raised
 // block against the tower. Not in OSM; placed from Esri imagery, shaped from
@@ -16,13 +16,15 @@ import { canvasTex, siteFrame } from './lib.js';
 // Tower centre; local +z faces bearing 190 (SSW), local +x runs ~ESE.
 export const PYRAMID = { x: 1452, z: 785, bearing: 190 };
 const W = 32; // shaft width at the corners
-const FOLD = 3.2; // how far the zigzag strip stands out from the corners
-const BAND = 0.11; // half-width of the silver strip, as a fraction of W
-const SHAFT_TOP = 100, CROWN_H = 2.5, PEAK_H = 22;
-const INSET = 0.82; // the pyramid's base, as a fraction of the shaft width: it sits inside the roof edge
+const FOLD = -2.2; // how far the zigzag strip is set back from the corners (negative = recessed)
+const BAND = 0.12; // half-width of the silver strip, as a fraction of W
+const SHAFT_TOP = 100, ROOF_T = 0.4, PEAK_H = 19;
+const INSET = 0.78; // the pyramid's base, as a fraction of the shaft width: it sits inside the roof edge
 const FLOORS = 27;
 // Zigzag centreline across a face: [height fraction, across fraction].
-const ZIGZAG = [[0, 0.7], [0.42, 0.28], [0.72, 0.62], [1, 0.46]];
+// From the founder's photos: centred at the top, a kink left at two thirds
+// height, back right at 40%, and down to the base right of centre.
+const ZIGZAG = [[0, 0.6], [0.4, 0.37], [0.66, 0.64], [1, 0.5]];
 // Podium in the tower frame, from imagery (world corners converted).
 const PODIUM = [[-24, -18], [103, -18], [85, 66], [-25, 38]];
 const PODIUM_H = 9;
@@ -71,9 +73,9 @@ function foldedFace(flip) {
     const y0 = v0 * H, y1 = v1 * H, c0 = across(f0), c1 = across(f1), b = BAND * W;
     const L0 = pt(-W / 2, y0, 0), L1 = pt(-W / 2, y1, 0), R0 = pt(W / 2, y0, 0), R1 = pt(W / 2, y1, 0);
     const bl0 = pt(c0 - b, y0, FOLD), bl1 = pt(c1 - b, y1, FOLD), br0 = pt(c0 + b, y0, FOLD), br1 = pt(c1 + b, y1, FOLD);
-    quad(glass, uvG, L0, bl0, bl1, L1); // left panel slopes out to the strip
+    quad(glass, uvG, L0, bl0, bl1, L1); // left panel slopes back from the corner to the strip
     quad(band, uvB, bl0, br0, br1, bl1); // the strip
-    quad(glass, uvG, br0, R0, R1, br1); // right panel slopes back to the corner
+    quad(glass, uvG, br0, R0, R1, br1); // right panel slopes out to the corner
   }
   const make = (pos, uvs) => {
     const g = new THREE.BufferGeometry();
@@ -94,6 +96,15 @@ function shaft(mats) {
     face.rotation.y = (k * Math.PI) / 2;
     face.position.set(Math.sin(face.rotation.y) * (W / 2), 0, Math.cos(face.rotation.y) * (W / 2));
     g.add(face);
+  }
+  // Silver trim on the four sharp corners.
+  const trim = new THREE.BoxGeometry(0.35, SHAFT_TOP, 0.35);
+  trim.translate(0, SHAFT_TOP / 2, 0);
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    const m = new THREE.Mesh(trim, mats.band);
+    m.position.set((x * W) / 2, 0, (z * W) / 2);
+    m.rotation.y = Math.PI / 4;
+    g.add(m);
   }
   return g;
 }
@@ -187,33 +198,25 @@ export function buildPyramidTower() {
     }
   }
   const roofShape = new THREE.Shape(top.map(([x, z]) => new THREE.Vector2(x, -z)));
-  const roofSlab = new THREE.Mesh(new THREE.ExtrudeGeometry(roofShape, { depth: 0.8, bevelEnabled: false }), grey);
+  const roofSlab = new THREE.Mesh(new THREE.ExtrudeGeometry(roofShape, { depth: ROOF_T, bevelEnabled: false }), grey);
   roofSlab.geometry.rotateX(-Math.PI / 2);
   put(roofSlab, 'high', SHAFT_TOP);
 
-  // Inset plinth with a ring of windows, then the pyramid on the same base.
+  // The pyramid, straight on the roof and set back inside its edge.
   const base = W * INSET;
-  const ringTex = canvasTex(256, 32, (g, w, h) => {
-    g.fillStyle = '#c3c8ce';
-    g.fillRect(0, 0, w, h);
-    g.fillStyle = '#2f5aa3';
-    for (let x = 4; x < w; x += 16) g.fillRect(x, 6, 10, h - 12);
-  });
-  const ring = new THREE.MeshStandardMaterial({ map: ringTex, roughness: 0.4, emissive: 0xffd9a0, emissiveIntensity: 0 });
-  put(new THREE.Mesh(new THREE.BoxGeometry(base, CROWN_H, base), [ring, ring, grey, grey, ring, ring]), 'high', SHAFT_TOP + 0.8 + CROWN_H / 2);
   const pyramid = new THREE.Mesh(
     new THREE.ConeGeometry((base * Math.SQRT2) / 2, PEAK_H, 4),
-    new THREE.MeshStandardMaterial({ color: 0xb0b4ba, roughness: 0.4, metalness: 0.6, flatShading: true }),
+    new THREE.MeshStandardMaterial({ color: 0xddd3b8, roughness: 0.4, metalness: 0.2, flatShading: true }),
   );
   pyramid.geometry.rotateY(Math.PI / 4);
-  put(pyramid, 'high', SHAFT_TOP + 0.8 + CROWN_H + PEAK_H / 2);
+  put(pyramid, 'high', SHAFT_TOP + ROOF_T + PEAK_H / 2);
 
   f.updateMatrixWorld(true);
   const toWorld = (pts) => pts.flatMap(([x, z]) => {
     const p = f.localToWorld(new THREE.Vector3(x, 0, z));
     return [p.x, p.z];
   });
-  const half = W / 2 + FOLD;
+  const half = W / 2 + Math.max(FOLD, 0);
 
   return {
     group: f,
@@ -221,7 +224,6 @@ export function buildPyramidTower() {
     footprints: [toWorld(PODIUM), toWorld(rect(-half, half, -half, half))],
     setNight(n) {
       mats.glass.emissiveIntensity = n * 1.1;
-      ring.emissiveIntensity = n * 0.8;
       podiumWalls.emissiveIntensity = n * 0.6;
     },
   };

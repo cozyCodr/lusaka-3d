@@ -11,7 +11,9 @@ it Zambia's tallest building. Model: `src/landmarks/pyramid-tower.js`.
   tower as built (from the street, the playing field to the south, close up
   at the podium, and an aerial). Two are the architect's renders (gold glass,
   a pyramid-roofed pavilion on the podium); the as-built tower differs, so
-  the renders were not used for the model.
+  the renders were not used for the model. A further five photos (street,
+  field and construction views) set v3: sharp corners, the zigzag's kinks,
+  and the pyramid straight on the roof with no storey under it.
 - **Web** — reports of the Pyramid Hotel along Thabo Mbeki Road with 27 floors
   (e.g. Africa View Facts, 2024; local social media, 2024).
 - **Esri World Imagery, zoom 16–18** — the tower's square pyramid roof and
@@ -28,8 +30,8 @@ it Zambia's tallest building. Model: `src/landmarks/pyramid-tower.js`.
 |---|---|---|
 | Position | tower centre (1452, 785) in world metres, faces at 10° / 100° | medium (imagery; roof displaced by height) |
 | Shaft | 32 m square, 100 m tall | medium: width from the roof on imagery, height from 27 floors and photo proportions |
-| Facade | folded: each face rises from its corners to a raised zigzag strip of pale silver glass (3.2 m proud), blue glass on a 27-floor grid; mirrored on alternate faces | high form, medium fold depth |
-| Crown | flat roof to the edge of the folded outline; set back inside it, a 2.5 m plinth with a ring of windows and a grey pyramid on a base 82% of the shaft width, 22 m high (top ≈ 125 m) | high form (founder's photo), medium size |
+| Facade | folded inward: each face falls back from its sharp corners to a recessed zigzag strip of pale silver glass (2.2 m in), blue glass on a 27-floor grid; the strip is centred at the top, kinks right at two thirds height and left at 40%, and ends right of centre; mirrored on alternate faces | high form, medium fold depth and direction |
+| Crown | flat roof to the edge of the folded outline; the pale champagne pyramid sits straight on it, set back on a base 78% of the shaft width, 19 m high (top ≈ 119 m) | high form (founder's photos), medium size |
 | Podium | quadrilateral ~130 × 85 m from imagery, 9 m (two storeys): blue glass under a white fascia; roof with white parapet, a raised block against the tower, a pale-blue glass roof (the lilac seen from above) and a round pool | form high, extent medium |
 
 ## Known gaps
