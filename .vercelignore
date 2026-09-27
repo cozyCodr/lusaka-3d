@@ -6,3 +6,5 @@ docs/
 .claude/
 AGENTS.md
 package-lock.json
+.env*
+.vercel/
