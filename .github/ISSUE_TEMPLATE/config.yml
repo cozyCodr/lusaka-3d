@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Commercial licence request
+    url: https://github.com/cozyCodr/lusaka-3d/issues/new?title=Commercial%20licence%20request&labels=licensing
+    about: Ask for permission to use Lusaka 3D commercially.

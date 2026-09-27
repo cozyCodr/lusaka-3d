@@ -1,63 +1,77 @@
 # Lusaka 3D
 
-A browser-based 3D map of Lusaka, built progressively with three.js: a base
-city from open data, procedural detail, and hand-built landmarks.
+**Zambia's capital, rebuilt in 3D in your browser.** Every street and
+building in Greater Lusaka from open map data, with the city's landmarks —
+the National Assembly, Findeco House, the Freedom Statue, State House and
+more — modelled by hand from photographs.
 
-Live: https://lusaka-3d.vercel.app
+**▶ Explore it: [lusaka-3d.vercel.app](https://lusaka-3d.vercel.app)**
 
-## Run
+![Lusaka from the south, the CBD and Cairo Road in view](docs/screenshots/city-overview.jpg)
 
-```bash
-python3 tools/serve.py
-```
-
-Styles are prebuilt with Tailwind into `styles/app.css`. After changing any
-class names in `index.html` or `src/`, rebuild it:
-
-```bash
-npm install && npm run build:css
-```
-
-## Deploy
-
-A static site with no build step, hosted on Vercel (project `lusaka-3d`,
-scope `cozycodrs-projects`); every push to `main` deploys to production.
-It is served straight from this repository
-(`vercel.json` sets cache headers for the tiles; `.vercelignore` keeps raw
-data, tools and docs out of the deployment).
-
-Open http://localhost:5199 (append `#still` to skip the intro flyover).
-
-## Docs
-
-- [Development planner](docs/DEVELOPMENT_PLANNER.md) — what's next and what's done
-- [Landmarks](docs/LANDMARKS.md) — every well-known place, by tier
+- **The whole city** — 466,000 buildings and 34,000 roads across about
+  37 × 31 km, from Matero to Kabulonga to the airport, streamed in as you move.
+- **Hand-built landmarks** — modelled from reference photos and measured
+  against the map; every part is tagged by how sure we are of it.
+- **Get around your way** — Map, Fly (drone) and Walk (street level, with
+  walls you cannot walk through) modes; double-click anywhere to go there.
+- **Morning to dusk** — a time-of-day slider; windows and lamps light up at night.
+- **Runs anywhere** — plain HTML and JavaScript, no install, no build step.
 
 ## Landmarks
 
-| Landmark | Status | Reference |
-|---|---|---|
-| National Assembly of Zambia | v1: OSM outline, front accurate, sides/rear guessed | [docs/landmarks/national-assembly.md](docs/landmarks/national-assembly.md) |
-| Findeco House | v2: pedestal, finned shaft, bracketed crown from reference photos | [docs/landmarks/findeco-house.md](docs/landmarks/findeco-house.md) |
-| Government Complex, Freedom Statue, National Museum (+ steel figure) | v1: Independence Avenue cluster from reference photos | [docs/landmarks/independence-avenue.md](docs/landmarks/independence-avenue.md) |
-| Cathedral of the Holy Cross | v1: prow tower, folded-plate nave, glass-grid walls from reference photos | [docs/landmarks/cathedral-holy-cross.md](docs/landmarks/cathedral-holy-cross.md) |
-| National Heroes Stadium (+ Gabon Disaster Memorial) | v1: petal roof, louvred bowl, glass and orange fronts from reference photos | [docs/landmarks/heroes-stadium.md](docs/landmarks/heroes-stadium.md) |
-| Society Business Park (mall + Hilton Garden Inn tower) | v3: one building; tower on the mall podium, spine-arc-sail crown | [docs/landmarks/hilton-garden-inn.md](docs/landmarks/hilton-garden-inn.md) |
-| Cabinet Office + Cenotaph square | v1: colonial block, eagle slabs, colonnades, Cenotaph from reference photos | [docs/landmarks/cabinet-office.md](docs/landmarks/cabinet-office.md) |
-| State House (+ grounds) | v1: brick block, curved portico, garden loggia, gates, lawn and woodland | [docs/landmarks/state-house.md](docs/landmarks/state-house.md) |
-| Bank of Zambia | v1: finned head office, lettered lower wing, skybridges to the banded south block | [docs/landmarks/bank-of-zambia.md](docs/landmarks/bank-of-zambia.md) |
+| | |
+|---|---|
+| ![National Assembly of Zambia](docs/screenshots/national-assembly.jpg) **National Assembly of Zambia** — the copper-finned chamber on its hill, with the approach walkway | ![Findeco House](docs/screenshots/findeco-house.jpg) **Findeco House** — Zambia's tallest building, 90 m on Cairo Road |
+| ![Society Business Park and the Hilton Garden Inn](docs/screenshots/hilton-garden-inn.jpg) **Society Business Park** — the mall with the Hilton Garden Inn tower on its roof | ![National Heroes Stadium](docs/screenshots/national-heroes-stadium.jpg) **National Heroes Stadium** — the petal roof, with the Gabon Disaster Memorial nearby |
+| ![Cabinet Office and the Cenotaph](docs/screenshots/cabinet-office.jpg) **Cabinet Office** — the colonial block, its two eagle-crested slabs and the Cenotaph square | ![State House](docs/screenshots/state-house.jpg) **State House** — the curved portico and its wooded grounds |
+| ![Freedom Statue](docs/screenshots/freedom-statue.jpg) **Freedom Statue** — breaking the chains on Independence Avenue | ![Government Complex](docs/screenshots/government-complex.jpg) **Government Complex** — the finned slab behind the Freedom Statue |
+| ![Cathedral of the Holy Cross](docs/screenshots/cathedral-of-the-holy-cross.jpg) **Cathedral of the Holy Cross** — the prow tower and folded-plate nave | ![Bank of Zambia](docs/screenshots/bank-of-zambia.jpg) **Bank of Zambia** — the head office and its skybridges |
+| ![Lusaka National Museum](docs/screenshots/national-museum.jpg) **Lusaka National Museum** — with the steel figure out front | ![National Assembly at dusk](docs/screenshots/national-assembly-dusk.jpg) **At dusk** — lamps and windows come on |
 
-Open any landmark directly with its slug, e.g. `#freedom-statue`, `#findeco-house`.
+Each landmark has reference notes in [`docs/landmarks/`](docs/landmarks)
+saying what it was built from and which parts are measured, estimated or
+guessed. Open any of them directly by name, e.g.
+[`#findeco-house`](https://lusaka-3d.vercel.app/#findeco-house) or
+[`#state-house`](https://lusaka-3d.vercel.app/#state-house).
 
-## City data
+**What's next:** Embassy Park, the conference centres, Manda Hill and more —
+see the [landmark list](docs/LANDMARKS.md) and the
+[development planner](docs/DEVELOPMENT_PLANNER.md).
 
-All of Greater Lusaka (about 37 × 31 km, including the airport) is cut from
-the OpenStreetMap Zambia extract into 1,330 tiles of 1 km: 466k buildings,
-34k roads and runways. Tiles near the camera load in full; further out a
-light version (large buildings, main roads); beyond that, haze. Geometry is
-built in web workers.
+## Help build it
 
-Rebuild the tiles from a fresh extract (Geofabrik, ~250 MB):
+Know Lusaka? The single most useful thing is **photos** of a landmark from
+several sides — they turn guesses into accurate models. Code, fixes and new
+landmarks are welcome too. Start with **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+
+## Run it locally
+
+```bash
+git clone https://github.com/cozyCodr/lusaka-3d.git
+cd lusaka-3d
+python3 tools/serve.py
+```
+
+Open http://localhost:5199 (add `#still` to skip the intro flyover). Press
+`?` in the app for the controls.
+
+Styles are prebuilt with Tailwind into `styles/app.css`; after changing class
+names in `index.html` or `src/`, run `npm install && npm run build:css`.
+
+## How it works
+
+1. **The city** comes from the OpenStreetMap Zambia extract, cut by
+   [`tools/osm_tiles.py`](tools/osm_tiles.py) into 1,330 tiles of 1 km at two
+   levels of detail. Tiles near the camera load in full, further out a light
+   version, and web workers build the geometry so the page never stalls.
+2. **Landmarks** are three.js models in [`src/landmarks/`](src/landmarks),
+   placed on their OpenStreetMap outlines and built from reference photos.
+   The tiler skips their OSM footprints so nothing is drawn twice.
+3. **Confidence** — turn on *Layers → Confidence view* to see which parts are
+   measured or photographed (green), estimated (amber) or guessed (red).
+
+Rebuild the tiles from a fresh extract (~250 MB download):
 
 ```bash
 curl -L -o data/raw/zambia-latest.osm.pbf https://download.geofabrik.de/africa/zambia-latest.osm.pbf
@@ -65,19 +79,17 @@ pip install osmium
 python3 tools/osm_tiles.py data/raw/zambia-latest.osm.pbf data/tiles
 ```
 
-## Approach
+The site is static and deployed on Vercel; every push to `main` goes live.
 
-1. **Base sketch** — OpenStreetMap footprints and roads (© OpenStreetMap
-   contributors, ODbL), streamed in 1 km tiles; elevation from Copernicus DEM (planned).
-2. **Procedural detail** — building types generated from OSM tags.
-3. **Hero landmarks** — modelled from reference photos, every part tagged
-   high / medium / low confidence (toggle "Confidence view" in the app).
+## Licence
 
-## Licence and attribution
-
-The city tiles in `data/tiles/` are derived from OpenStreetMap and remain
-under the [Open Database Licence (ODbL)](https://opendatacommons.org/licenses/odbl/):
-© OpenStreetMap contributors. The rendered city is a produced work that must
-credit OpenStreetMap (shown in the app's corner), and the tiles themselves,
-being served publicly, stay available under the ODbL. The hand-built
-landmarks, textures and code are not OSM data.
+- **Code, landmark models and tools:** [PolyForm Noncommercial 1.0.0](LICENSE.md)
+  — free to use, change and share for any non-commercial purpose. For
+  commercial use, [open an issue](https://github.com/cozyCodr/lusaka-3d/issues)
+  to ask for permission. (This makes the project *source-available*, not
+  OSI "open source".)
+- **City data** in `data/tiles/`: derived from OpenStreetMap,
+  © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright),
+  under the [ODbL](https://opendatacommons.org/licenses/odbl/) — see
+  [`data/tiles/README.md`](data/tiles/README.md). Screenshots of the city are
+  produced works of that data and carry the same credit.

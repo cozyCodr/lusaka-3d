@@ -8,3 +8,5 @@ AGENTS.md
 package-lock.json
 .env*
 .vercel/
+.github/
+CONTRIBUTING.md

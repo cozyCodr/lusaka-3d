@@ -1,46 +1,72 @@
-# Lusaka 3D — agent instructions
+# Lusaka 3D — instructions for coding agents
 
-A progressive 3D map of Lusaka in three.js: an OpenStreetMap base city,
-procedural detail, and hand-built landmarks with honest confidence tags.
+A progressive 3D map of Lusaka in three.js: an OpenStreetMap base city
+streamed in tiles, and hand-built landmarks with honest confidence tags.
+These instructions apply to AI coding agents and human contributors alike;
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the contribution process and
+licensing.
 
-## Every run
+## Every task
 
 1. **Start** by reading the current priority in `docs/DEVELOPMENT_PLANNER.md`.
-   Work priorities in order.
-2. **End** by ticking finished items `[x]` in the planner in the same session,
-   only once they work in the app (page loads, no console errors, checked in a
-   browser). A priority moves to **Completed** with a dated one-line summary
-   only when every box, including Verify, is ticked.
+   Work priorities in order unless the maintainer or the issue says otherwise.
+2. **Verify in a browser** before calling anything done: the page loads, no
+   console errors, and the change looks right from the relevant views
+   (`#<landmark-slug>` opens a landmark's view; `#still` skips the intro).
+   Tests and linters alone are not verification for visual work.
+3. **End** by ticking finished items `[x]` in the planner in the same change.
+   A priority moves to **Completed** with a dated one-line summary only when
+   every box, including Verify, is ticked.
 
 ## Layout
 
-- `src/` — ES modules, no build step (three.js from jsDelivr via importmap).
-  `main.js` wires renderer, sky, camera and UI; `city/tiles.js` streams the
-  OSM city in 1 km tiles, built in `city/worker.js`; `terrain.js` is the
-  worker-safe ground height;
-  `building.js` + `site.js` are the Parliament; `landmarks/<slug>.js` are the
-  other hand-built landmarks, registered in `landmarks/index.js` (menu entry,
-  camera view, night lighting) with shared helpers in `landmarks/lib.js`;
-  `geo.js` owns the world frame.
-- `data/tiles/` — generated city tiles (committed; rebuild with
-  `tools/osm_tiles.py`); `data/raw/` holds the OSM extract and other raw
-  exports (ignored).
-- `tools/` — the tiler (`osm_tiles.py`, which also skips hand-built
-  buildings), the landmark catalogue builder, and the no-cache dev server.
+- `index.html` — page shell and the top-right menu; styles come from the
+  prebuilt `styles/app.css` (Tailwind, source `src/styles.css`).
+- `src/` — ES modules, no build step (three.js, zustand and earcut from
+  jsDelivr; import maps do not apply inside workers, so the worker imports
+  full URLs).
+  - `main.js` — renderer, sky, lighting, camera moves, menu wiring, and the
+    `window.lusaka` debug handle (including `capture` for screenshots).
+  - `city/tiles.js` + `city/worker.js` — stream the OSM city in 1 km tiles
+    (full near the focus, far beyond; radii grow with altitude).
+  - `controls/rig.js` — Map / Fly / Walk camera modes; the mode lives in the
+    zustand store in `store.js`, shared with the menu in `ui.js`.
+  - `terrain.js` — worker-safe ground height; `geo.js` re-exports it with
+    three.js-side helpers. `collide.js` — footprint index for Walk mode.
+  - `building.js` + `site.js` — the National Assembly and its hill.
+  - `landmarks/<slug>.js` — the other hand-built landmarks, registered in
+    `landmarks/index.js` (menu entry, camera view, night lighting, walk
+    footprints), with shared helpers in `landmarks/lib.js`.
+- `data/tiles/` — generated city tiles (ODbL; rebuild with `tools/osm_tiles.py`).
+  `data/landmarks.json` — the catalogue of named places. `data/raw/` holds
+  the OSM extract (git-ignored, never deployed).
+- `tools/` — the tiler (which also skips hand-built buildings), the landmark
+  catalogue builder, and the dev server (`serve.py`; `--capture` for screenshots).
 - `docs/LANDMARKS.md` — what to build and at what tier;
-  `docs/landmarks/<slug>.md` — reference notes per hand-built landmark.
+  `docs/landmarks/<slug>.md` — reference notes per hand-built landmark;
+  `docs/screenshots/` — README images.
 
 ## Rules
 
-- World frame: metres from the Parliament origin (-15.3922718, 28.3090371),
-  x = east, z = south, y = up. Never introduce a second frame without
-  documenting it in `geo.js`.
-- Every hand-built part gets a confidence tag (`high` / `med` / `low`). Do not
-  present a guess as measured.
-- Prefer OSM outlines over estimates; record sources and licences in the
-  landmark's notes. Credit OpenStreetMap in the UI.
-- No photographs are embedded in the model; textures are procedural.
-- Run with `python3 tools/serve.py` (port 5199, caching disabled). After
-  changing Tailwind classes, run `npm run build:css` and commit `styles/app.css`.
-- Keep the OpenStreetMap credit visible: `data/tiles/` is ODbL-derived data.
-- Commits describe the change and nothing else. No AI attribution.
+- **World frame:** metres from the Parliament origin (-15.3922718,
+  28.3090371), x = east, z = south, y = up; the city ground is at
+  `CITY_Y` = -4.5. Never introduce a second frame without documenting it in
+  `terrain.js`. Landmark-local frames come from `siteFrame(x, z, bearing)`.
+- **Honesty:** every hand-built part gets a confidence tag (`high` / `med` /
+  `low`). Never present a guess as measured; record sources, licences and
+  gaps in the landmark's notes.
+- **Placement:** prefer OSM outlines over estimates. Check that nothing you
+  add (lawns, plazas, walkways) overlaps an OSM road or neighbouring building.
+- **No photographs** are embedded in models or committed; textures are drawn
+  procedurally. Photos are reference only.
+- **Public exterior only:** model what can be seen from public places. No
+  interiors or security details of government or other sensitive sites.
+- **Attribution:** keep the "© OpenStreetMap contributors" credit visible;
+  `data/tiles/` is ODbL-derived data.
+- **Styling:** Tailwind utility classes; shared class strings live in
+  `src/ui.js`. After changing class names, run `npm run build:css` and commit
+  `styles/app.css`.
+- **Performance:** keep 60 fps while tiles stream; build heavy geometry in
+  the worker or with instancing, and dispose of what you unload.
+- **Commits** describe the change and nothing else — no AI or tool
+  attribution, no co-author trailers.

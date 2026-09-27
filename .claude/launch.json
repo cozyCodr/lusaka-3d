@@ -4,8 +4,21 @@
     {
       "name": "lusaka-3d",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["tools/serve.py", "5199"],
+      "runtimeArgs": [
+        "tools/serve.py",
+        "5199"
+      ],
       "port": 5199
+    },
+    {
+      "name": "lusaka-3d-capture",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "tools/serve.py",
+        "5201",
+        "--capture"
+      ],
+      "port": 5201
     }
   ]
 }

@@ -301,7 +301,43 @@ addEventListener('resize', () => {
 });
 
 // Debug handle for inspecting views from the console.
-window.lusaka = { camera, controls, rig, store, city };
+window.lusaka = {
+  camera, controls, rig, store, city, landmarks, capture,
+  views: { city: CITY_VIEW, assembly: { position: path.getPointAt(1), target: assemblyLook } },
+};
+
+// Save a still of a view to docs/screenshots/<name>.jpg (needs `tools/serve.py --capture`).
+// view: { position, target } in world metres; time: 0 morning … 1 dusk.
+async function capture(name, view, { time = 0.12, width = 1600, height = 900 } = {}) {
+  endFly();
+  store.getState().setMode('map');
+  slider.value = time * 100;
+  setTime(time);
+  refreshEnvironment();
+  camera.position.copy(view.position);
+  controls.target.copy(view.target);
+  controls.update();
+  const ratio = renderer.getPixelRatio();
+  renderer.setPixelRatio(1);
+  renderer.setSize(width, height, false);
+  composer.setSize(width, height);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  await wait(600);
+  for (let i = 0; i < 90 && city.stats.queued > 0; i++) await wait(250); // let nearby tiles stream in
+  await wait(800);
+  composer.render();
+  const url = renderer.domElement.toDataURL('image/jpeg', 0.88); // same task as the render
+  const blob = await (await fetch(url)).blob();
+  const res = await fetch(`/__capture/${name}.jpg`, { method: 'POST', body: blob });
+  renderer.setPixelRatio(ratio);
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  return res.status;
+}
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop((now) => {
