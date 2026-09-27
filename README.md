@@ -3,6 +3,8 @@
 A browser-based 3D map of Lusaka, built progressively with three.js: a base
 city from open data, procedural detail, and hand-built landmarks.
 
+Live: https://lusaka-3d.vercel.app
+
 ## Run
 
 ```bash
@@ -18,7 +20,9 @@ npm install && npm run build:css
 
 ## Deploy
 
-A static site with no build step, hosted on Vercel from this repository
+A static site with no build step, hosted on Vercel (project `lusaka-3d`,
+scope `cozycodrs-projects`); every push to `main` deploys to production.
+It is served straight from this repository
 (`vercel.json` sets cache headers for the tiles; `.vercelignore` keeps raw
 data, tools and docs out of the deployment).
 
