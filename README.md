@@ -27,6 +27,7 @@ Open http://localhost:5199 (append `#still` to skip the intro flyover).
 | National Heroes Stadium (+ Gabon Disaster Memorial) | v1: petal roof, louvred bowl, glass and orange fronts from reference photos | [docs/landmarks/heroes-stadium.md](docs/landmarks/heroes-stadium.md) |
 | Society Business Park (mall + Hilton Garden Inn tower) | v3: one building; tower on the mall podium, spine-arc-sail crown | [docs/landmarks/hilton-garden-inn.md](docs/landmarks/hilton-garden-inn.md) |
 | Cabinet Office + Cenotaph square | v1: colonial block, eagle slabs, colonnades, Cenotaph from reference photos | [docs/landmarks/cabinet-office.md](docs/landmarks/cabinet-office.md) |
+| State House (+ grounds) | v1: brick block, curved portico, garden loggia, gates, lawn and woodland | [docs/landmarks/state-house.md](docs/landmarks/state-house.md) |
 | Bank of Zambia | v1: finned head office, lettered lower wing, skybridges to the banded south block | [docs/landmarks/bank-of-zambia.md](docs/landmarks/bank-of-zambia.md) |
 
 Open any landmark directly with its slug, e.g. `#freedom-statue`, `#findeco-house`.

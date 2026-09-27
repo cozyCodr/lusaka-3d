@@ -51,7 +51,7 @@ up in the wider export.
 | National Heroes Stadium | venue | 4.64 | ✓ | ✓ | v1 built, with the Gabon Disaster Memorial — [notes](landmarks/heroes-stadium.md) |
 | University of Zambia (UNZA) | education | 2.5 | — | ✓ | Great East Road campus; library block |
 | Kenneth Kaunda International Airport | transport | 17.06 | — | ✓ | 17 km out: separate "island" scene |
-| State House | building | 4.51 | — | ✓ | Satellite massing only: no ground photos sought (security) |
+| State House | building | 4.51 | ✓ | ✓ | v1 built with its grounds, from public exterior photos — [notes](landmarks/state-house.md) |
 
 ## Tier 2 — notable places
 

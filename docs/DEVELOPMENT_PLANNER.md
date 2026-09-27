@@ -98,6 +98,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] Cabinet Office, with the Cenotaph square (v1, from the founder's photos: notes in docs/landmarks/cabinet-office.md)
 - [ ] Embassy Park and the presidential mausoleums
 - [x] Society Business Park: Hilton Garden Inn tower and the shell building (added to Tier 1 by the founder, 2026-09-27; v2 from the founder's photos)
+- [x] State House and its grounds (v1, from the founder's photos: notes in docs/landmarks/state-house.md)
 - [ ] Mulungushi and Kenneth Kaunda International Conference Centres
 - [ ] Manda Hill Mall and East Park Mall
 - [x] National Heroes Stadium, with the Gabon Disaster Memorial (v1, from the founder's photos: notes in docs/landmarks/heroes-stadium.md)
