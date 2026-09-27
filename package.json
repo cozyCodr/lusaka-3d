@@ -1,0 +1,13 @@
+{
+  "name": "lusaka-3d",
+  "private": true,
+  "description": "Progressive 3D map of Lusaka in three.js",
+  "scripts": {
+    "build:css": "tailwindcss -i src/styles.css -o styles/app.css --minify",
+    "watch:css": "tailwindcss -i src/styles.css -o styles/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

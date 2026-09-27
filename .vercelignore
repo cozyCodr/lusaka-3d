@@ -1,0 +1,8 @@
+# Source data, tooling and notes are not part of the site.
+data/raw/
+node_modules/
+tools/
+docs/
+.claude/
+AGENTS.md
+package-lock.json

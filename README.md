@@ -9,6 +9,19 @@ city from open data, procedural detail, and hand-built landmarks.
 python3 tools/serve.py
 ```
 
+Styles are prebuilt with Tailwind into `styles/app.css`. After changing any
+class names in `index.html` or `src/`, rebuild it:
+
+```bash
+npm install && npm run build:css
+```
+
+## Deploy
+
+A static site with no build step, hosted on Vercel from this repository
+(`vercel.json` sets cache headers for the tiles; `.vercelignore` keeps raw
+data, tools and docs out of the deployment).
+
 Open http://localhost:5199 (append `#still` to skip the intro flyover).
 
 ## Docs
@@ -55,3 +68,12 @@ python3 tools/osm_tiles.py data/raw/zambia-latest.osm.pbf data/tiles
 2. **Procedural detail** — building types generated from OSM tags.
 3. **Hero landmarks** — modelled from reference photos, every part tagged
    high / medium / low confidence (toggle "Confidence view" in the app).
+
+## Licence and attribution
+
+The city tiles in `data/tiles/` are derived from OpenStreetMap and remain
+under the [Open Database Licence (ODbL)](https://opendatacommons.org/licenses/odbl/):
+© OpenStreetMap contributors. The rendered city is a produced work that must
+credit OpenStreetMap (shown in the app's corner), and the tiles themselves,
+being served publicly, stay available under the ODbL. The hand-built
+landmarks, textures and code are not OSM data.

@@ -1,0 +1,4 @@
+/* Tailwind entry: build with `npm run build:css` into styles/app.css. */
+@import "tailwindcss";
+@source "../index.html";
+@source "./";

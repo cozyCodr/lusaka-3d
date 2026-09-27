@@ -40,5 +40,7 @@ procedural detail, and hand-built landmarks with honest confidence tags.
 - Prefer OSM outlines over estimates; record sources and licences in the
   landmark's notes. Credit OpenStreetMap in the UI.
 - No photographs are embedded in the model; textures are procedural.
-- Run with `python3 tools/serve.py` (port 5199, caching disabled).
+- Run with `python3 tools/serve.py` (port 5199, caching disabled). After
+  changing Tailwind classes, run `npm run build:css` and commit `styles/app.css`.
+- Keep the OpenStreetMap credit visible: `data/tiles/` is ODbL-derived data.
 - Commits describe the change and nothing else. No AI attribution.
