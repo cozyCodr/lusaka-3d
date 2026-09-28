@@ -126,3 +126,27 @@ export function windowGlow(cols, rows, seed, { litFraction = 0.5, glassTop = 0.1
     }
   });
 }
+
+// Night glow: a warm material whose emissive map lights only the dark,
+// blue-tinted glazing of its texture.
+export function glowing(tex, o = {}) {
+  const src = tex.image, c = document.createElement('canvas');
+  c.width = src.width;
+  c.height = src.height;
+  const g = c.getContext('2d');
+  g.drawImage(src, 0, 0);
+  const img = g.getImageData(0, 0, c.width, c.height), d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const lit = d[i] + d[i + 1] + d[i + 2] < 360 && d[i + 2] > d[i] + 20;
+    d[i] = lit ? 255 : 0;
+    d[i + 1] = lit ? 214 : 0;
+    d[i + 2] = lit ? 150 : 0;
+  }
+  g.putImageData(img, 0, 0);
+  const mask = new THREE.CanvasTexture(c);
+  mask.colorSpace = THREE.SRGBColorSpace;
+  mask.wrapS = tex.wrapS;
+  mask.wrapT = tex.wrapT;
+  mask.repeat.copy(tex.repeat); // set any repeat on tex before calling
+  return new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: mask, emissiveIntensity: 0, ...o });
+}

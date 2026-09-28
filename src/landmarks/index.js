@@ -13,6 +13,7 @@ import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
 import { buildGabonMemorial, buildHeroesStadium } from './heroes-stadium.js';
 import { buildHiltonGardenInn } from './hilton-garden-inn.js';
+import { buildMulungushi } from './mulungushi.js';
 import { buildPyramidTower } from './pyramid-tower.js';
 import { buildStateHouse } from './state-house.js';
 import { buildNationalMuseum } from './national-museum.js';
@@ -86,6 +87,13 @@ const REGISTRY = [
     build: buildEmbassyPark,
     // world frame; from Independence Avenue, looking NE across all three
     view: () => ({ position: new THREE.Vector3(-20, 24, 3318), target: new THREE.Vector3(42, 0, 3252) }),
+  },
+  {
+    name: 'Mulungushi Conference Centre',
+    build: buildMulungushi,
+    // world frame; from the south-east over the plaza: the Kenneth Kaunda Wing,
+    // the Old and East Wings behind it
+    view: () => ({ position: new THREE.Vector3(640, 75, 60), target: new THREE.Vector3(450, 2, -160) }),
   },
   {
     name: 'Pyramid Tower',

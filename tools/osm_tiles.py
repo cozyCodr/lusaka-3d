@@ -35,6 +35,7 @@ HAND_MODELLED = {
     "Cathedral of the Holy Cross", "Bank of Zambia", "National Heroes Stadium",
     "Hilton Garden Inn Lusaka Society Business Park", "Cabinet Office", "State House",
     "Michael Sata's Mausoleum", "Levy Mwanawasa's Mausoleum", "Frederick Chiluba's Mausoleum",
+    "Mulungushi International Conference Centre", "Kenneth Kaunda International Conference Centre",
 }
 HAND_MODELLED_WAYS = {
     283005457,  # Bank of Zambia south block (skybridge partner)

@@ -41,8 +41,8 @@ place in the catalogue is inside it; the "In current map" column is historical.
 | Lusaka City Council Civic Centre | government | 3.29 | — |  | Civic centre clock tower |
 | The Pamodzi Hotel | hotel | 2.9 | — | ✓ |  |
 | Intercontinental Hotel | hotel | 2.91 | — |  |  |
-| Mulungushi International Conference Centre | venue | 0.59 | ✓ |  | Inside the current map |
-| Kenneth Kaunda International Conference Centre | venue | 0.42 | ✓ |  | Inside the current map; newest civic landmark |
+| Mulungushi International Conference Centre | venue | 0.59 | ✓ |  | v1 built: Old Wing, East Wing and Kenneth Kaunda Wing — [notes](landmarks/mulungushi.md) |
+| Kenneth Kaunda International Conference Centre | venue | 0.42 | ✓ |  | v1 built as the Kenneth Kaunda Wing of Mulungushi — [notes](landmarks/mulungushi.md) |
 | Manda Hill Mall | mall | 0.62 | ✓ |  | Inside the current map |
 | East Park Mall | mall | 1.39 | ✓ |  | Inside the current map |
 | Levy Junction Shopping Mall | mall | 3.44 | — |  |  |
