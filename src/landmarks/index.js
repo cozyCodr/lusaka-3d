@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { buildBankOfZambia } from './bank-of-zambia.js';
 import { buildCabinetOffice } from './cabinet-office.js';
 import { buildCathedral } from './cathedral.js';
+import { buildEmbassyPark } from './embassy-park.js';
 import { buildFindeco } from './findeco.js';
 import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
@@ -79,6 +80,12 @@ const REGISTRY = [
     name: 'State House',
     build: buildStateHouse,
     view: (lm) => local(lm.group, [1935, 34, 4165], [1985, 10, 4060]),
+  },
+  {
+    name: 'Embassy Park',
+    build: buildEmbassyPark,
+    // world frame; from Independence Avenue, looking NE across all three
+    view: () => ({ position: new THREE.Vector3(-20, 24, 3318), target: new THREE.Vector3(42, 0, 3252) }),
   },
   {
     name: 'Pyramid Tower',

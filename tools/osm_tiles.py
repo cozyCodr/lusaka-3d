@@ -34,6 +34,7 @@ HAND_MODELLED = {
     "National Assembly", "Findeco House", "Lusaka National Museum", "Government Complex",
     "Cathedral of the Holy Cross", "Bank of Zambia", "National Heroes Stadium",
     "Hilton Garden Inn Lusaka Society Business Park", "Cabinet Office", "State House",
+    "Michael Sata's Mausoleum", "Levy Mwanawasa's Mausoleum", "Frederick Chiluba's Mausoleum",
 }
 HAND_MODELLED_WAYS = {
     283005457,  # Bank of Zambia south block (skybridge partner)
@@ -96,7 +97,6 @@ def height(tags, pts, rnd):
 class Collector(osmium.SimpleHandler):
     def __init__(self):
         super().__init__()
-        self.rnd = random.Random(42)
         self.buildings, self.roads, self.areas = [], [], []
 
     def area(self, a):
@@ -117,7 +117,8 @@ class Collector(osmium.SimpleHandler):
                 return
             if ring_area(pts) < 6:
                 return
-            h = height(tagd, pts, self.rnd)
+            # seeded per building, so skipping one never shifts the others' heights
+            h = height(tagd, pts, random.Random(a.id))
             self.buildings.append((BTYPES.get(tagd.get("building"), 8), h, pts))
             return
         v = tagd.get("aeroway") or tagd.get("leisure") or tagd.get("landuse") or tagd.get("natural") or tagd.get("amenity")
