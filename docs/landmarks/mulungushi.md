@@ -12,7 +12,9 @@ Model: `src/landmarks/mulungushi.js`.
   Kaunda Wing: street and plaza views, drone shots from the east and south,
   the entrance with its lettering, corner close-ups of the fins and the
   terracotta cladding, and the architect's renders (used only to confirm the
-  plan).
+  plan). A second set (2026-09-28): the terracotta ends and back with
+  staggered windows, the colonnade under the canopy, the end columns, the
+  African Union statue, the flagpole avenue, urns, lights and night views.
 - **Web photos of the older wings** (reference only): the MICC's own
   TripAdvisor photos ("our main building", "our new wing building"), the
   Industrial Development Corporation's MICC page, Lusaka Times (2009), and
@@ -36,11 +38,13 @@ Model: `src/landmarks/mulungushi.js`.
 | Old Wing: form | recessed glazed ground floor 3.8 m (set back 1.6 m); upper storey of concrete piers and grilles 3.4 m; rust-brown precast fascia 2.6 m deep with a notched top, 1.2 m proud; raised hall (~26 × 45 m, from the aerial) 4.2 m higher with its own fascia | high form (photos), medium heights |
 | East Wing | OSM wedge, 12.5 m, silver aluminium panels; green-blue glass curtain wall on the face towards the Old Wing; dark octagonal hall roof, 40 m across | high form, medium height |
 | KK Wing: plan | traced from the aerial: a curved east front ~200 m long, north and south wings, a ~58 m square central block | high |
-| KK Wing: form | 19.5 m to the white roof frame (2.6 m deep, 3.5 m overhang, ~12 m wide); white fins 2.4 m apart along the front and both ends, 1.5 m deep, over sky-blue glass; grid roofs over the wings; terracotta central block to 25 m with deep punched windows; red plinth walls 2.8 m, 9 m in front, open at the entrance; entrance canopy | high form (photos), medium heights |
+| KK Wing: form | 19.5 m to the white roof frame (2.6 m deep, 3.5 m overhang, ~12 m wide); curved front of white fins 2.4 m apart, 1.6 m deep, over sky-blue glass, with a white band across them at 7 m; ends and back in terracotta panels with deep windows staggered floor to floor over a glazed ground floor, slender white columns under the frame at both ends; terracotta central block to 25 m | high form (photos), medium heights |
+| KK Wing: front | granite podium 1.8 m high and 9 m deep with red walls; six broad steps at the entrance; canopy with "KENNETH KAUNDA WING" on round white columns | high form, medium sizes |
+| Yard | paved plaza with a round basin (16 m); four lawn panels; the African Union statue (Africa slab and three figures on a stepped plinth) at the north edge of the plaza facing east; 24 steel flagpoles in two rows along the walkway north of it; grey urns along the podium; solar street lights; palm avenues along the east road and by the north car park | layout medium (aerial), statue low (proportions from photos) |
 
 ## Known gaps
 
 - The Kenneth Kaunda Wing's west side (terracotta with punched windows here) and the rear courtyards are simplified.
 - The fins are straight segments following the traced front; the real front is a smooth curve.
-- The plaza, fountains, car parks, the African Union statue and the landscaping are not modelled.
+- The fountain jets on the granite wall, the flags themselves, the car parks and the smaller planting are not modelled.
 - The East Wing's lower strip along its west side is not separated from the main volume.

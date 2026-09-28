@@ -15,8 +15,9 @@
 // Sources: docs/landmarks/mulungushi.md.
 import * as THREE from 'three';
 import { CITY_Y } from '../geo.js';
-import { tag } from '../util.js';
-import { canvasTex, extrudeFootprint, glowing } from './lib.js';
+import { palmFactory } from '../site.js';
+import { rng, tag } from '../util.js';
+import { canvasTex, extrudeFootprint, glowing, limb } from './lib.js';
 
 // OSM relation 14208530, world metres.
 const OLD = [[413.7, -350.9], [415.0, -347.0], [435.3, -282.2], [460.7, -289.1], [464.8, -276.9], [465.6, -274.2],
@@ -35,7 +36,8 @@ const KK = [[434.8, -198.9], [438.2, -172.4], [444.0, -143.6], [449.8, -114.8], 
   [483.7, -16.9], [400.8, 0.4], [386.4, -45.7], [382.0, -60.0], [373.4, -116.2], [351.3, -168.9]];
 const KK_FRONT = [0, 6]; // indices of the curved front, inclusive
 const KK_CENTRE = [[373.4, -116.2], [430.2, -130.6], [437.7, -73.0], [382.0, -60.0]];
-const KK_H = 19.5, KK_FRAME = 2.6, KK_CENTRE_H = 25;
+const KK_H = 19.5, KK_FRAME = 2.6, KK_CENTRE_H = 25, KK_GROUND = 4.5;
+const PODIUM_W = 9, PODIUM_H = 1.8; // granite podium along the front, red walls
 
 const GROUND = 3.8, UPPER = 3.4, FASCIA = 2.6, HALL_H = 4.2, EAST_H = 12.5;
 
@@ -140,6 +142,34 @@ const terracotta = () => wallTex(128, 128, 4, 4, (g, w, h) => {
   g.fillStyle = '#1f2833';
   g.fillRect(44, 38, 40, 56);
 });
+// KK Wing terracotta: panels with deep windows staggered floor to floor
+// (one tile = 8 m x 10 m, two floors), bottom-up like the other wall textures.
+const staggered = () => wallTex(256, 320, 8, 10, (g, w, h) => {
+  g.fillStyle = '#8f4c3c';
+  g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#7a3f31';
+  g.lineWidth = 2;
+  for (let y = 0; y < h; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  for (let f = 0; f < 2; f++) {
+    for (const x of f ? [40, 168] : [104, 232]) {
+      const y = 40 + f * 160;
+      g.fillStyle = '#5c2e24';
+      g.fillRect(x - 22, y - 6, 44, 104); // reveal
+      g.fillStyle = '#2b4f73';
+      g.fillRect(x - 12, y, 24, 90);
+    }
+  }
+});
+// KK Wing ground floor: storey-high glazing with white mullions.
+const groundBand = () => wallTex(128, 128, 2.4, KK_GROUND, (g, w, h) => {
+  g.fillStyle = '#35597f';
+  g.fillRect(0, 0, w, h);
+  g.fillStyle = '#eef0f0';
+  g.fillRect(0, 0, 6, h);
+  g.fillRect(0, 0, w, 6);
+  g.fillRect(0, h - 10, w, 10);
+  g.fillRect(0, h * 0.62, w, 4);
+});
 const pergola = () => {
   const t = canvasTex(128, 128, (g, w, h) => {
     g.fillStyle = '#6f7275';
@@ -159,6 +189,184 @@ function ring(outer, inner, y0, y1, mats) {
   const m = extrudeFootprint(outer, [inner], y1 - y0, mats);
   m.position.y += y0;
   return m;
+}
+
+// ---------- the yard in front of the Kenneth Kaunda Wing ----------
+// From the aerial and the founder's photos: a paved plaza with a round basin,
+// lawn panels, the African Union statue, a double row of steel flagpoles,
+// big grey urns, solar street lights and two avenues of palms.
+const PLAZA_EAST = [[528, -24], [520, -90], [509, -150], [500, -212], [440, -214]];
+const LAWNS = [
+  [[449, -200], [468, -202], [461, -154]],
+  [[476, -203], [497, -206], [500, -156], [472, -152]],
+  [[478, -96], [495, -96], [492, -62], [481, -70]],
+  [[497, -92], [512, -90], [520, -36], [499, -41]],
+];
+const BASIN = { x: 481, z: -115.5, r: 8 };
+const STATUE = { x: 486, z: -160, face: Math.PI / 2 }; // faces east, over the plaza
+const FLAGS = [[466, -151], [472, -201]]; // walkway between the north lawns
+const PALM_ROWS = [[[506, -184], [538, -48], 9], [[482, -238], [498, -155], 10]];
+
+function flatSlab(pts, y, thick, mat) {
+  const m = extrudeFootprint(pts, [], thick, [mat, mat]);
+  m.position.y += y;
+  return m;
+}
+
+function buildYard(podiumEdge) {
+  const g = new THREE.Group();
+  const put = (m, conf) => g.add(tag(m, conf, { cast: m.userData.cast ?? true }));
+  const footprints = [];
+  const paveTex = canvasTex(64, 64, (c, w, h) => {
+    c.fillStyle = '#bdb8ae';
+    c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#a8a39a';
+    c.lineWidth = 2;
+    c.strokeRect(1, 1, w - 2, h - 2);
+  });
+  paveTex.repeat.set(1 / 3, 1 / 3);
+  const pave = new THREE.MeshStandardMaterial({ map: paveTex, roughness: 0.9 });
+  const grass = new THREE.MeshStandardMaterial({ color: 0x5d8f37, roughness: 1 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0xd6d9dc, roughness: 0.3, metalness: 0.8 });
+  const stone = new THREE.MeshStandardMaterial({ color: 0xc9cbcd, roughness: 0.7 });
+
+  // plaza and lawns (thin slabs just above the city ground)
+  const plaza = [];
+  for (let i = KK_FRONT[0]; i <= KK_FRONT[1]; i++) plaza.push(podiumEdge[i]);
+  const slabPlaza = flatSlab([...plaza, ...PLAZA_EAST], 0, 0.08, pave); // podium edge N->S, then back north
+  slabPlaza.userData.cast = false;
+  put(slabPlaza, 'med');
+  for (const l of LAWNS) {
+    const lawn = flatSlab(l, 0, 0.14, grass);
+    lawn.userData.cast = false;
+    put(lawn, 'med');
+  }
+
+  // round basin
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(BASIN.r, BASIN.r, 0.7, 48), new THREE.MeshStandardMaterial({ color: 0xf2f2ef, roughness: 0.6 }));
+  rim.position.set(BASIN.x, CITY_Y + 0.35, BASIN.z);
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(BASIN.r - 0.4, BASIN.r - 0.4, 0.1, 48), new THREE.MeshStandardMaterial({ color: 0x6fa3c4, roughness: 0.1, metalness: 0.3 }));
+  water.position.set(BASIN.x, CITY_Y + 0.68, BASIN.z);
+  put(rim, 'med');
+  put(water, 'med');
+  footprints.push(ringPts(BASIN.x, BASIN.z, BASIN.r));
+
+  // African Union statue: stepped plinth, the Africa slab, three figures
+  const st = new THREE.Group();
+  st.position.set(STATUE.x, CITY_Y, STATUE.z);
+  st.rotation.y = STATUE.face;
+  const base = new THREE.Mesh(new THREE.BoxGeometry(7, 0.9, 5), new THREE.MeshStandardMaterial({ color: 0xb0b2b4, roughness: 0.8 }));
+  base.position.y = 0.45;
+  const upper = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.9, 2.6), stone);
+  upper.position.set(0, 1.35, 0.4);
+  const africa = new THREE.Shape([[-1.7, 0], [-0.4, 0], [0.5, 1.3], [1.3, 2.6], [1.8, 3.6], [2.6, 4.3], [2.3, 5.2],
+    [1.4, 6.2], [-0.8, 6.4], [-2.1, 5.6], [-2.6, 4.4], [-2.2, 2.6]].map(([x, y]) => new THREE.Vector2(x, y)));
+  const slab = new THREE.Mesh(new THREE.ExtrudeGeometry(africa, { depth: 1.1, bevelEnabled: false }), new THREE.MeshStandardMaterial({ color: 0xd9dde0, roughness: 0.6, flatShading: true }));
+  slab.position.set(0, 1.8, -0.9);
+  st.add(base, upper, slab);
+  const skin = new THREE.MeshStandardMaterial({ color: 0x6b4a36, roughness: 0.7 });
+  const cloth = new THREE.MeshStandardMaterial({ color: 0xe8e6df, roughness: 0.8 });
+  for (const [x, dress] of [[-1.1, false], [0, false], [1.1, true]]) {
+    const fig = new THREE.Group();
+    fig.position.set(x, 1.8, 0.8);
+    const V = (a, b, c) => new THREE.Vector3(a, b, c);
+    fig.add(limb(V(-0.15, 0, 0), V(-0.15, 1.1, 0), 0.13, cloth), limb(V(0.15, 0, 0), V(0.15, 1.1, 0), 0.13, cloth));
+    const body = dress
+      ? new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.4, 12), cloth)
+      : new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 1.1, 10), cloth);
+    body.position.y = dress ? 1.2 : 1.55;
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.26, 0.8, 10), cloth);
+    torso.position.y = 2.05;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), skin);
+    head.position.y = 2.65;
+    fig.add(body, torso, head);
+    st.add(fig);
+  }
+  put(st, 'low');
+  footprints.push([[-3.5, -2.5], [3.5, -2.5], [3.5, 2.5], [-3.5, 2.5]].flatMap(([x, z]) => {
+    const c = Math.cos(STATUE.face), s = Math.sin(STATUE.face);
+    return [STATUE.x + x * c + z * s, STATUE.z - x * s + z * c];
+  }));
+
+  // double row of steel flagpoles along a paved walkway
+  const [fa, fb] = FLAGS;
+  const flen = Math.hypot(fb[0] - fa[0], fb[1] - fa[1]);
+  const fx = (fb[0] - fa[0]) / flen, fz = (fb[1] - fa[1]) / flen;
+  const walk = flatSlab([[fa[0] - fz * 3, fa[1] + fx * 3], [fb[0] - fz * 3, fb[1] + fx * 3], [fb[0] + fz * 3, fb[1] - fx * 3], [fa[0] + fz * 3, fa[1] - fx * 3]], 0, 0.16, new THREE.MeshStandardMaterial({ color: 0xd8c7a6, roughness: 0.8 }));
+  walk.userData.cast = false;
+  put(walk, 'med');
+  const poleGeo = new THREE.CylinderGeometry(0.07, 0.11, 12, 8);
+  const nPoles = 12;
+  const poles = new THREE.InstancedMesh(poleGeo, steel, nPoles * 2);
+  const m4 = new THREE.Matrix4();
+  let k = 0;
+  for (const side of [-2.3, 2.3]) {
+    for (let i = 0; i < nPoles; i++) {
+      const t = (i + 0.5) / nPoles;
+      m4.makeTranslation(fa[0] + (fb[0] - fa[0]) * t - fz * side, CITY_Y + 6, fa[1] + (fb[1] - fa[1]) * t + fx * side);
+      poles.setMatrixAt(k++, m4);
+    }
+  }
+  put(poles, 'high');
+
+  // big grey urns along the podium and the walkway ends
+  const urnGeo = new THREE.LatheGeometry([[0, 0], [0.35, 0], [0.55, 0.3], [0.6, 0.8], [0.45, 1.4], [0.3, 1.6], [0.32, 1.7], [0, 1.7]].map(([x, y]) => new THREE.Vector2(x, y)), 16);
+  const urnMat = new THREE.MeshStandardMaterial({ color: 0x8c8f93, roughness: 0.6 });
+  const urns = [];
+  const steps = Math.floor((KK_FRONT[0] + KK_FRONT[1]) / 2);
+  for (let i = KK_FRONT[0]; i < KK_FRONT[1]; i++) {
+    if (i === steps) continue; // the entrance steps
+    const [a, b] = [podiumEdge[i], podiumEdge[i + 1]];
+    // the front faces east, so +x steps just off the podium wall
+    for (const t of [0.3, 0.7]) urns.push([a[0] + (b[0] - a[0]) * t + 1.5, a[1] + (b[1] - a[1]) * t]);
+  }
+  urns.push([fa[0] - fz * 3.8, fa[1] + fx * 3.8], [fa[0] + fz * 3.8, fa[1] - fx * 3.8]);
+  const urnMesh = new THREE.InstancedMesh(urnGeo, urnMat, urns.length);
+  urns.forEach(([x, z], i) => urnMesh.setMatrixAt(i, m4.makeTranslation(x, CITY_Y + 0.08, z)));
+  put(urnMesh, 'med');
+
+  // solar street lights along the plaza's east edge
+  const lightPts = [];
+  for (let i = 0; i < PLAZA_EAST.length - 1; i++) {
+    const [a, b] = [PLAZA_EAST[i], PLAZA_EAST[i + 1]];
+    const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 18);
+    for (let j = 0; j < n; j++) lightPts.push([a[0] + ((b[0] - a[0]) * j) / n - 2, a[1] + ((b[1] - a[1]) * j) / n]);
+  }
+  const lampPole = new THREE.CylinderGeometry(0.08, 0.12, 7, 8);
+  const panelGeo = new THREE.BoxGeometry(1.4, 0.06, 0.8);
+  const panelMat = new THREE.MeshStandardMaterial({ color: 0x1d2a44, roughness: 0.3, metalness: 0.5 });
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff1d6, emissiveIntensity: 0 });
+  for (const [x, z] of lightPts) {
+    const pole = new THREE.Mesh(lampPole, steel);
+    pole.position.set(x, CITY_Y + 3.5, z);
+    const panel = new THREE.Mesh(panelGeo, panelMat);
+    panel.position.set(x, CITY_Y + 7.2, z);
+    panel.rotation.z = 0.3;
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.25), lampMat);
+    lamp.position.set(x + 0.5, CITY_Y + 6.6, z);
+    put(pole, 'med');
+    put(panel, 'med');
+    put(lamp, 'med');
+  }
+
+  // palm avenues
+  const make = palmFactory();
+  const r = rng(71);
+  for (const [a, b, gap] of PALM_ROWS) {
+    const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / gap);
+    for (let i = 0; i <= n; i++) {
+      const p = make(7 + r() * 2.5, r);
+      p.position.set(a[0] + ((b[0] - a[0]) * i) / n, CITY_Y, a[1] + ((b[1] - a[1]) * i) / n);
+      put(p, 'med');
+    }
+  }
+  return { group: g, footprints, setNight: (n) => (lampMat.emissiveIntensity = n * 2) };
+}
+
+function ringPts(x, z, r, n = 16) {
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(x + Math.sin((i / n) * Math.PI * 2) * r, z + Math.cos((i / n) * Math.PI * 2) * r);
+  return out;
 }
 
 export function buildMulungushi() {
@@ -213,45 +421,51 @@ export function buildMulungushi() {
   // ---------- Kenneth Kaunda Wing ----------
   const white = new THREE.MeshStandardMaterial({ color: 0xf1f1ee, roughness: 0.6 });
   const clay = glowing(terracotta(), { roughness: 0.85 });
+  const kkClay = glowing(staggered(), { roughness: 0.8 });
+  const kkGround = glowing(groundBand(), { roughness: 0.2, metalness: 0.4 });
   const roofGrid = new THREE.MeshStandardMaterial({ map: pergola(), roughness: 0.8 });
-  // world-UV caps: the roof texture tiles in metres
-  put(extrudeFootprint(KK, [], KK_H, [roofGrid, clay]), 'med');
-  const centre = extrudeFootprint(KK_CENTRE, [], KK_CENTRE_H, [roofPale, clay]);
-  put(centre, 'high');
+  // glazed ground floor all round, terracotta with staggered windows above
+  // (the ends and the back; the front is hidden behind glass and fins)
+  put(extrudeFootprint(KK, [], KK_GROUND, [roofGrid, kkGround]), 'high');
+  const kkUpper = extrudeFootprint(KK, [], KK_H - KK_GROUND, [roofGrid, kkClay]);
+  kkUpper.position.y += KK_GROUND;
+  put(kkUpper, 'high');
+  put(extrudeFootprint(KK_CENTRE, [], KK_CENTRE_H, [roofPale, clay]), 'high');
   // the deep white roof frame, overhanging the walls
   put(ring(offset(KK, 3.5), offset(KK, -9), KK_H - 0.2, KK_H + KK_FRAME, [white, white]), 'high');
 
-  // glass behind the fins, the fins, and the red plinth walls, along the
-  // front and both ends (every edge except the west side)
+  // Along the curved front: glass, the white fins, the granite podium with
+  // its red walls, and the entrance steps, canopy and columns.
   const kkGlass = glowing(curtain('#3f6f9e'), { roughness: 0.15, metalness: 0.5 });
-  const finGeo = new THREE.BoxGeometry(0.4, KK_H - 3, 1.5);
+  const finGeo = new THREE.BoxGeometry(0.45, KK_H - 3, 1.6);
   const finPos = [];
-  const edges = [];
-  for (let i = KK_FRONT[0]; i < KK_FRONT[1]; i++) edges.push([i, i + 1]);
-  edges.push([KK.length - 1, 0], [KK_FRONT[1], KK_FRONT[1] + 1]); // north and south ends
-  const glassOut = offset(KK, 0.3), finOut = offset(KK, 2.2), plinthOut = offset(KK, 9);
+  const glassOut = offset(KK, 0.3), finOut = offset(KK, 2.2);
   const plinthMat = new THREE.MeshStandardMaterial({ color: 0xa4513a, roughness: 0.9 });
+  const granite = new THREE.MeshStandardMaterial({ color: 0xb9b6b0, roughness: 0.8 });
   const mid = Math.floor((KK_FRONT[0] + KK_FRONT[1]) / 2);
-  for (const [i, j] of edges) {
-    const seg = (pts, h, y, mat, thick) => {
-      const [a, b] = [pts[i], pts[j]];
-      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      const m = new THREE.Mesh(thick ? new THREE.BoxGeometry(len, h, thick) : new THREE.PlaneGeometry(len, h), mat);
-      m.position.set((a[0] + b[0]) / 2, CITY_Y + y + h / 2, (a[1] + b[1]) / 2);
-      m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
-      return m;
-    };
-    const gl = seg(glassOut, KK_H - 0.5, 0.2, kkGlass);
+  const along = (a, b) => -Math.atan2(b[1] - a[1], b[0] - a[0]);
+  for (let i = KK_FRONT[0]; i < KK_FRONT[1]; i++) {
+    const [a, b] = [glassOut[i], glassOut[i + 1]];
+    const gl = new THREE.Mesh(new THREE.PlaneGeometry(Math.hypot(b[0] - a[0], b[1] - a[1]), KK_H - 0.5), kkGlass);
     gl.material.side = THREE.DoubleSide;
+    gl.position.set((a[0] + b[0]) / 2, CITY_Y + 0.2 + (KK_H - 0.5) / 2, (a[1] + b[1]) / 2);
+    gl.rotation.y = along(a, b);
     put(gl, 'high');
-    if (i !== mid && i < KK_FRONT[1]) put(seg(plinthOut, 2.8, 0, plinthMat, 0.6), 'med'); // gap at the entrance
-    const [a, b] = [finOut[i], finOut[j]];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const n = Math.max(1, Math.round(len / 2.4));
+    const [c, d] = [finOut[i], finOut[i + 1]];
+    const n = Math.max(1, Math.round(Math.hypot(d[0] - c[0], d[1] - c[1]) / 2.4));
     for (let k = 0; k < n; k++) {
       const t = (k + 0.5) / n;
-      finPos.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, -Math.atan2(b[1] - a[1], b[0] - a[0])]);
+      finPos.push([c[0] + (d[0] - c[0]) * t, c[1] + (d[1] - c[1]) * t, along(c, d)]);
     }
+  }
+  // the white band across the fins above the ground floor
+  const bandOut = offset(KK, 1.6);
+  for (let i = KK_FRONT[0]; i < KK_FRONT[1]; i++) {
+    const [c, d] = [bandOut[i], bandOut[i + 1]];
+    const band = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(d[0] - c[0], d[1] - c[1]) + 0.6, 1.3, 2.6), white);
+    band.position.set((c[0] + d[0]) / 2, CITY_Y + 7.4, (c[1] + d[1]) / 2);
+    band.rotation.y = along(c, d);
+    put(band, 'high');
   }
   const fins = new THREE.InstancedMesh(finGeo, white, finPos.length);
   const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
@@ -261,26 +475,82 @@ export function buildMulungushi() {
     fins.setMatrixAt(k, mtx);
   });
   put(fins, 'high');
-  // entrance canopy at the middle of the front
+  const podIn = offset(KK, 0.2), outer = offset(KK, PODIUM_W);
+  const podium = [];
+  for (let i = KK_FRONT[0]; i <= KK_FRONT[1]; i++) podium.push(podIn[i]);
+  for (let i = KK_FRONT[1]; i >= KK_FRONT[0]; i--) podium.push(outer[i]);
+  put(extrudeFootprint(podium, [], PODIUM_H, [granite, plinthMat]), 'high');
   {
-    const [a, b] = [offset(KK, 8)[mid], offset(KK, 8)[mid + 1]];
-    const canopy = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.7, 0.8, 14), white);
+    // steps down from the podium in front of the entrance, then the canopy
+    // on round white columns
+    const [a, b] = [outer[mid], outer[mid + 1]], ry = along(a, b);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const beyond = offset(KK, PODIUM_W + 3);
+    const cx = (a[0] + b[0]) / 2, cz = (a[1] + b[1]) / 2;
+    let dx = (beyond[mid][0] + beyond[mid + 1][0]) / 2 - cx, dz = (beyond[mid][1] + beyond[mid + 1][1]) / 2 - cz;
+    const dl = Math.hypot(dx, dz);
+    dx /= dl;
+    dz /= dl;
+    const n = 6;
+    for (let k = 0; k < n; k++) {
+      const h = (PODIUM_H * (n - k)) / n;
+      const step = new THREE.Mesh(new THREE.BoxGeometry(len * 0.6, h, 0.5), granite);
+      step.position.set(cx + dx * (0.25 + k * 0.5), CITY_Y + h / 2, cz + dz * (0.25 + k * 0.5));
+      step.rotation.y = ry;
+      put(step, 'med');
+    }
     const [c, d] = [KK[mid], KK[mid + 1]];
-    canopy.position.set((a[0] + b[0] + c[0] + d[0]) / 4, CITY_Y + 7, (a[1] + b[1] + c[1] + d[1]) / 4);
-    canopy.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
-    put(canopy, 'med');
+    const sign = canvasTex(1024, 64, (c, w, h) => {
+      c.fillStyle = '#f1f1ee';
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = '#7a2e1f';
+      c.font = 'bold 40px sans-serif';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText('KENNETH KAUNDA WING', w / 2, h / 2 + 2);
+    }, { repeat: false });
+    const signMat = new THREE.MeshStandardMaterial({ map: sign, roughness: 0.6 });
+    const canopy = new THREE.Mesh(new THREE.BoxGeometry(len * 0.75, 1.4, PODIUM_W + 5), [white, white, white, white, signMat, signMat]);
+    canopy.position.set((a[0] + b[0] + c[0] + d[0]) / 4, CITY_Y + 9, (a[1] + b[1] + c[1] + d[1]) / 4);
+    canopy.rotation.y = ry;
+    put(canopy, 'high');
+    const colGeo = new THREE.CylinderGeometry(0.45, 0.45, 9 - PODIUM_H, 16);
+    for (let k = 0; k < 6; k++) {
+      const t = 0.18 + (k / 5) * 0.64;
+      const col = new THREE.Mesh(colGeo, white);
+      col.position.set(a[0] + (b[0] - a[0]) * t, CITY_Y + PODIUM_H + (9 - PODIUM_H) / 2, a[1] + (b[1] - a[1]) * t);
+      put(col, 'high');
+    }
   }
+  // slender white columns under the roof frame at both ends
+  const endColGeo = new THREE.CylinderGeometry(0.3, 0.3, KK_H, 12);
+  const colLine = offset(KK, 3.1);
+  for (const [i, j] of [[KK.length - 1, 0], [KK_FRONT[1], KK_FRONT[1] + 1]]) {
+    const [a, b] = [colLine[i], colLine[j]];
+    const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 8);
+    for (let k = 0; k <= n; k++) {
+      const col = new THREE.Mesh(endColGeo, white);
+      col.position.set(a[0] + ((b[0] - a[0]) * k) / n, CITY_Y + KK_H / 2, a[1] + ((b[1] - a[1]) * k) / n);
+      put(col, 'high');
+    }
+  }
+
+  const yard = buildYard(outer);
+  group.add(yard.group);
 
   const flat = (pts) => pts.flat();
   return {
     group,
-    footprints: [flat(OLD), flat(EAST), flat(KK)],
+    footprints: [flat(OLD), flat(EAST), flat(KK), flat(podium), ...yard.footprints],
     setNight(n) {
       glassMat.emissiveIntensity = n * 0.8;
       screenMat.emissiveIntensity = n * 0.5;
       glassWall.material.emissiveIntensity = n * 0.4;
       kkGlass.emissiveIntensity = n * 0.6;
       clay.emissiveIntensity = n * 0.5;
+      kkClay.emissiveIntensity = n * 0.5;
+      kkGround.emissiveIntensity = n * 0.8;
+      yard.setNight(n);
     },
   };
 }
