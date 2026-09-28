@@ -137,7 +137,7 @@ export function glowing(tex, o = {}) {
   g.drawImage(src, 0, 0);
   const img = g.getImageData(0, 0, c.width, c.height), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
-    const lit = d[i] + d[i + 1] + d[i + 2] < 360 && d[i + 2] > d[i] + 20;
+    const lit = d[i] + d[i + 1] + d[i + 2] < 360 && d[i + 2] > d[i] + 10;
     d[i] = lit ? 255 : 0;
     d[i + 1] = lit ? 214 : 0;
     d[i + 2] = lit ? 150 : 0;
