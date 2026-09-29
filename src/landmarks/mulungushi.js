@@ -211,8 +211,14 @@ const LAWNS = [
 const BASIN = { x: 480, z: -115, r: 8 };
 const STATUE = { x: 482.5, z: -157, face: Math.PI / 2 }; // faces east, down the flag walk
 const FLAGS = [[478, -200], [490, -152]]; // the striped walk between the north lawns and the drive
-// palms: along the north parking drive, and a double avenue on the east path
-const PALM_ROWS = [[[480, -229], [497, -182], 9], [[504, -140], [526, -45], 9], [[511, -140], [533, -45], 9]];
+// South of the plaza, OSM maps the paved walk through the palm avenue (way
+// 405672365) and a line along the forest edge (680357976) as service roads;
+// on the ground there is only the walk, between two rows of palms, on a grass
+// verge. The verge and the walk are laid over the tile roads there.
+const PALM_WALK = [[500.6, -162], [542, -27]];
+const VERGE = [[502, -150], [523, -150], [561, -26], [525, -28], [531, -40], [502, -142]];
+// palms: along the north parking drive, and either side of the palm walk
+const PALM_ROWS = [[[480, -229], [497, -182], 9], [[502.8, -145], [538, -22], 9], [[508.9, -146], [544, -23], 9]];
 
 function flatSlab(pts, y, thick, mat) {
   const m = extrudeFootprint(pts, [], thick, [mat, mat]);
@@ -247,6 +253,19 @@ function buildYard(podiumEdge) {
     const lawn = flatSlab(l, 0, 0.14, grass);
     lawn.userData.cast = false;
     put(lawn, 'med');
+  }
+
+  // grass verge and the paved palm walk, over the tile roads on that side
+  const verge = flatSlab(VERGE, 0, 0.16, grass);
+  verge.userData.cast = false;
+  put(verge, 'med');
+  {
+    const [a, b] = PALM_WALK;
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uz = (b[1] - a[1]) / len;
+    const w = 2.2;
+    const walkPave = flatSlab([[a[0] - uz * w, a[1] + ux * w], [b[0] - uz * w, b[1] + ux * w], [b[0] + uz * w, b[1] - ux * w], [a[0] + uz * w, a[1] - ux * w]], 0, 0.2, new THREE.MeshStandardMaterial({ color: 0xc9bca3, roughness: 0.85 }));
+    walkPave.userData.cast = false;
+    put(walkPave, 'med');
   }
 
   // round basin
@@ -363,8 +382,8 @@ function buildYard(podiumEdge) {
     const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / gap);
     for (let i = 0; i <= n; i++) {
       // date palms: stout trunks, broad crowns
-      const p = make(5.5 + r() * 2, r);
-      p.scale.set(1.7, 1, 1.7);
+      const p = make(6.5 + r() * 2, r);
+      p.scale.set(1.35, 1, 1.35);
       p.position.set(a[0] + ((b[0] - a[0]) * i) / n, CITY_Y, a[1] + ((b[1] - a[1]) * i) / n);
       put(p, 'med');
     }
