@@ -14,8 +14,10 @@ just south-west of Manda Hill. Model: `src/landmarks/indo-zambia-bank.js`.
   architect's render (NAM Designs; the built building differs, so it was
   used only for intent).
 - **Address** — Indo-Zambia Bank Limited (Wikipedia; Bloomberg LEI record).
-- **Esri World Imagery, zoom 19** — the plan, the stepped roofs with solar
-  panels, and the forecourt; zoom 20 is not available here.
+- **Google Maps satellite (2026 imagery)** — the finished building: the
+  north-east block standing ~7 m forward of the rest towards the road.
+- **Esri World Imagery, zoom 19** — older imagery from construction: the
+  plan outline and the forecourt.
 - **OpenStreetMap** — way 1061966800 (a Microsoft footprint traced during
   construction); the tiler skips it.
 
@@ -25,9 +27,9 @@ just south-west of Manda Hill. Model: `src/landmarks/indo-zambia-bank.js`.
 |---|---|---|
 | Plan | ~66 × 27 m along Great East Road, front facing north-west; front widths measured off the founder's street elevation | medium (aerial, photo) |
 | North-east end | a wedge block at the road corner, 14 × 12 m, 25.5 m: terracotta with slot windows and a white edge with the IZB logo on the road side, white split by a diagonal terracotta field on the end wall; behind it a white wing with five stacked white boxes cantilevered out towards the junction, a hedge and pergola on top and INDO ZAMBIA BANK in red letters; a tall terracotta strip with the logo at the rear corner | high form (photos), medium sizes |
-| Terraces | the terracotta corner block is an L in plan: its terracotta face on the road is the short leg, the long leg runs south-west behind 14 m of terraces; four terraces in the angle of the L (at ~6, 10.4, 14.9 and 18.7 m), each a white slab with a hedge on its edge and a glass balustrade, stepping up to a pergola at 22.5 m (founder) | high form, medium heights |
-| Tower | 12 m, 23 m high: pale blue panels between five columns of dark and maroon glazing; a projecting white band with INDO ZAMBIA BANK; a white fin on its south-west edge | high form |
-| South-west glass box | 26 m of front and 14 m deep, turning the corner onto the forecourt: two storeys of glazing (10 m) on a white plinth in a thick white frame with hedges on top; two white trays of glazing above, wrapping round and overhanging more at the top | high form (photos), medium sizes |
+| L plan and terraces | the building is an L: the north-east block (the short leg) stands ~7 m forward of the rest towards the road, its road face the terracotta panel; on its south-west side four terraces face along the road over the space in front of the tower, each a white slab with a hedge and a glass balustrade (also along the road end), under a pergola at 22.5 m (founder; Google imagery) | high form, medium sizes |
+| Tower | 14 m, 23 m high: pale blue panels between five columns of dark and maroon glazing; a projecting white band with INDO ZAMBIA BANK; a white fin on its south-west edge | high form |
+| South-west glass box | 38 m of front and 14 m deep, turning the corner onto the forecourt: two storeys of glazing (10 m) on a white plinth in a thick white frame with hedges on top; two white trays of glazing above, wrapping round and overhanging more at the top | high form (photos), medium sizes |
 | Entrance tower | 12 × 13 m, 24 m high, behind the glass box; the IZB logo on its south-west face; dark canopy on three white columns over a raised podium with steps down to the forecourt | high form |
 | Main body | white with vertical window strips, 19 m, solar panels on the roof | medium (drone photo) |
 | Site | paved forecourt to the south-west with white gate pillars and a stone-clad wall; grass verge, dark boundary wall and black railing, small fan palms and solar street lights along the road | high form, medium positions |

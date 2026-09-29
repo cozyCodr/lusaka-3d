@@ -29,9 +29,10 @@ const L = 66, D = 27, FLOOR = 3.6;
 // Front segments, u ranges along the road.
 // Seen from the road, north-east is on the left: the photos read right to
 // left. u ranges, measured off the founder's street elevation (~66 m).
-const GLASS = [0, 26], TOWER = [26, 38], TERRACE = [38, 52], CORNER = [52, 66];
+const GLASS = [0, 38], TOWER = [38, 52], TERRACE = [52, 59], CORNER = [59, 66];
+const PROTRUDE = 7; // the north-east block stands this far forward of the rest (Google imagery, 2026)
 const ENTRY = [0, 12, 14, D]; // u0, u1, v0, v1: behind the glass box
-const WEDGE_D = 12; // depth of the wedge block at the north-east front corner
+const WEDGE_D = 13; // front part of the north-east block, with the diagonal end wall
 
 // ---------- textures (whole faces, UV 0..1; canvas y down; for a front
 // (-z) face the canvas left is the north-east end) ----------
@@ -159,7 +160,7 @@ export function buildIndoZambiaBank() {
   const [c0, c1] = CORNER;
   const cH = 25.5;
   // the wedge block at the road corner
-  put(box(c0, c1, 0, WEDGE_D, 0, cH, [new THREE.MeshStandardMaterial({ map: cornerEnd(), roughness: 0.7 }), white, roof, roof, white, new THREE.MeshStandardMaterial({ map: cornerFront(), roughness: 0.7 })]), 'high');
+  put(box(c0, c1, -PROTRUDE, WEDGE_D, 0, cH, [new THREE.MeshStandardMaterial({ map: cornerEnd(), roughness: 0.7 }), white, roof, roof, white, new THREE.MeshStandardMaterial({ map: cornerFront(), roughness: 0.7 })]), 'high');
   // the white wing behind it, with cantilevered white boxes on its end wall
   const wingH = 23;
   put(box(c0, c1 - 2, WEDGE_D, D - 4, 0, wingH, front(white, white)), 'high');
@@ -186,24 +187,35 @@ export function buildIndoZambiaBank() {
   put(box(c0 + 2, c1, D - 4, D, 0, cH - 1, [new THREE.MeshStandardMaterial({ map: rearStrip(), roughness: 0.7 }), white, roof, roof, white, white]), 'high');
 
   // ---------- along the road ----------
-  // The terracotta corner block is an L in plan: its terracotta face on the
-  // road is the short leg; the long leg runs south-west behind the terraces.
-  // Four terraces sit in the angle of the L, each a white slab with a glass
-  // balustrade and a hedge, stepping up to a pergola (founder, 2026-09-29).
+  // In plan the building is an L: the north-east block (the short leg)
+  // stands PROTRUDE m forward of the rest (the long leg) towards the road.
+  // Its road face is the terracotta panel; on its south-west side, facing
+  // along the road over the space in front of the tower, four terraces are
+  // stacked, each a white slab with a hedge and a glass balustrade, under a
+  // pergola (founder, 2026-09-29; Google imagery).
   const [t0, t1] = TERRACE;
-  const TERRACES = [6, 10.4, 14.9, 18.7], tTop = 22.5, back = 5;
-  put(box(t0, t1, back, 13, 0, tTop, front(glow(curtain(6, 5)))), 'high'); // the long leg's glazed face
-  put(box(t0, t1, 1.2, back, 0, TERRACES[0], front(glow(curtain(6, 1)))), 'high'); // ground floor
+  const TERRACES = [6, 10.4, 14.9, 18.7], tTop = 22.5;
+  const tu = t1 - 1.5, tv0 = -PROTRUDE, tv1 = 0; // glazed wall behind the terraces; their span along v
+  put(box(tu, t1, tv0, WEDGE_D, 0, tTop, [white, glow(curtain(4, 5)), roof, roof, white, glow(curtain(1, 5))]), 'high');
+  put(box(t0, tu, tv1, WEDGE_D, 0, tTop, [white, white, roof, roof, white, white]), 'high'); // behind, beside the tower
+  put(box(t0 + 0.6, tu, tv0 + 0.6, tv1, 0, TERRACES[0] - 0.55, [white, glow(curtain(3, 1)), roof, roof, white, glow(curtain(3, 1))]), 'high'); // ground floor
   const balustrade = new THREE.MeshStandardMaterial({ color: 0xbcd6e0, transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.2, side: THREE.DoubleSide });
-  for (const y of TERRACES) {
-    put(box(t0, t1, 0, back, y - 0.55, y, white), 'high');
-    const glass = new THREE.Mesh(new THREE.PlaneGeometry(t1 - t0, 1.1), balustrade);
-    glass.position.set((t0 + t1) / 2, y + 0.55, 0.95);
-    put(glass, 'high', { cast: false });
-    hedgeOn(t0, t1, 0.1, y); // hedge on the slab edge, glass just behind it
+  const pane = (len, x, z, ry, y) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.1), balustrade);
+    m.position.set(x, y + 0.55, z);
+    m.rotation.y = ry;
+    put(m, 'high', { cast: false });
+  };
+  for (const y of [...TERRACES, tTop]) {
+    put(box(t0, tu, tv0, tv1, y - 0.55, y, white), 'high');
+    if (y === tTop) continue;
+    put(box(t0, t0 + 0.7, tv0 + 0.2, tv1, y, y + 0.55, hedge), 'high'); // hedge along the south-west edge
+    pane(tv1 - tv0 - 0.4, t0 + 1.1, (tv0 + tv1) / 2, Math.PI / 2, y); // glass just behind it
+    put(box(t0, tu, tv0, tv0 + 0.6, y, y + 0.55, hedge), 'high'); // and along the road end
+    pane(tu - t0 - 0.4, (t0 + tu) / 2, tv0 + 1, 0, y);
   }
-  put(box(t0, t1, 0, back, tTop - 0.5, tTop, white), 'high');
-  for (let u = t0 + 0.4; u < t1; u += 0.9) put(box(u, u + 0.2, 0.5, 11, tTop + 2, tTop + 2.3, dark), 'med'); // pergola
+  for (let v = tv0 + 0.4; v < tv1; v += 0.9) put(box(t0, tu, v, v + 0.2, tTop + 2, tTop + 2.3, dark), 'med'); // pergola
+  put(box(t0, t0 + 0.3, tv0, tv1, tTop, tTop + 2.3, dark), 'med');
 
   // tower: pale blue panels and window columns, projecting name band
   const [w0, w1] = TOWER;
