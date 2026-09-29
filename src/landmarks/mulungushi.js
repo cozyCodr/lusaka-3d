@@ -211,14 +211,15 @@ const LAWNS = [
 const BASIN = { x: 480, z: -115, r: 8 };
 const STATUE = { x: 482.5, z: -157, face: Math.PI / 2 }; // faces east, down the flag walk
 const FLAGS = [[478, -200], [490, -152]]; // the striped walk between the north lawns and the drive
-// South of the plaza, OSM maps the paved walk through the palm avenue (way
-// 405672365) and a line along the forest edge (680357976) as service roads;
-// on the ground there is only the walk, between two rows of palms, on a grass
-// verge. The verge and the walk are laid over the tile roads there.
-const PALM_WALK = [[500.6, -162], [542, -27]];
-const VERGE = [[502, -150], [523, -150], [561, -26], [525, -28], [531, -40], [502, -142]];
-// palms: along the north parking drive, and either side of the palm walk
-const PALM_ROWS = [[[480, -229], [497, -182], 9], [[502.8, -145], [538, -22], 9], [[508.9, -146], [544, -23], 9]];
+// South of the plaza, from the yard outwards (aerial): a band of palms in two
+// rows with a paved walk between them, then the drive to the gate, ~11 m of
+// pale concrete (OSM way 680357976; the tiles draw it only 4 m wide, and draw
+// the walk, way 405672365, as a road), then a grass verge to the woods.
+const DRIVE_LINE = [[503, -179], [566, 25]];
+const EAST_Z = [-148, -26]; // where the palm avenue runs
+const DRIVE_HALF = 5.3, WALK_HALF = 1.5;
+// palms along the north parking drive (the avenue rows are computed)
+const PALM_ROWS = [[[480, -229], [497, -182], 9]];
 
 function flatSlab(pts, y, thick, mat) {
   const m = extrudeFootprint(pts, [], thick, [mat, mat]);
@@ -255,17 +256,31 @@ function buildYard(podiumEdge) {
     put(lawn, 'med');
   }
 
-  // grass verge and the paved palm walk, over the tile roads on that side
-  const verge = flatSlab(VERGE, 0, 0.16, grass);
-  verge.userData.cast = false;
-  put(verge, 'med');
-  {
-    const [a, b] = PALM_WALK;
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uz = (b[1] - a[1]) / len;
-    const w = 2.2;
-    const walkPave = flatSlab([[a[0] - uz * w, a[1] + ux * w], [b[0] - uz * w, b[1] + ux * w], [b[0] + uz * w, b[1] - ux * w], [a[0] + uz * w, a[1] - ux * w]], 0, 0.2, new THREE.MeshStandardMaterial({ color: 0xc9bca3, roughness: 0.85 }));
-    walkPave.userData.cast = false;
-    put(walkPave, 'med');
+  // the palm avenue: planting strips and palms either side of the paved walk,
+  // and a grass verge beyond the drive
+  const xAt = ([[x0, z0], [x1, z1]], z) => x0 + ((x1 - x0) * (z - z0)) / (z1 - z0);
+  const yardX = (z) => { // east edge of the yard paving
+    for (let i = 0; i < YARD_EAST.length - 1; i++) {
+      const [a, b] = [YARD_EAST[i], YARD_EAST[i + 1]];
+      if ((z - a[1]) * (z - b[1]) <= 0 && a[1] !== b[1]) return xAt([a, b], z);
+    }
+    return xAt([YARD_EAST[1], YARD_EAST[2]], z);
+  };
+  const band = (west, east, lift, mat) => {
+    const [z0, z1] = EAST_Z;
+    const m = flatSlab([[west(z0), z0], [east(z0), z0], [east(z1), z1], [west(z1), z1]], 0, lift, mat);
+    m.userData.cast = false;
+    put(m, 'med');
+  };
+  const driveW = (z) => xAt(DRIVE_LINE, z) - DRIVE_HALF, driveE = (z) => xAt(DRIVE_LINE, z) + DRIVE_HALF;
+  const mid = (z) => (yardX(z) + driveW(z)) / 2;
+  band(yardX, driveW, 0.16, grass); // the palm band
+  band((z) => mid(z) - WALK_HALF, (z) => mid(z) + WALK_HALF, 0.2, new THREE.MeshStandardMaterial({ color: 0xc9bca3, roughness: 0.85 }));
+  band(driveW, driveE, 0.17, new THREE.MeshStandardMaterial({ color: 0xa9a59d, roughness: 0.9 }));
+  band(driveE, (z) => driveE(z) + 10, 0.16, grass);
+  const avenue = [];
+  for (const row of [(z) => (yardX(z) + mid(z) - WALK_HALF) / 2, (z) => (mid(z) + WALK_HALF + driveW(z)) / 2]) {
+    for (let z = EAST_Z[0] + 3; z < EAST_Z[1] - 6; z += 9) avenue.push([row(z), z]);
   }
 
   // round basin
@@ -378,6 +393,12 @@ function buildYard(podiumEdge) {
   // palm avenues
   const make = palmFactory();
   const r = rng(71);
+  for (const [x, z] of avenue) {
+    const p = make(6.5 + r() * 2, r);
+    p.scale.set(1.35, 1, 1.35);
+    p.position.set(x, CITY_Y, z);
+    put(p, 'med');
+  }
   for (const [a, b, gap] of PALM_ROWS) {
     const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / gap);
     for (let i = 0; i <= n; i++) {

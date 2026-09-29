@@ -47,5 +47,5 @@ Model: `src/landmarks/mulungushi.js`.
 - The Kenneth Kaunda Wing's west side (terracotta with punched windows here) and the rear courtyards are simplified.
 - The fins are straight segments following the traced front; the real front is a smooth curve.
 - The fountain jets on the granite wall, the flags themselves, the car parks and the smaller planting are not modelled.
-- South of the plaza, OSM maps the palm walk and a line along the forest edge as service roads; the model lays a grass verge and the paved walk over them, since on the ground there is only the walk between two rows of palms.
+- South of the plaza the tiles draw OSM's palm walk as a road and the drive to the gate only 4 m wide; the model lays the palm band (grass, two rows of palms, a paved walk between them), the ~11 m concrete drive and the verge over them, traced from the aerial.
 - The East Wing's lower strip along its west side is not separated from the main volume.
