@@ -45,7 +45,7 @@ place in the catalogue is inside it; the "In current map" column is historical.
 | Mulungushi International Conference Centre | venue | 0.59 | ✓ |  | v1 built: Old Wing, East Wing and Kenneth Kaunda Wing — [notes](landmarks/mulungushi.md) |
 | Kenneth Kaunda International Conference Centre | venue | 0.42 | ✓ |  | v1 built as the Kenneth Kaunda Wing of Mulungushi — [notes](landmarks/mulungushi.md) |
 | Manda Hill Mall | mall | 0.62 | ✓ |  | v2 built: the mall, the street under its portal frames, parking decks and gate, from the founder's photos — [notes](landmarks/manda-hill.md) |
-| East Park Mall | mall | 1.39 | ✓ |  | Inside the current map |
+| East Park Mall | mall | 1.39 | ✓ |  | v1 built: the mall, south strips, Builders Warehouse and amphitheatre, from the founder's photos — [notes](landmarks/east-park.md) |
 | Levy Junction Shopping Mall | mall | 3.44 | — |  |  |
 | National Heroes Stadium | venue | 4.64 | ✓ | ✓ | v1 built, with the Gabon Disaster Memorial — [notes](landmarks/heroes-stadium.md) |
 | University of Zambia (UNZA) | education | 2.5 | — | ✓ | Great East Road campus; library block |

@@ -43,6 +43,7 @@ HAND_MODELLED_WAYS = {
     625074826,  # retail box inside the Society Business Park podium
     1061490855, 1061490873, 1062089194,  # Pyramid Tower podium (Microsoft footprints)
     1061966800,  # Indo Zambia Bank head office (Microsoft footprint)
+    614461977, 437561941, 802797488, 802797489,  # East Park Mall, Builders Warehouse, the south strips
 }
 
 ROADS = {  # highway tag -> (kind, width m); kinds 0-1 are "main"

@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { buildBankOfZambia } from './bank-of-zambia.js';
 import { buildCabinetOffice } from './cabinet-office.js';
 import { buildCathedral } from './cathedral.js';
+import { buildEastPark } from './east-park.js';
 import { buildEmbassyPark } from './embassy-park.js';
 import { buildFindeco } from './findeco.js';
 import { buildFreedomStatue } from './freedom-statue.js';
@@ -108,6 +109,12 @@ const REGISTRY = [
     build: buildIndoZambiaBank,
     // from Great East Road to the south-west, as in the founder's street photos
     view: (lm) => local(lm.frame, [-30, 7, -62], [30, 11, 6]),
+  },
+  {
+    name: 'East Park Mall',
+    build: buildEastPark,
+    // world frame; from the south-west over Thabo Mbeki Road
+    view: () => ({ position: new THREE.Vector3(1090, 95, 60), target: new THREE.Vector3(1360, 0, -150) }),
   },
   {
     name: 'Pyramid Tower',
