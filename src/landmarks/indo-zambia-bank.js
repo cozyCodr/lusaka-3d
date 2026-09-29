@@ -220,10 +220,10 @@ export function buildIndoZambiaBank() {
   const [g0, g1] = GLASS, GD = 14;
   const gl = glow(curtain(10, 3, '#222c3d'));
   const glSide = glow(curtain(5, 3, '#222c3d'));
-  put(box(g0, g1 - 1.2, 1.2, GD, 0, 0.9, white), 'high');
-  put(box(g0 + 1.2, g1 - 1.2, 1.2, GD - 1, 0.9, 10, [white, glSide, roof, roof, white, gl]), 'high');
+  // the two glass walls meet at the corner with no post between them
+  put(box(g0 + 0.4, g1 - 1.2, 0.4, GD, 0, 0.9, white), 'high');
+  put(box(g0 + 0.4, g1 - 1.2, 0.4, GD - 1, 0.9, 10, [white, glSide, roof, roof, white, gl]), 'high');
   put(box(g1 - 1.2, g1, 0, GD, 0, 11.2, white), 'high'); // pier against the tower
-  put(box(g0, g0 + 1.2, 0, 1.2, 0, 11.2, white), 'high'); // corner post
   put(box(g0, g1, 0, GD, 10, 11.2, white), 'high'); // top slab
   hedgeOn(g0 + 1, g1 - 1, 0.2, 11.2);
   put(box(g0 + 0.2, g0 + 0.9, 1.2, GD - 1, 11.2, 11.75, hedge), 'high');
