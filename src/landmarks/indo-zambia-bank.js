@@ -186,16 +186,24 @@ export function buildIndoZambiaBank() {
   put(box(c0 + 2, c1, D - 4, D, 0, cH - 1, [new THREE.MeshStandardMaterial({ map: rearStrip(), roughness: 0.7 }), white, roof, roof, white, white]), 'high');
 
   // ---------- along the road ----------
-  // terraced floors: recessed glazing, white slabs with hedges, pergola on top
+  // The terracotta corner block is an L in plan: its terracotta face on the
+  // road is the short leg; the long leg runs south-west behind the terraces.
+  // Four terraces sit in the angle of the L, each a white slab with a glass
+  // balustrade and a hedge, stepping up to a pergola (founder, 2026-09-29).
   const [t0, t1] = TERRACE;
-  const tH = 6 * FLOOR;
-  put(box(t0, t1, 2.2, 13, 0, tH, front(glow(curtain(6, 6)))), 'high');
-  for (let f = 1; f <= 6; f++) {
-    const y = f * FLOOR;
-    put(box(t0, t1, 0, 2.4, y - 0.5, y, white), 'high');
-    hedgeOn(t0, t1, 0.1, y);
+  const TERRACES = [6, 10.4, 14.9, 18.7], tTop = 22.5, back = 5;
+  put(box(t0, t1, back, 13, 0, tTop, front(glow(curtain(6, 5)))), 'high'); // the long leg's glazed face
+  put(box(t0, t1, 1.2, back, 0, TERRACES[0], front(glow(curtain(6, 1)))), 'high'); // ground floor
+  const balustrade = new THREE.MeshStandardMaterial({ color: 0xbcd6e0, transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.2, side: THREE.DoubleSide });
+  for (const y of TERRACES) {
+    put(box(t0, t1, 0, back, y - 0.55, y, white), 'high');
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(t1 - t0, 1.1), balustrade);
+    glass.position.set((t0 + t1) / 2, y + 0.55, 0.95);
+    put(glass, 'high', { cast: false });
+    hedgeOn(t0, t1, 0.1, y); // hedge on the slab edge, glass just behind it
   }
-  for (let u = t0 + 0.4; u < t1; u += 0.9) put(box(u, u + 0.2, 1, 11, tH + 2.2, tH + 2.5, dark), 'med');
+  put(box(t0, t1, 0, back, tTop - 0.5, tTop, white), 'high');
+  for (let u = t0 + 0.4; u < t1; u += 0.9) put(box(u, u + 0.2, 0.5, 11, tTop + 2, tTop + 2.3, dark), 'med'); // pergola
 
   // tower: pale blue panels and window columns, projecting name band
   const [w0, w1] = TOWER;
