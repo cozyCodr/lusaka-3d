@@ -13,6 +13,7 @@ import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
 import { buildGabonMemorial, buildHeroesStadium } from './heroes-stadium.js';
 import { buildHiltonGardenInn } from './hilton-garden-inn.js';
+import { buildIndoZambiaBank } from './indo-zambia-bank.js';
 import { buildMandaHill } from './manda-hill.js';
 import { buildMulungushi } from './mulungushi.js';
 import { buildPyramidTower } from './pyramid-tower.js';
@@ -101,6 +102,12 @@ const REGISTRY = [
     build: buildMandaHill,
     // from over Great East Road, looking at the front and the decks
     view: (lm) => local(lm.frame, [-70, 55, 200], [-10, 4, 20]),
+  },
+  {
+    name: 'Indo Zambia Bank',
+    build: buildIndoZambiaBank,
+    // from across Great East Road, as in the founder's street photos
+    view: (lm) => local(lm.frame, [20, 6, -75], [33, 12, 0]),
   },
   {
     name: 'Pyramid Tower',

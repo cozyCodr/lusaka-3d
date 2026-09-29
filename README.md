@@ -30,7 +30,7 @@ more — modelled by hand from photographs.
 | ![Pyramid Tower](docs/screenshots/pyramid-tower.jpg) **Pyramid Tower** — "Burj Kalingalinga", Zambia's new tallest building on Thabo Mbeki Road | ![Gabon Disaster Memorial](docs/screenshots/gabon-disaster-memorial.jpg) **Gabon Disaster Memorial** — for the 1993 national team, beside Heroes Stadium |
 | ![Lusaka National Museum](docs/screenshots/national-museum.jpg) **Lusaka National Museum** — with the steel figure out front | ![National Assembly at dusk](docs/screenshots/national-assembly-dusk.jpg) **At dusk** — lamps and windows come on |
 | ![Embassy Park](docs/screenshots/embassy-park.jpg) **Embassy Park** — the Sata, Mwanawasa and Chiluba mausoleums | ![Mulungushi International Conference Centre](docs/screenshots/mulungushi.jpg) **Mulungushi Conference Centre** — the Kenneth Kaunda Wing, with the 1970 Old Wing and the East Wing behind |
-| ![Manda Hill Mall](docs/screenshots/manda-hill.jpg) **Manda Hill Mall** — Zambia's first mall, with its parking decks on Great East Road | |
+| ![Manda Hill Mall](docs/screenshots/manda-hill.jpg) **Manda Hill Mall** — Zambia's first mall, with its parking decks on Great East Road | ![Indo Zambia Bank head office](docs/screenshots/indo-zambia-bank.jpg) **Indo Zambia Bank** — the head office on Great East Road |
 
 Each landmark has reference notes in [`docs/landmarks/`](docs/landmarks)
 saying what it was built from and which parts are measured, estimated or

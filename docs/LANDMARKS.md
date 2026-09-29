@@ -27,6 +27,7 @@ place in the catalogue is inside it; the "In current map" column is historical.
 | Place | Type | km from Parliament | In current map | Wikidata | Notes |
 |---|---|---|---|---|---|
 | National Assembly of Zambia | government | 0 | ✓ | ✓ | v1 built — [notes](landmarks/national-assembly.md) |
+| Indo Zambia Bank head office | bank | 0.93 | ✓ |  | v1 built on the founder's request, from the founder's photos — [notes](landmarks/indo-zambia-bank.md) |
 | Hilton Garden Inn + Society Business Park shell | hotel | 4.1 | ✓ |  | v2 built from the founder's photos — [notes](landmarks/hilton-garden-inn.md) |
 | Pyramid Tower ("Burj Kalingalinga") | hotel | 1.7 | ✓ |  | v3 built on the founder's request — [notes](landmarks/pyramid-tower.md) |
 | Findeco House | building | 4.46 | ✓ | ✓ | v1 built — [notes](landmarks/findeco-house.md) |
