@@ -305,6 +305,26 @@ export function buildMandaHill() {
   }));
   flag.position.set(DRIVE[1] + 2.75, 13, DECK_V - 4);
   put(f, flag, 'med', { cast: false });
+  // short bollards linked by a sagging chain along the road edge, in front
+  // of the palms (founder's description), either side of the drive
+  const FENCE_V = DECK_V + 5.2, SPAN = 2.4, POST_H = 0.75;
+  const posts = [];
+  const chainMat = new THREE.MeshStandardMaterial({ color: 0x3b3d40, roughness: 0.5, metalness: 0.6 });
+  for (const [u0, u1] of [[DECKS[0][0], DRIVE[0] - 7], [DRIVE[1] + 7, DECKS[1][1]]]) {
+    const n = Math.round((u1 - u0) / SPAN), pts = [];
+    for (let i = 0; i <= n; i++) {
+      const u = u0 + ((u1 - u0) * i) / n;
+      posts.push(u);
+      pts.push(new THREE.Vector3(u, POST_H - 0.1, FENCE_V));
+      if (i < n) pts.push(new THREE.Vector3(u + (u1 - u0) / n / 2, POST_H - 0.35, FENCE_V));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    put(f, new THREE.Mesh(new THREE.TubeGeometry(curve, pts.length * 4, 0.025, 4), chainMat), 'med', { cast: false });
+  }
+  const bollards = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.07, 0.08, POST_H, 8), chainMat, posts.length);
+  posts.forEach((u, i) => bollards.setMatrixAt(i, m4.makeTranslation(u, POST_H / 2, FENCE_V)));
+  put(f, bollards, 'med');
+
   const make = palmFactory();
   const r = rng(29);
   for (let u = -160; u <= 86; u += 9) {

@@ -30,7 +30,7 @@ redeveloped and extended in 2013–16. Model: `src/landmarks/manda-hill.js`.
 | Front | a street 13 m wide at ground level along the whole front; shopfronts at street level under a beige band of brand signs (SHOPRITE in large red letters twice, Game); steel portal frames every 10 m on stone-clad pillars across the street | high form (photos), medium sizes |
 | Entrances | white faces with the logo at the four OSM entrance points, each with a sloping steel canopy; the main one a white block bridged over the street, under two dark sloping sun-roofs; footbridges from the decks to the side entrances and across the drive | high form, medium sizes |
 | Parking decks | two levels: a ground car park and a top car park on a 0.6 m slab at 4.2 m, carried on columns every ~8 m, from the street to 77 m out; the two top car parks are joined by an 11 m bridge over the entrance drive near the mall; ramp opening in the south-west deck; rails on both edges | medium (aerial, drone and photos) |
-| Gate | two sign pylons 12 m on stone bases either side of the drive, the national flag, palms along the road | high form, medium positions |
+| Gate | two sign pylons 12 m on stone bases either side of the drive, the national flag, palms along the road with a low fence of short bollards linked by chain in front of them (founder) | high form, medium positions |
 
 ## Known gaps
 
