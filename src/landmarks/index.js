@@ -4,6 +4,7 @@
 // menu. To add a landmark: write src/landmarks/<slug>.js, register it here,
 // and add its OSM name to HAND_MODELLED in tools/osm_to_json.py.
 import * as THREE from 'three';
+import { buildAcaciaPark } from './acacia-park.js';
 import { buildBankOfZambia } from './bank-of-zambia.js';
 import { buildCabinetOffice } from './cabinet-office.js';
 import { buildCathedral } from './cathedral.js';
@@ -115,6 +116,12 @@ const REGISTRY = [
     build: buildEastPark,
     // world frame; from the south-west over Thabo Mbeki Road
     view: () => ({ position: new THREE.Vector3(1090, 95, 60), target: new THREE.Vector3(1360, 0, -150) }),
+  },
+  {
+    name: 'Acacia Park',
+    build: buildAcaciaPark,
+    // world frame; from over Great East Road, looking south-east over Ecobank to FNB
+    view: () => ({ position: new THREE.Vector3(930, 55, -250), target: new THREE.Vector3(1010, 0, -130) }),
   },
   {
     name: 'Pyramid Tower',

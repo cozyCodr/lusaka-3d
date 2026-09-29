@@ -106,6 +106,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] Manda Hill Mall (v2, from the founder's photos, web photos and the aerial: notes in docs/landmarks/manda-hill.md)
 - [x] Indo Zambia Bank head office (added by the founder, 2026-09-29; v1 from the founder's photos: notes in docs/landmarks/indo-zambia-bank.md)
 - [x] East Park Mall (v1, from the founder's photos, Google places and OSM: notes in docs/landmarks/east-park.md)
+- [x] Acacia Park office park (added by the founder, 2026-09-29; v1 from the founder's and Reiz photos: notes in docs/landmarks/acacia-park.md)
 - [x] National Heroes Stadium, with the Gabon Disaster Memorial (v1, from the founder's photos: notes in docs/landmarks/heroes-stadium.md)
 - [ ] **Verify:** each landmark checked against its reference photos and shown in confidence view
 
