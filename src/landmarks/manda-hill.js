@@ -73,18 +73,6 @@ function wordTex(text, color, bg, font = 'bold 150px sans-serif') {
     g.fillText(text, w / 2, h / 2 + 6);
   }, { repeat: false });
 }
-function deckEdgeTex() {
-  // deck faces: slab edge over the dark lower car park and its columns
-  const t = canvasTex(128, 64, (g, w, h) => {
-    g.fillStyle = '#23262a';
-    g.fillRect(0, 0, w, h);
-    g.fillStyle = '#cfc8b8';
-    g.fillRect(0, 0, w, 16);
-    g.fillRect(0, 0, 10, h);
-  });
-  t.repeat.set(1 / 8, 1 / DECK);
-  return t;
-}
 function stoneTex() {
   const t = canvasTex(64, 64, (g, w, h) => {
     const r = rng(5);
@@ -251,19 +239,37 @@ export function buildMandaHill() {
 
   // the two parking decks, with parking beneath, a ramp and rails
   const top = new THREE.MeshStandardMaterial({ map: parkingTex(), roughness: 0.95 });
-  const edge = new THREE.MeshStandardMaterial({ map: deckEdgeTex(), roughness: 0.9 });
+  // Each deck is a slab on a grid of columns: the top car park on it and
+  // the ground car park beneath.
+  const SLAB = 0.6;
+  const ground = new THREE.MeshStandardMaterial({ map: parkingTex(), roughness: 0.95, color: 0xb5b2aa });
+  const colGeo = new THREE.BoxGeometry(0.5, DECK - SLAB, 0.5);
+  const cols = [];
   DECKS.forEach(([u0, u1], k) => {
     const shape = new THREE.Shape([[u0, STREET], [u1, STREET], [u1, DECK_V], [u0, DECK_V]].map(([u, v]) => new THREE.Vector2(u, -v)));
     if (k === 0) {
       const [[r0, s0], [r1, s1]] = RAMP;
       shape.holes.push(new THREE.Path([[r0, s0], [r1, s0], [r1, s1], [r0, s1]].map(([u, v]) => new THREE.Vector2(u, -v))));
     }
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: DECK, bevelEnabled: false });
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: SLAB, bevelEnabled: false });
     geo.rotateX(-Math.PI / 2);
-    put(f, new THREE.Mesh(geo, [top, edge]), 'med');
+    const slab = new THREE.Mesh(geo, [top, white]);
+    slab.position.y = DECK - SLAB;
+    put(f, slab, 'med');
+    put(f, box(u0, STREET, u1, DECK_V, 0, 0.1, ground), 'med', { cast: false }); // the ground car park
+    for (let u = u0 + 1; u < u1; u += 8) {
+      for (let v = STREET + 1; v < DECK_V; v += 8.5) {
+        const [[r0, s0], [r1, s1]] = RAMP;
+        if (k === 0 && u > r0 - 1 && u < r1 + 1 && v > s0 - 1 && v < s1 + 1) continue;
+        cols.push([u, v]);
+      }
+    }
     rail(u0, u1, DECK_V, DECK);
     rail(u0, u1, STREET, DECK);
   });
+  const colMesh = new THREE.InstancedMesh(colGeo, white, cols.length);
+  cols.forEach(([u, v], i) => colMesh.setMatrixAt(i, m4.makeTranslation(u, (DECK - SLAB) / 2, v)));
+  put(f, colMesh, 'med');
   {
     const [[r0, s0], [r1, s1]] = RAMP;
     const len = s1 - s0, ramp = new THREE.Mesh(new THREE.BoxGeometry(r1 - r0 - 1, 0.3, Math.hypot(len, DECK)), asphalt);
@@ -272,11 +278,13 @@ export function buildMandaHill() {
     put(f, ramp, 'med');
   }
 
-  // entrance drive between the decks, with a footbridge where it meets the street
+  // entrance drive between the decks, and the bridge joining the two top
+  // car parks over it, near the mall
   put(f, box(DRIVE[0], STREET, DRIVE[1], DECK_V + 3, 0, 0.14, asphalt), 'med', { cast: false });
-  put(f, box(DRIVE[0], STREET, DRIVE[1], STREET + 4, DECK - 0.5, DECK, edge), 'high');
-  rail(DRIVE[0], DRIVE[1], STREET + 4, DECK);
-
+  put(f, box(DRIVE[0], STREET + 3, DRIVE[1], STREET + 14, DECK - 0.6, DECK, top), 'high');
+  put(f, box(DRIVE[0], STREET + 13.4, DRIVE[1], STREET + 14, DECK - 1.4, DECK - 0.6, white), 'high'); // edge beam
+  rail(DRIVE[0], DRIVE[1], STREET + 3, DECK);
+  rail(DRIVE[0], DRIVE[1], STREET + 14, DECK);
   // gate: sign pylons, the flagpole, palms along the road
   const signMat = new THREE.MeshStandardMaterial({ map: signTex(), roughness: 0.6 });
   const base = new THREE.MeshStandardMaterial({ color: 0x8c8479, roughness: 0.95 });
