@@ -82,7 +82,7 @@ Make OSM boxes read as Lusaka.
 - [ ] Window bands and floor lines on offices and flats; shopfront canopies on retail
 - [ ] Perimeter walls and gates around residential plots
 - [ ] Street trees (jacaranda, msasa, palms) along primary roads; scattered yard trees
-- [ ] Road markings and pavements on primary and secondary roads
+- [x] Road markings and pavements on primary and secondary roads (asphalt with wear, kerbed pavements, centre dashes and edge lines near the camera; tracks stay dirt)
 - [ ] **Verify:** a street-level view in a residential area and on Cairo Road reads as Lusaka to the founder
 
 ## P6 — Tier 1 landmarks

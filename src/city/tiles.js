@@ -8,6 +8,28 @@ import { CITY_Y } from '../terrain.js';
 const WORKERS = 3;
 const HYSTERESIS = 1.15; // unload only once this much further out than the load radius
 
+// Worn asphalt: soft patches of lighter and darker surface in world space,
+// so long roads do not read as flat ribbons. Markings vary with it too.
+function asphalt(mat) {
+  mat.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vRoadXZ;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvRoadXZ = (modelMatrix * vec4(transformed, 1.0)).xz;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+varying vec2 vRoadXZ;
+float roadHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float roadNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(roadHash(i), roadHash(i + vec2(1, 0)), f.x), mix(roadHash(i + vec2(0, 1)), roadHash(i + vec2(1, 1)), f.x), f.y);
+}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+diffuseColor.rgb *= 0.84 + 0.22 * roadNoise(vRoadXZ / 7.0) + 0.08 * roadNoise(vRoadXZ / 1.3);`);
+  };
+  return mat;
+}
+
 export function createTileManager({ scene, footprints, onMesh = () => {}, base = './data/tiles' }) {
   const group = new THREE.Group();
   group.name = 'city';
@@ -15,7 +37,7 @@ export function createTileManager({ scene, footprints, onMesh = () => {}, base =
 
   const mats = {
     buildings: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88 }),
-    roads: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide }),
+    roads: asphalt(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide })),
     areas: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
   };
   const CONF = { buildings: 'med', roads: 'high', areas: 'high' };
