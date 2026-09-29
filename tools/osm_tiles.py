@@ -50,6 +50,12 @@ ROADS = {  # highway tag -> (kind, width m); kinds 0-1 are "main"
     "service": (3, 4), "track": (3, 3),
     "footway": (4, 2), "path": (4, 1.6), "steps": (4, 2), "pedestrian": (4, 5), "cycleway": (4, 2),
 }
+# Ways whose OSM tagging does not match what is on the ground (checked on
+# imagery): way id -> (kind, width m).
+ROAD_FIXES = {
+    680357976: (3, 10.6),  # MICC: the drive along the palm avenue is ~10.6 m of concrete, not a 4 m lane
+    405672365: None,       # MICC: a "service road" through the palm avenue; the model draws the walk there
+}
 AEROWAYS = {"runway": (5, 45), "taxiway": (5, 20), "taxilane": (5, 12)}  # drawn like roads
 AREAS = {  # tag value -> kind: 0 grass, 1 pitch, 2 water, 3 wood, 4 paved, 5 runway
     "grass": 0, "park": 0, "garden": 0, "recreation_ground": 0, "golf_course": 0, "farmland": 0,
@@ -129,7 +135,7 @@ class Collector(osmium.SimpleHandler):
     def way(self, w):
         hw = w.tags.get("highway")
         aw = w.tags.get("aeroway")
-        spec = ROADS.get(hw) or AEROWAYS.get(aw)
+        spec = ROAD_FIXES[w.id] if w.id in ROAD_FIXES else ROADS.get(hw) or AEROWAYS.get(aw)
         if not spec or w.is_closed() and w.tags.get("area") == "yes":
             return
         coords = [(n.location.lat, n.location.lon) for n in w.nodes if n.location.valid()]

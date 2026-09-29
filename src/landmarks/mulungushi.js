@@ -211,15 +211,15 @@ const LAWNS = [
 const BASIN = { x: 480, z: -115, r: 8 };
 const STATUE = { x: 482.5, z: -157, face: Math.PI / 2 }; // faces east, down the flag walk
 const FLAGS = [[478, -200], [490, -152]]; // the striped walk between the north lawns and the drive
-// South of the plaza, from the yard outwards (aerial): a band of palms in two
-// rows with a paved walk between them, then the drive to the gate, ~11 m of
-// pale concrete (OSM way 680357976; the tiles draw it only 4 m wide, and draw
-// the walk, way 405672365, as a road), then a grass verge to the woods.
+// South of the plaza, from the yard outwards (aerial): a grass band with two
+// rows of palms and a paved walk between them, then the drive to the gate
+// (OSM way 680357976, drawn by the tiles at its real 10.6 m; tools/osm_tiles.py
+// ROAD_FIXES also drops the service road OSM maps through the avenue).
 const DRIVE_LINE = [[503, -179], [566, 25]];
-const EAST_Z = [-148, -26]; // where the palm avenue runs
-const DRIVE_HALF = 5.3, WALK_HALF = 1.5;
+const EAST_Z = [-150, -20]; // where the palm avenue runs
+const DRIVE_HALF = 5.6, WALK_HALF = 1.5; // grass stops just short of the drive's edge
 // palms along the north parking drive (the avenue rows are computed)
-const PALM_ROWS = [[[480, -229], [497, -182], 9]];
+const PALM_ROWS = [[[478, -231], [489, -183], 8]];
 
 function flatSlab(pts, y, thick, mat) {
   const m = extrudeFootprint(pts, [], thick, [mat, mat]);
@@ -272,12 +272,10 @@ function buildYard(podiumEdge) {
     m.userData.cast = false;
     put(m, 'med');
   };
-  const driveW = (z) => xAt(DRIVE_LINE, z) - DRIVE_HALF, driveE = (z) => xAt(DRIVE_LINE, z) + DRIVE_HALF;
+  const driveW = (z) => xAt(DRIVE_LINE, z) - DRIVE_HALF;
   const mid = (z) => (yardX(z) + driveW(z)) / 2;
   band(yardX, driveW, 0.16, grass); // the palm band
   band((z) => mid(z) - WALK_HALF, (z) => mid(z) + WALK_HALF, 0.2, new THREE.MeshStandardMaterial({ color: 0xc9bca3, roughness: 0.85 }));
-  band(driveW, driveE, 0.17, new THREE.MeshStandardMaterial({ color: 0xa9a59d, roughness: 0.9 }));
-  band(driveE, (z) => driveE(z) + 10, 0.16, grass);
   const avenue = [];
   for (const row of [(z) => (yardX(z) + mid(z) - WALK_HALF) / 2, (z) => (mid(z) + WALK_HALF + driveW(z)) / 2]) {
     for (let z = EAST_Z[0] + 3; z < EAST_Z[1] - 6; z += 9) avenue.push([row(z), z]);
