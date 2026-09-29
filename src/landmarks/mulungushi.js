@@ -195,17 +195,24 @@ function ring(outer, inner, y0, y1, mats) {
 // From the aerial and the founder's photos: a paved plaza with a round basin,
 // lawn panels, the African Union statue, a double row of steel flagpoles,
 // big grey urns, solar street lights and two avenues of palms.
-const PLAZA_EAST = [[528, -24], [520, -90], [509, -150], [500, -212], [440, -214]];
+// All traced from the aerial at 0.29 m/px. The paving stops at the drives and
+// roads around the yard (the tiles draw those), and covers the OSM footpaths
+// inside it.
+const YARD_EAST = [[525, -28], [531, -40], [502, -142], [500, -146], [476, -211], [446, -208]];
 const LAWNS = [
-  [[449, -200], [468, -202], [461, -154]],
-  [[476, -203], [497, -206], [500, -156], [472, -152]],
-  [[478, -96], [495, -96], [492, -62], [481, -70]],
-  [[497, -92], [512, -90], [520, -36], [499, -41]],
+  [[452, -200], [468, -202], [472, -170], [466, -165], [448, -172]],
+  [[468, -202], [476, -202], [486, -162], [480, -152], [472, -170]],
+  [[458, -162], [480, -143], [463, -135], [456, -150]],
+  [[482, -151], [491, -152], [491, -143], [483, -143]],
+  [[478, -93], [493, -95], [489, -60], [480, -80]],
+  [[498, -99], [507, -99], [507, -90], [498, -90]],
+  [[496, -84], [512, -83], [523, -53], [519, -37], [495, -38], [492, -58], [500, -63]],
 ];
-const BASIN = { x: 481, z: -115.5, r: 8 };
-const STATUE = { x: 486, z: -160, face: Math.PI / 2 }; // faces east, over the plaza
-const FLAGS = [[466, -151], [472, -201]]; // walkway between the north lawns
-const PALM_ROWS = [[[506, -184], [538, -48], 9], [[482, -238], [498, -155], 10]];
+const BASIN = { x: 480, z: -115, r: 8 };
+const STATUE = { x: 482.5, z: -157, face: Math.PI / 2 }; // faces east, down the flag walk
+const FLAGS = [[478, -200], [490, -152]]; // the striped walk between the north lawns and the drive
+// palms: along the north parking drive, and a double avenue on the east path
+const PALM_ROWS = [[[480, -229], [497, -182], 9], [[504, -140], [526, -45], 9], [[511, -140], [533, -45], 9]];
 
 function flatSlab(pts, y, thick, mat) {
   const m = extrudeFootprint(pts, [], thick, [mat, mat]);
@@ -233,7 +240,7 @@ function buildYard(podiumEdge) {
   // plaza and lawns (thin slabs just above the city ground)
   const plaza = [];
   for (let i = KK_FRONT[0]; i <= KK_FRONT[1]; i++) plaza.push(podiumEdge[i]);
-  const slabPlaza = flatSlab([...plaza, ...PLAZA_EAST], 0, 0.08, pave); // podium edge N->S, then back north
+  const slabPlaza = flatSlab([...plaza, ...YARD_EAST], 0, 0.08, pave); // podium edge N->S, then back north
   slabPlaza.userData.cast = false;
   put(slabPlaza, 'med');
   for (const l of LAWNS) {
@@ -325,12 +332,12 @@ function buildYard(podiumEdge) {
   urns.forEach(([x, z], i) => urnMesh.setMatrixAt(i, m4.makeTranslation(x, CITY_Y + 0.08, z)));
   put(urnMesh, 'med');
 
-  // solar street lights along the plaza's east edge
+  // solar street lights along the yard's east edge, just inside the paving
   const lightPts = [];
-  for (let i = 0; i < PLAZA_EAST.length - 1; i++) {
-    const [a, b] = [PLAZA_EAST[i], PLAZA_EAST[i + 1]];
+  for (let i = 1; i < YARD_EAST.length - 1; i++) {
+    const [a, b] = [YARD_EAST[i], YARD_EAST[i + 1]];
     const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 18);
-    for (let j = 0; j < n; j++) lightPts.push([a[0] + ((b[0] - a[0]) * j) / n - 2, a[1] + ((b[1] - a[1]) * j) / n]);
+    for (let j = 0; j < n; j++) lightPts.push([a[0] + ((b[0] - a[0]) * j) / n - 2.5, a[1] + ((b[1] - a[1]) * j) / n]);
   }
   const lampPole = new THREE.CylinderGeometry(0.08, 0.12, 7, 8);
   const panelGeo = new THREE.BoxGeometry(1.4, 0.06, 0.8);
@@ -355,7 +362,9 @@ function buildYard(podiumEdge) {
   for (const [a, b, gap] of PALM_ROWS) {
     const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / gap);
     for (let i = 0; i <= n; i++) {
-      const p = make(7 + r() * 2.5, r);
+      // date palms: stout trunks, broad crowns
+      const p = make(5.5 + r() * 2, r);
+      p.scale.set(1.7, 1, 1.7);
       p.position.set(a[0] + ((b[0] - a[0]) * i) / n, CITY_Y, a[1] + ((b[1] - a[1]) * i) / n);
       put(p, 'med');
     }
