@@ -43,7 +43,7 @@ place in the catalogue is inside it; the "In current map" column is historical.
 | Intercontinental Hotel | hotel | 2.91 | — |  |  |
 | Mulungushi International Conference Centre | venue | 0.59 | ✓ |  | v1 built: Old Wing, East Wing and Kenneth Kaunda Wing — [notes](landmarks/mulungushi.md) |
 | Kenneth Kaunda International Conference Centre | venue | 0.42 | ✓ |  | v1 built as the Kenneth Kaunda Wing of Mulungushi — [notes](landmarks/mulungushi.md) |
-| Manda Hill Mall | mall | 0.62 | ✓ |  | Inside the current map |
+| Manda Hill Mall | mall | 0.62 | ✓ |  | v1 built: the mall, parking decks and gate, from web photos and the aerial — [notes](landmarks/manda-hill.md) |
 | East Park Mall | mall | 1.39 | ✓ |  | Inside the current map |
 | Levy Junction Shopping Mall | mall | 3.44 | — |  |  |
 | National Heroes Stadium | venue | 4.64 | ✓ | ✓ | v1 built, with the Gabon Disaster Memorial — [notes](landmarks/heroes-stadium.md) |

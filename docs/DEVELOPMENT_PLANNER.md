@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P6 — Tier 1 landmarks: Manda Hill and East Park malls next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
+**Current priority: P6 — Tier 1 landmarks: East Park Mall next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
 
 ---
 
@@ -103,7 +103,8 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] State House and its grounds (v1, from the founder's photos: notes in docs/landmarks/state-house.md)
 - [x] Pyramid Tower, "Burj Kalingalinga" (added by the founder, 2026-09-27; v1 from the founder's photos and imagery)
 - [x] Mulungushi and Kenneth Kaunda International Conference Centres (v1: all three wings, from the founder's KK Wing photos, web photos of the older wings, Vertex AI renders and the aerial: notes in docs/landmarks/mulungushi.md)
-- [ ] Manda Hill Mall and East Park Mall
+- [x] Manda Hill Mall (v1, from web photos and the aerial: notes in docs/landmarks/manda-hill.md)
+- [ ] East Park Mall
 - [x] National Heroes Stadium, with the Gabon Disaster Memorial (v1, from the founder's photos: notes in docs/landmarks/heroes-stadium.md)
 - [ ] **Verify:** each landmark checked against its reference photos and shown in confidence view
 

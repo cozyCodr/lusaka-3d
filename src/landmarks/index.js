@@ -13,6 +13,7 @@ import { buildFreedomStatue } from './freedom-statue.js';
 import { buildGovernmentComplex } from './government-complex.js';
 import { buildGabonMemorial, buildHeroesStadium } from './heroes-stadium.js';
 import { buildHiltonGardenInn } from './hilton-garden-inn.js';
+import { buildMandaHill } from './manda-hill.js';
 import { buildMulungushi } from './mulungushi.js';
 import { buildPyramidTower } from './pyramid-tower.js';
 import { buildStateHouse } from './state-house.js';
@@ -94,6 +95,12 @@ const REGISTRY = [
     // world frame; from the south-east over the plaza: the Kenneth Kaunda Wing,
     // the Old and East Wings behind it
     view: () => ({ position: new THREE.Vector3(640, 75, 60), target: new THREE.Vector3(450, 2, -160) }),
+  },
+  {
+    name: 'Manda Hill Mall',
+    build: buildMandaHill,
+    // from over Great East Road, looking at the front and the decks
+    view: (lm) => local(lm.frame, [-70, 55, 200], [-10, 4, 20]),
   },
   {
     name: 'Pyramid Tower',
