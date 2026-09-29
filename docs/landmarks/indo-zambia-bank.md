@@ -20,13 +20,13 @@ just south-west of Manda Hill. Model: `src/landmarks/indo-zambia-bank.js`.
 
 | Element | Value | Confidence |
 |---|---|---|
-| Plan | ~66 × 27 m along Great East Road, front facing north-west | medium (aerial, footprint) |
-| North-east corner block | 14 m of front, 26 m high (7 floors); tall terracotta panel with slot windows and the IZB logo; end wall to the junction white with a diagonal terracotta field | high form (photos), medium sizes |
-| Terraced floors | 6 floors of recessed dark glazing behind white slabs with planted hedges on their edges | high form |
-| Tower | 13 m wide, 7 floors; teal panels, three columns of maroon glazing, white INDO ZAMBIA BANK fascia | high form |
-| Glass block | 7.5 m glazed ground floor, planted slab, two floors of dark glazing set back in a white frame | high form |
-| South-west tower | white, 5 floors, IZB logo; dark entrance canopy on white columns over the forecourt | high form, medium sizes |
-| Street | grass verge, black railing, small fan palms, solar street lights | high form |
+| Plan | ~66 × 27 m along Great East Road, front facing north-west; front widths measured off the founder's street elevation | medium (aerial, photo) |
+| North-east corner block | 7 m of front, 25.5 m, the tallest part: a white edge with the IZB logo and a tan terracotta face with slot windows; end wall to the junction white with a diagonal terracotta field | high form (photos), medium sizes |
+| Terraced floors | 7.5 m of front: six white slabs with hedges on their edges over recessed glazing, a slatted pergola on top | high form |
+| Tower | 11.5 m, 23 m high: pale blue panels between five columns of dark and maroon glazing; a projecting white band with INDO ZAMBIA BANK; a white fin on its south-west edge | high form |
+| Glass block | 27 m, the widest part: a two-storey glass box (10 m) in a thick white frame with a hedge on top, under two cantilevered white trays of dark glazing (the upper overhanging more) and a white volume behind | high form, medium sizes |
+| Entrance tower | 13 m, 24 m high, white with the IZB logo; dark flat canopy on three white columns over the entrance | high form |
+| Street | grass verge, dark boundary wall and black railing, small fan palms, solar street lights | high form |
 
 ## Known gaps
 
