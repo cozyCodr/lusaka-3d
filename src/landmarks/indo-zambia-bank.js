@@ -245,8 +245,9 @@ export function buildIndoZambiaBank() {
   put(box(g0 + 0.4, g1 - 1.2, 0.4, GD - 1, 0.9, 10, [white, glSide, roof, roof, white, gl]), 'high');
   put(box(g1 - 1.2, g1, 0, GD, 0, 11.2, white), 'high'); // pier against the tower
   put(box(g0, g1, 0, GD, 10, 11.2, white), 'high'); // top slab
-  hedgeOn(g0 + 1, g1 - 1, 0.2, 11.2);
-  put(box(g0 + 0.2, g0 + 0.9, 1.2, GD - 1, 11.2, 11.75, hedge), 'high');
+  // hedges round the top of the frame, meeting at the corner
+  put(box(g0 + 0.2, g1 - 1.2, 0.2, 0.9, 11.2, 11.75, hedge), 'high');
+  put(box(g0 + 0.2, g0 + 0.9, 0.2, GD - 1, 11.2, 11.75, hedge), 'high');
   // two white trays of glazing above, overhanging the road and the forecourt
   const tray = (y0, y1, over, inset) => {
     const tg = glow(curtain(9, 1)), ts = glow(curtain(4, 1));
@@ -256,7 +257,7 @@ export function buildIndoZambiaBank() {
   };
   tray(12.2, 16, 1.2, 1.5);
   tray(16.9, 20.6, 2, 2.5);
-  put(box(g0 + 4, g1, 4, GD, 11.2, 23, white), 'high'); // white volume behind the trays
+  put(box(g0 + 4, g1, 6, GD, 11.2, 23, white), 'high'); // white volume behind the trays (behind both glass faces)
 
   // entrance tower behind the glass box, canopy out over the forecourt
   const [e0, e1, ev0, ev1] = ENTRY;
