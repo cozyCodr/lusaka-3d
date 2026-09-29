@@ -33,9 +33,12 @@ Model: `src/landmarks/east-park.js`.
 | Shoprite Select | stone sign pillar with the Shoprite logo on the north-east wing | medium |
 | South strips | charcoal-grey, 8.5 m, with the same canopies; Micmar and Sikale signs at the roundabout ends | medium |
 | Builders Warehouse | OSM outline, 10 m | medium |
+| Car parks | inside the OSM car parks, on the mall's axes: rows of 2.6 m bays with white lines either side of 6.5 m aisles; a planted island (kerb, grass, iris) every 11 bays with a flat-crowned shade tree or a twin-headed lamp post; ~40% of bays hold a parked car. Nothing is placed within a road's width + margin of OSM's drives and aisles (data/landmarks/east-park-roads.json) | medium (layout generated, not surveyed) |
 | Amphitheatre | stage under a curved roof over a lawn striped with paving, on the east lawn | low (position guessed) |
 
 ## Known gaps
+
+- The bay rows are laid out by rule on the mall's axes, so they do not match the painted bays one for one.
 
 - Entrance positions and numbers are placed by rule, not surveyed; the directory map was too small to read.
 - Individual shop signs are generic apart from Shoprite, Galaxy Casino, Hungry Lion, Doğtaş, Pick n Pay, Edgars, Keg, Micmar, Sikale and Builders.
