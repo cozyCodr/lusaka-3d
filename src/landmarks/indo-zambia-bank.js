@@ -1,15 +1,17 @@
 // Indo Zambia Bank head office, corner of Great East Road and Addis Ababa
-// Drive, Rhodespark. A long building along Great East Road, stepping in
-// height. From the north-east (the Addis Ababa Drive junction): a narrow
-// tall corner block, a white edge with the IZB logo and a tan terracotta face
-// with slot windows (its end wall is white, split by a diagonal terracotta
-// field); terraced floors of white slabs with hedges on their edges under a
-// slatted pergola; a tower of pale blue panels between columns of dark and
-// maroon glazing, with a projecting white INDO ZAMBIA BANK band; the widest
-// part, a two-storey glass box in a thick white frame with a hedge on top,
-// under two cantilevered white trays of dark glazing; and a white tower with
-// the IZB logo behind a dark canopy on white columns at the entrance.
-// A black railing, grass verge, palms and solar street lights line the road.
+// Drive, Rhodespark. A long building along Great East Road. At the
+// north-east (junction) end: a wedge block, terracotta with slot windows on
+// the road side and white split by a diagonal terracotta field on the end
+// wall, with a white wing behind it of stacked cantilevered white boxes under
+// a hedge and pergola, and a tall terracotta strip with the logo at the rear
+// corner. Along the road: terraced floors with hedges on their slabs, then a
+// tower of pale blue panels and dark and maroon window columns under a
+// projecting INDO ZAMBIA BANK band. At the south-west end a two-storey glass
+// box in a thick white frame turns the corner onto the forecourt, under two
+// cantilevered white trays of glazing that wrap round too; behind it the
+// white entrance tower with the IZB logo, whose dark canopy on white columns
+// projects over the steps and the forecourt. The main body behind is white
+// with vertical window strips and solar panels on the roof.
 // Sources: docs/landmarks/indo-zambia-bank.md.
 import * as THREE from 'three';
 import { CITY_Y } from '../geo.js';
@@ -27,7 +29,9 @@ const L = 66, D = 27, FLOOR = 3.6;
 // Front segments, u ranges along the road.
 // Seen from the road, north-east is on the left: the photos read right to
 // left. u ranges, measured off the founder's street elevation (~66 m).
-const ENTRY = [0, 13], GLASS = [13, 40], TOWER = [40, 51.5], TERRACE = [51.5, 59], CORNER = [59, 66];
+const GLASS = [0, 26], TOWER = [26, 38], TERRACE = [38, 52], CORNER = [52, 66];
+const ENTRY = [0, 12, 14, D]; // u0, u1, v0, v1: behind the glass box
+const WEDGE_D = 12; // depth of the wedge block at the north-east front corner
 
 // ---------- textures (whole faces, UV 0..1; canvas y down; for a front
 // (-z) face the canvas left is the north-east end) ----------
@@ -102,19 +106,21 @@ const curtain = (cols, rows, tint = '#1d2632') => canvasTex(256, 128, (g, w, h) 
   for (let c = 0; c <= cols; c++) g.fillRect((c * w) / cols - 1.5, 0, 3, h);
   for (let r = 0; r <= rows; r++) g.fillRect(0, (r * h) / rows - 1.5, w, 3);
 }, { repeat: false });
-const entryFront = () => canvasTex(256, 512, (g, w, h) => {
-  g.fillStyle = WHITE;
-  g.fillRect(0, 0, w, h);
-  izbLogo(g, w * 0.5, h * 0.03, 34);
-  g.fillStyle = '#2a3440'; // glazed ground floor behind the canopy
-  g.fillRect(w * 0.1, h * 0.8, w * 0.8, h * 0.2);
-}, { repeat: false });
 const officeSide = () => canvasTex(128, 128, (g, w, h) => {
+  // white with vertical window strips (drone photo)
   g.fillStyle = WHITE;
   g.fillRect(0, 0, w, h);
-  g.fillStyle = '#2a3440';
-  g.fillRect(12, 30, w - 24, 60);
+  g.fillStyle = '#26303a';
+  g.fillRect(44, 0, 40, h);
+  g.fillStyle = '#e6e5df';
+  for (let y = 0; y < h; y += 32) g.fillRect(44, y, 40, 4);
 });
+const rearStrip = () => canvasTex(128, 512, (g, w, h) => {
+  g.fillStyle = TERRA;
+  g.fillRect(0, 0, w, h);
+  slots(g, 0, w, h * 0.12, h, 8, 20);
+  izbLogo(g, w * 0.18, h * 0.03, 26);
+}, { repeat: false });
 
 export function buildIndoZambiaBank() {
   const group = new THREE.Group();
@@ -126,13 +132,14 @@ export function buildIndoZambiaBank() {
   const roof = new THREE.MeshStandardMaterial({ color: 0x9c9a94, roughness: 0.9 });
   const hedge = new THREE.MeshStandardMaterial({ color: 0x4e7d2c, roughness: 1, flatShading: true });
   const dark = new THREE.MeshStandardMaterial({ color: 0x33373d, roughness: 0.5, metalness: 0.4 });
+  const panel = new THREE.MeshStandardMaterial({ color: 0x1c2a44, roughness: 0.3, metalness: 0.5 });
   const glows = [];
   const glow = (tex, o) => {
     const m = glowing(tex, { roughness: 0.2, metalness: 0.4, ...o });
     glows.push(m);
     return m;
   };
-  // box over u0..u1, v0..v1, y0..y1; materials [+x, -x, top, bottom, +z, -z(front)]
+  // box over u0..u1, v0..v1, y0..y1; materials [+x (NE), -x (SW), top, bottom, +z (rear), -z (front)]
   const box = (u0, u1, v0, v1, y0, y1, mats) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(u1 - u0, y1 - y0, v1 - v0), mats);
     m.position.set((u0 + u1) / 2, (y0 + y1) / 2, (v0 + v1) / 2);
@@ -141,30 +148,59 @@ export function buildIndoZambiaBank() {
   const front = (mat, rest = white) => [rest, rest, roof, roof, rest, mat];
   const hedgeOn = (u0, u1, v, y) => put(box(u0 + 0.2, u1 - 0.2, v, v + 0.7, y, y + 0.55, hedge), 'high');
 
-  // the body behind, with office windows
+  // main body behind: white with vertical window strips, solar panels on top
   const side = officeSide();
-  side.repeat.set(12, 6);
+  side.repeat.set(14, 5);
   const body = new THREE.MeshStandardMaterial({ map: side, roughness: 0.7 });
-  put(box(2, L - 2, 12, D, 0, 20, [body, body, roof, roof, body, body]), 'med');
+  put(box(ENTRY[1], CORNER[0], 13, D, 0, 19, [body, body, roof, roof, body, body]), 'med');
+  put(box(ENTRY[1] + 2, CORNER[0] - 2, 15, D - 2, 19.2, 19.5, panel), 'med', { cast: false });
 
-  // north-east corner block: the tallest part
+  // ---------- north-east end ----------
+  const [c0, c1] = CORNER;
   const cH = 25.5;
-  put(box(CORNER[0], CORNER[1], 0, 20, 0, cH, [new THREE.MeshStandardMaterial({ map: cornerEnd(), roughness: 0.7 }), white, roof, roof, white, new THREE.MeshStandardMaterial({ map: cornerFront(), roughness: 0.7 })]), 'high');
+  // the wedge block at the road corner
+  put(box(c0, c1, 0, WEDGE_D, 0, cH, [new THREE.MeshStandardMaterial({ map: cornerEnd(), roughness: 0.7 }), white, roof, roof, white, new THREE.MeshStandardMaterial({ map: cornerFront(), roughness: 0.7 })]), 'high');
+  // the white wing behind it, with cantilevered white boxes on its end wall
+  const wingH = 23;
+  put(box(c0, c1 - 2, WEDGE_D, D - 4, 0, wingH, front(white, white)), 'high');
+  const winMat = glow(curtain(4, 2, '#1f2833'));
+  for (let f = 0; f < 5; f++) {
+    const y0 = 3 + f * 4, off = f % 2 ? 0.6 : 0;
+    put(box(c1 - 2, c1 + 0.2 + off, WEDGE_D + 1 + off, WEDGE_D + 8 + off, y0, y0 + 3.4, [winMat, white, white, white, white, white]), 'high');
+  }
+  hedgeOn(c0, c1 - 2, WEDGE_D + 0.2, wingH);
+  for (let v = WEDGE_D + 0.6; v < D - 4.5; v += 0.9) put(box(c1 - 6, c1 - 2, v, v + 0.2, wingH + 2.2, wingH + 2.5, dark), 'med'); // pergola
+  const letters = canvasTex(512, 64, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = '#9a2433';
+    g.font = 'bold 44px sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('INDO ZAMBIA BANK', w / 2, h / 2 + 2);
+  }, { repeat: false });
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.25), new THREE.MeshStandardMaterial({ map: letters, transparent: true, roughness: 0.6 }));
+  sign.position.set(c1 - 1.9, wingH + 1.2, (WEDGE_D + D - 4) / 2);
+  sign.rotation.y = Math.PI / 2;
+  put(sign, 'high', { cast: false });
+  // the tall terracotta strip at the rear corner
+  put(box(c0 + 2, c1, D - 4, D, 0, cH - 1, [new THREE.MeshStandardMaterial({ map: rearStrip(), roughness: 0.7 }), white, roof, roof, white, white]), 'high');
 
+  // ---------- along the road ----------
   // terraced floors: recessed glazing, white slabs with hedges, pergola on top
+  const [t0, t1] = TERRACE;
   const tH = 6 * FLOOR;
-  put(box(TERRACE[0], TERRACE[1], 2.2, 12, 0, tH, front(glow(curtain(4, 6)))), 'high');
+  put(box(t0, t1, 2.2, 13, 0, tH, front(glow(curtain(6, 6)))), 'high');
   for (let f = 1; f <= 6; f++) {
     const y = f * FLOOR;
-    put(box(TERRACE[0], TERRACE[1], 0, 2.4, y - 0.5, y, white), 'high');
-    hedgeOn(TERRACE[0], TERRACE[1], 0.1, y);
+    put(box(t0, t1, 0, 2.4, y - 0.5, y, white), 'high');
+    hedgeOn(t0, t1, 0.1, y);
   }
-  for (let u = TERRACE[0] + 0.4; u < TERRACE[1]; u += 0.9) put(box(u, u + 0.2, 1, 11, tH + 2.2, tH + 2.5, dark), 'med'); // pergola slats
-  put(box(TERRACE[0], TERRACE[0] + 0.3, 1, 11, tH, tH + 2.5, dark), 'med');
+  for (let u = t0 + 0.4; u < t1; u += 0.9) put(box(u, u + 0.2, 1, 11, tH + 2.2, tH + 2.5, dark), 'med');
 
   // tower: pale blue panels and window columns, projecting name band
+  const [w0, w1] = TOWER;
   const twH = 23;
-  put(box(TOWER[0], TOWER[1], 0, 14, 0, twH, front(glow(towerFront()))), 'high');
+  put(box(w0, w1, 0, 14, 0, twH, front(glow(towerFront()))), 'high');
   const band = canvasTex(512, 64, (g, w, h) => {
     g.fillStyle = WHITE;
     g.fillRect(0, 0, w, h);
@@ -174,44 +210,56 @@ export function buildIndoZambiaBank() {
     g.textBaseline = 'middle';
     g.fillText('INDO ZAMBIA BANK', w / 2, h / 2 + 2);
   }, { repeat: false });
-  put(box(TOWER[0] + 0.5, TOWER[1] + 0.5, -1.2, 3, twH - 3.2, twH - 1, front(new THREE.MeshStandardMaterial({ map: band, roughness: 0.6 }))), 'high');
-  put(box(TOWER[0], TOWER[1], 0, 14, twH, twH + 0.8, white), 'high');
-  put(box(TOWER[0] - 0.6, TOWER[0], -0.6, 14, 0, twH + 0.8, white), 'high'); // white fin on its south-west edge
+  put(box(w0 + 0.5, w1 + 0.5, -1.2, 3, twH - 3.2, twH - 1, front(new THREE.MeshStandardMaterial({ map: band, roughness: 0.6 }))), 'high');
+  put(box(w0, w1, 0, 14, twH, twH + 0.8, white), 'high');
+  put(box(w0 - 0.6, w0, -0.6, 14, 0, twH + 0.8, white), 'high');
 
-  // the glass block: a two-storey glass box in a thick white frame with a
-  // hedge on top, and two cantilevered white trays of dark glazing above
-  const [g0, g1] = GLASS;
-  put(box(g0 + 1.2, g1 - 1.2, 1.2, 16, 0, 10, front(glow(curtain(10, 3, '#222c3d')))), 'high');
-  put(box(g0, g0 + 1.2, 0, 16, 0, 11.2, white), 'high');
-  put(box(g1 - 1.2, g1, 0, 16, 0, 11.2, white), 'high');
-  put(box(g0, g1, 0, 16, 10, 11.2, white), 'high');
+  // ---------- south-west end ----------
+  // glass box turning the corner: glazed on the road and forecourt sides,
+  // in a thick white frame, on a white plinth, a hedge on top
+  const [g0, g1] = GLASS, GD = 14;
+  const gl = glow(curtain(10, 3, '#222c3d'));
+  const glSide = glow(curtain(5, 3, '#222c3d'));
+  put(box(g0, g1 - 1.2, 1.2, GD, 0, 0.9, white), 'high');
+  put(box(g0 + 1.2, g1 - 1.2, 1.2, GD - 1, 0.9, 10, [white, glSide, roof, roof, white, gl]), 'high');
+  put(box(g1 - 1.2, g1, 0, GD, 0, 11.2, white), 'high'); // pier against the tower
+  put(box(g0, g0 + 1.2, 0, 1.2, 0, 11.2, white), 'high'); // corner post
+  put(box(g0, g1, 0, GD, 10, 11.2, white), 'high'); // top slab
   hedgeOn(g0 + 1, g1 - 1, 0.2, 11.2);
-  const tray = (y0, y1, over, u0) => {
-    put(box(u0, g1, 2.5, 16, y0, y1, front(glow(curtain(9, 1)))), 'high');
-    put(box(u0 - 0.6, g1 + 0.3, 2.5 - over, 16, y1, y1 + 0.9, white), 'high'); // slab over
-    put(box(u0 - 0.6, u0, 2.5 - over, 16, y0, y1, white), 'high'); // end cheek
+  put(box(g0 + 0.2, g0 + 0.9, 1.2, GD - 1, 11.2, 11.75, hedge), 'high');
+  // two white trays of glazing above, overhanging the road and the forecourt
+  const tray = (y0, y1, over, inset) => {
+    const tg = glow(curtain(9, 1)), ts = glow(curtain(4, 1));
+    put(box(g0 + inset, g1, 2 + inset, GD, y0, y1, [white, ts, roof, roof, white, tg]), 'high');
+    put(box(g0 + inset - over, g1 + 0.3, 2 + inset - over, GD, y1, y1 + 0.9, white), 'high');
+    put(box(g0 + inset - over, g1 + 0.3, 2 + inset - over, GD, y0 - 0.5, y0, white), 'high');
   };
-  put(box(g0 + 4, g1, 1.5, 16, 11.2, 12.2, white), 'high');
-  tray(12.2, 16, 1.2, g0 + 4.6);
-  tray(16.9, 20.6, 2.2, g0 + 6);
-  put(box(g0 + 3, g1, 4, 16, 11.2, 23, white), 'high'); // white volume behind the trays
+  tray(12.2, 16, 1.2, 1.5);
+  tray(16.9, 20.6, 2, 2.5);
+  put(box(g0 + 4, g1, 4, GD, 11.2, 23, white), 'high'); // white volume behind the trays
 
-  // south-west entrance tower with the IZB logo, dark canopy on white columns
+  // entrance tower behind the glass box, canopy out over the forecourt
+  const [e0, e1, ev0, ev1] = ENTRY;
   const eH = 24;
-  put(box(ENTRY[0], ENTRY[1], 1.5, 18, 0, eH, front(glow(entryFront(), { roughness: 0.6, metalness: 0 }))), 'high');
-  put(box(ENTRY[0] - 0.5, ENTRY[1] - 1, -7, 3, 5.6, 6.2, dark), 'high');
-  const col = new THREE.CylinderGeometry(0.45, 0.45, 5.6, 16);
-  for (const u of [1.5, 6, 10.5]) {
+  const logoFace = new THREE.MeshStandardMaterial({ map: canvasTex(256, 512, (g, w, h) => {
+    g.fillStyle = WHITE; g.fillRect(0, 0, w, h); izbLogo(g, w * 0.45, h * 0.03, 34);
+  }, { repeat: false }), roughness: 0.6 });
+  put(box(e0, e1, ev0, ev1, 0, eH, [white, logoFace, roof, roof, white, white]), 'high');
+  put(box(e0 - 9, e0 + 0.5, ev0 - 1, ev0 + 10, 5.6, 6.2, dark), 'high');
+  const col = new THREE.CylinderGeometry(0.45, 0.45, 5.6 - 0.9, 16);
+  for (const v of [ev0, ev0 + 4.5, ev0 + 9]) {
     const c = new THREE.Mesh(col, white);
-    c.position.set(u, 2.8, -6);
+    c.position.set(e0 - 8, 0.9 + (5.6 - 0.9) / 2, v);
     put(c, 'high');
   }
-  put(box(-16, ENTRY[1] + 2, -4, D, 0, 0.1, new THREE.MeshStandardMaterial({ color: 0xb9b2a4, roughness: 0.95 })), 'med', { cast: false });
-
-  // solar panels on the roofs (from the aerial)
-  const panel = new THREE.MeshStandardMaterial({ color: 0x1c2a44, roughness: 0.3, metalness: 0.5 });
-  put(box(3, 11, 4, 16, eH + 0.2, eH + 0.5, panel), 'med', { cast: false });
-  put(box(16, 48, 14, 24, 20.2, 20.5, panel), 'med', { cast: false });
+  // raised podium with steps down to the forecourt
+  put(box(e0 - 9, e0, ev0 - 1, ev1 - 2, 0, 0.9, white), 'high');
+  for (let k = 0; k < 5; k++) put(box(e0 - 9 - (k + 1) * 0.35, e0 - 9 - k * 0.35, ev0, ev0 + 8, 0, 0.9 - k * 0.18, white), 'med');
+  // forecourt paving, gate pillars and a stone-clad wall on its south-west side
+  put(box(-26, e0, -6, D, 0, 0.1, new THREE.MeshStandardMaterial({ color: 0xa9a49a, roughness: 0.95 })), 'med', { cast: false });
+  const stone = new THREE.MeshStandardMaterial({ color: 0x9a8a74, roughness: 0.95 });
+  put(box(-26, -25.4, 6, D, 0, 2.4, stone), 'med');
+  for (const v of [-6, 4]) put(box(-26.4, -24.6, v, v + 2, 0, 3.2, white), 'med');
 
   // along the road: grass verge, a dark boundary wall behind a black railing,
   // small fan palms, solar street lights
@@ -246,11 +294,10 @@ export function buildIndoZambiaBank() {
     put(p, 'med');
   }
   const steel = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, roughness: 0.4, metalness: 0.6 });
-  const solar = new THREE.MeshStandardMaterial({ color: 0x1d2a44, roughness: 0.3, metalness: 0.5 });
   for (const u of [18, 50]) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 9, 8), steel);
     pole.position.set(u, 4.5, -10);
-    const pv = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 1), solar);
+    const pv = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 1), panel);
     pv.position.set(u, 9.3, -10);
     pv.rotation.x = -0.35;
     put(pole, 'med');

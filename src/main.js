@@ -324,9 +324,18 @@ async function capture(name, view, { time = 0.12, width = 1600, height = 900 } =
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Do the per-frame work here too: a background tab gets no animation
+  // frames, so the loop alone would leave the sky and tiles behind.
+  const frame = () => {
+    city.update(controls.target, Math.max(0, camera.position.y - CITY_Y), performance.now());
+    sky.position.copy(camera.position);
+    placeSun();
+  };
+  frame();
   await wait(600);
-  for (let i = 0; i < 90 && city.stats.queued > 0; i++) await wait(250); // let nearby tiles stream in
+  for (let i = 0; i < 90 && (frame(), city.stats.queued > 0); i++) await wait(250); // let nearby tiles stream in
   await wait(800);
+  frame();
   composer.render();
   const url = renderer.domElement.toDataURL('image/jpeg', 0.88); // same task as the render
   const blob = await (await fetch(url)).blob();

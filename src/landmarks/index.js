@@ -106,8 +106,8 @@ const REGISTRY = [
   {
     name: 'Indo Zambia Bank',
     build: buildIndoZambiaBank,
-    // from across Great East Road, as in the founder's street photos
-    view: (lm) => local(lm.frame, [36, 5, -80], [33, 12, 0]),
+    // from Great East Road to the south-west, as in the founder's street photos
+    view: (lm) => local(lm.frame, [-30, 7, -62], [30, 11, 6]),
   },
   {
     name: 'Pyramid Tower',
