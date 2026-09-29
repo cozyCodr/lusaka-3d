@@ -29,6 +29,7 @@ exterior only; no interior or security layout is modelled.
 |---|---|---|
 | House outline | OSM; wings 8.6 m, taller centre 9.8 m (two storeys) | footprint high, heights medium |
 | Walls | red brick, white plinth, string course and cornice, white-framed sash windows | high |
+| North boundary wall | plain red face brick like the house, ~2.4 m with piers every 3 m, along Los Angeles Boulevard opposite the golf course, from the north-west corner to the workers' compound (OSM way 288543270, checked on imagery) | high line (OSM, imagery), medium height (founder) |
 | Parapet and roof | white balustrade; low red hipped roofs behind; brick chimneys | medium |
 | Entrance portico | semicircular, radius 6.8 m, four white columns, curved entablature and balustrade, steps, door with fanlight; on the OSM projection facing the turning circle | high form, medium size |
 | Garden loggia | four columns across two storeys, recessed brick, red steps to the lawn | high form, medium size |
@@ -40,5 +41,5 @@ exterior only; no interior or security layout is modelled.
 
 - Window rhythm is a repeating bay, not the real arrangement; the arched
   French windows of the garden front are not modelled.
-- The north, east and west boundaries of the grounds are not fenced in the model.
+- The east and west boundaries of the grounds are not walled in the model yet.
 - Outbuildings in the grounds are plain OSM boxes.

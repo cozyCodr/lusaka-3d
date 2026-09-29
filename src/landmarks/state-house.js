@@ -25,8 +25,15 @@ const LOGGIA = { x: 1993, z: 4028.6 };
 // Independence Avenue north carriageway (OSM way 98620621).
 const AVENUE = [[1772, 4215], [1885, 4261], [1906, 4270], [2254, 4415], [2306, 4439]];
 const GATE = { x: 1906, z: 4270 }; // where the OSM drive meets the avenue
-// Grounds boundary, read from Esri imagery at zoom 17 (~1.15 m/px).
-const GROUNDS = [[1815, 3600], [2340, 3600], [2300, 4180], [2292, 4400], [1790, 4205]];
+// Grounds boundary: the OSM walls on the west and north (checked on Esri
+// imagery), then east of the house from imagery at zoom 17 (~1.15 m/px).
+const GROUNDS = [[1757, 3445], [2042, 3561], [2458, 3477], [2496, 3633], [2340, 3650], [2300, 4180], [2292, 4400],
+  [1790, 4205], [1736, 4076], [1731, 4063], [1809, 3971], [1802, 3794], [1691, 3525]];
+// The boundary wall on the golf course side (north, along Los Angeles
+// Boulevard, the Lusaka Golf Club across the road), from the north-west
+// corner to the workers' compound: OSM way 288543270, checked on imagery.
+// Plain red face brick, the same as the house (founder, 2026-09-29).
+const NORTH_WALL = [[1757, 3445], [2042, 3561], [2458, 3477]];
 const LAWN = [[1850, 3610], [2300, 3610], [2270, 3960], [2100, 4000], [1900, 3985], [1860, 3900]];
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -266,6 +273,37 @@ function perimeter(m) {
   bars.forEach(([x, z], i) => bm.setMatrixAt(i, mx.makeTranslation(x, 1.1, z)));
   piers.forEach(([x, z], i) => pm.setMatrixAt(i, mx.makeTranslation(x, 1.4, z)));
   g.add(bm, pm);
+
+  // the face-brick wall on the golf course side, with piers every 3 m
+  const bricks = canvasTex(128, 64, (c, w, h) => {
+    c.fillStyle = '#9a4a33';
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = 'rgba(230,220,205,0.55)';
+    for (let r = 0; r < 8; r++) {
+      c.fillRect(0, r * 8, w, 1);
+      for (let x = (r % 2) * 16; x < w; x += 32) c.fillRect(x, r * 8, 1, 8);
+    }
+  });
+  const wallH = 2.4, wallMat = new THREE.MeshStandardMaterial({ map: bricks, roughness: 0.95 });
+  const pierPts = [];
+  for (let i = 1; i < NORTH_WALL.length; i++) {
+    const [ax, az] = NORTH_WALL[i - 1], [bx, bz] = NORTH_WALL[i];
+    const len = Math.hypot(bx - ax, bz - az);
+    const geo = new THREE.BoxGeometry(len, wallH, 0.23);
+    // brick courses in metres on the long faces
+    const uv = geo.attributes.uv;
+    for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * (len / 4), uv.getY(k) * (wallH / 2));
+    bricks.wrapS = bricks.wrapT = THREE.RepeatWrapping;
+    const w = new THREE.Mesh(geo, wallMat);
+    w.position.set((ax + bx) / 2, wallH / 2, (az + bz) / 2);
+    w.rotation.y = -Math.atan2(bz - az, bx - ax);
+    g.add(w);
+    for (let d = 0; d <= len; d += 3) pierPts.push([ax + ((bx - ax) * d) / len, az + ((bz - az) * d) / len, w.rotation.y]);
+  }
+  const pier = new THREE.InstancedMesh(new THREE.BoxGeometry(0.45, wallH + 0.25, 0.45), wallMat, pierPts.length);
+  const q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
+  pierPts.forEach(([x, z, ry], i) => pier.setMatrixAt(i, mx.compose(new THREE.Vector3(x, (wallH + 0.25) / 2, z), q.setFromAxisAngle(up, ry), one)));
+  g.add(pier);
   return tag(g, 'med');
 }
 
