@@ -103,7 +103,7 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [x] State House and its grounds (v1, from the founder's photos: notes in docs/landmarks/state-house.md)
 - [x] Pyramid Tower, "Burj Kalingalinga" (added by the founder, 2026-09-27; v1 from the founder's photos and imagery)
 - [x] Mulungushi and Kenneth Kaunda International Conference Centres (v1: all three wings, from the founder's KK Wing photos, web photos of the older wings, Vertex AI renders and the aerial: notes in docs/landmarks/mulungushi.md)
-- [x] Manda Hill Mall (v1, from web photos and the aerial: notes in docs/landmarks/manda-hill.md)
+- [x] Manda Hill Mall (v2, from the founder's photos, web photos and the aerial: notes in docs/landmarks/manda-hill.md)
 - [ ] East Park Mall
 - [x] National Heroes Stadium, with the Gabon Disaster Memorial (v1, from the founder's photos: notes in docs/landmarks/heroes-stadium.md)
 - [ ] **Verify:** each landmark checked against its reference photos and shown in confidence view

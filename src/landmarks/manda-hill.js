@@ -1,9 +1,11 @@
 // Manda Hill Mall, Great East Road: Zambia's first mall, rebuilt 2013–16.
-// A long two-level block of shops facing south-east onto the road, with a
-// row of dark steel canopy frames along its front, a white atrium box and a
-// projecting white entrance block in the middle. In front, two raised parking
-// decks over a lower car park, split by the entrance drive, with palms along
-// the road and the tall Manda Hill sign pylons at the gate.
+// A long block of shops facing south-east onto the road. A street runs along
+// its whole front at ground level, under steel portal frames on stone-clad
+// pillars, between the shopfronts and two raised parking decks (with more
+// parking beneath). Footbridges cross the street from the decks to the white
+// entrance blocks; the main entrance is a white block the street passes
+// under, shaded by big dark sloping sun-roofs, at the end of the entrance
+// drive from the road, with the sign pylons and palms at the gate.
 // Sources: docs/landmarks/manda-hill.md.
 import * as THREE from 'three';
 import { palmFactory } from '../site.js';
@@ -23,52 +25,83 @@ const FACADE_W = 357; // the shopfront panel along the front
 // Local frame (from the aerial): origin on the front facade by the main
 // entrance, +x (u) along the front to the north-east, +z (v) out to the road.
 const FRAME = { x: -190.2, z: 619.4, bearing: 139 };
-const DECK = 3.2; // parking deck level (and the shop floor)
-const DECKS = [[-165, -15], [-2, 88]]; // u ranges; v from 0 to DECK_V
+const STREET = 13; // the street along the front: v 0..STREET
+const DECK = 4.2; // deck level: cars park beneath
+const DECKS = [[-165, -15], [-2, 88]]; // u ranges; v from STREET to DECK_V
 const DECK_V = 77;
 const DRIVE = [-15, -2];
-const RAMP = [[-135, 22], [-112, 48]]; // opening in the south-west deck, ramp down
+const RAMP = [[-135, 30], [-112, 56]]; // opening in the south-west deck, ramp down
 const ATRIUM = [[-20, -44], [22, -6]]; // u/v corners; white box to 19 m
-const ENTRANCES = [[-3.3, 8.5, 20], [44, 52, 7], [-60, -51, 7.5], [-178, -168, 4]]; // u0, u1, depth (OSM)
+const MAIN = [-3.3, 8.5]; // main entrance block (OSM), bridged over the street
+const ENTRANCES = [[44, 52], [-60, -51], [-178, -168]]; // side entrances (OSM), with footbridges
 
 // ---------- textures ----------
 function frontTex() {
-  // one 24 m bay: lower car-park level, shopfronts, beige band with signs
+  // one 24 m bay, bottom-up: shopfronts at street level, a beige band of
+  // brand signs above
   const t = canvasTex(512, 256, (g, w, h) => {
     const y = (m) => h - (m / H) * h;
     g.fillStyle = '#e3dccd';
     g.fillRect(0, 0, w, h);
-    g.fillStyle = '#2a2d31';
-    g.fillRect(0, y(DECK), w, h - y(DECK)); // under the deck
-    g.fillStyle = '#20303f';
-    g.fillRect(6, y(DECK + 4.6), w - 12, y(DECK) - y(DECK + 4.6)); // glazing
-    g.strokeStyle = '#c9c4ba';
-    g.lineWidth = 3;
-    for (let x = 6; x < w; x += 64) { g.beginPath(); g.moveTo(x, y(DECK + 4.6)); g.lineTo(x, y(DECK)); g.stroke(); }
+    g.fillStyle = '#243444';
+    g.fillRect(0, y(4.8), w, y(0.3) - y(4.8)); // glazing
+    g.fillStyle = '#d6d0c4';
+    for (let x = 0; x < w; x += 64) g.fillRect(x, y(4.8), 8, y(0) - y(4.8)); // columns
+    g.fillStyle = '#4a4540';
+    g.fillRect(0, y(5.4), w, y(4.8) - y(5.4)); // fascia
     const r = rng(9);
     const signs = ['#c8102e', '#1d3f8f', '#f2f2f2', '#111', '#e87722', '#0a7d3b', '#7a1f5c'];
-    for (let x = 30; x < w - 60; x += 120) {
-      g.fillStyle = signs[Math.floor(r() * signs.length)];
-      g.fillRect(x, y(DECK + 7.4), 70 + r() * 30, 22);
+    for (let x = 24; x < w - 60; x += 110) {
+      for (const m of [7.2, 9.6]) {
+        if (r() < 0.35) continue;
+        g.fillStyle = signs[Math.floor(r() * signs.length)];
+        g.fillRect(x + r() * 10, y(m + 1.2), 64 + r() * 26, y(m) - y(m + 1.2));
+      }
     }
   });
   t.repeat.set(FACADE_W / 24, 1); // on a plane: UVs run 0..1
   return t;
 }
-function deckEdgeTex() {
-  // road face of the deck: columns and the dark lower car park
-  const t = canvasTex(128, 64, (g, w, h) => {
-    g.fillStyle = '#cfc8b8';
+function wordTex(text, color, bg, font = 'bold 150px sans-serif') {
+  return canvasTex(1024, 192, (g, w, h) => {
+    g.fillStyle = bg;
     g.fillRect(0, 0, w, h);
+    g.fillStyle = color;
+    g.font = font;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(text, w / 2, h / 2 + 6);
+  }, { repeat: false });
+}
+function deckEdgeTex() {
+  // deck faces: slab edge over the dark lower car park and its columns
+  const t = canvasTex(128, 64, (g, w, h) => {
     g.fillStyle = '#23262a';
-    g.fillRect(14, 16, w - 28, h - 16);
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = '#cfc8b8';
+    g.fillRect(0, 0, w, 16);
+    g.fillRect(0, 0, 10, h);
   });
   t.repeat.set(1 / 8, 1 / DECK);
   return t;
 }
+function stoneTex() {
+  const t = canvasTex(64, 64, (g, w, h) => {
+    const r = rng(5);
+    for (let y = 0; y < h; y += 8) {
+      for (let x = (y / 8) % 2 ? -8 : 0; x < w; x += 16) {
+        const v = 150 + Math.floor(r() * 50);
+        g.fillStyle = `rgb(${v},${v - 18},${v - 38})`;
+        g.fillRect(x, y, 15, 7);
+      }
+    }
+  });
+  t.repeat.set(1, 3);
+  return t;
+}
 function parkingTex() {
   const t = canvasTex(256, 256, (g, w, h) => {
-    g.fillStyle = '#6f6e6a';
+    g.fillStyle = '#8a877f';
     g.fillRect(0, 0, w, h);
     g.fillStyle = '#e8e6df';
     for (let x = 0; x < w; x += 32) { g.fillRect(x, 0, 3, 90); g.fillRect(x, h - 90, 3, 90); }
@@ -110,75 +143,16 @@ export function buildMandaHill() {
   const f = siteFrame(FRAME.x, FRAME.z, FRAME.bearing);
   group.add(f);
   const white = new THREE.MeshStandardMaterial({ color: 0xf3f2ee, roughness: 0.6 });
-  const steel = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.5, metalness: 0.6 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x9da2a8, roughness: 0.45, metalness: 0.6 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.5, metalness: 0.5, side: THREE.DoubleSide });
+  const stone = new THREE.MeshStandardMaterial({ map: stoneTex(), roughness: 0.95 });
+  const asphalt = new THREE.MeshStandardMaterial({ color: 0x4a4b4d, roughness: 0.95 });
+  const paving = new THREE.MeshStandardMaterial({ color: 0xc9c2b4, roughness: 0.9 });
   const box = (u0, v0, u1, v1, y0, y1, mat) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(u1 - u0, y1 - y0, v1 - v0), mat);
     m.position.set((u0 + u1) / 2, (y0 + y1) / 2, (v0 + v1) / 2);
     return m;
   };
-
-  // front facade: shopfronts and signs along the whole front
-  const front = glowing(frontTex(), { roughness: 0.8 });
-  const facade = new THREE.Mesh(new THREE.PlaneGeometry(FACADE_W, H), front);
-  facade.position.set(0.5, H / 2, 0.12);
-  put(f, facade, 'med', { cast: false });
-
-  // white atrium box and the white entrance blocks
-  const [[a0, b0], [a1, b1]] = ATRIUM;
-  put(f, box(a0, b0, a1, b1, H - 1, 19, white), 'high');
-  for (const [u0, u1, d] of ENTRANCES) put(f, box(u0 - 0.3, -0.5, u1 + 0.3, d + 0.3, 0, H + 1.5, white), 'med');
-  // flat white canopy over the main entrance, on columns
-  put(f, box(-6, 20, 12, 30, DECK + 5.2, DECK + 5.9, white), 'high');
-  const colGeo = new THREE.CylinderGeometry(0.35, 0.35, DECK + 5.2, 12);
-  for (const u of [-5, 3, 11]) {
-    const c = new THREE.Mesh(colGeo, white);
-    c.position.set(u, (DECK + 5.2) / 2, 29.3);
-    put(f, c, 'med');
-  }
-
-  // dark steel canopy frames along the front, at deck level
-  const posts = [];
-  for (let u = -176; u <= 176; u += 8) {
-    if (ENTRANCES.some(([u0, u1]) => u > u0 - 3 && u < u1 + 3)) continue;
-    posts.push(u);
-  }
-  const postGeo = new THREE.BoxGeometry(0.3, 7.5, 0.3);
-  const beamGeo = new THREE.BoxGeometry(0.25, 0.35, 7.3);
-  const pm = new THREE.InstancedMesh(postGeo, steel, posts.length);
-  const bm = new THREE.InstancedMesh(beamGeo, steel, posts.length);
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.14);
-  posts.forEach((u, i) => {
-    pm.setMatrixAt(i, m4.makeTranslation(u, DECK + 3.75, 7));
-    bm.setMatrixAt(i, m4.compose(new THREE.Vector3(u, DECK + 8, 3.5), q, new THREE.Vector3(1, 1, 1)));
-  });
-  put(f, pm, 'high');
-  put(f, bm, 'high');
-  // a strip of canopy roofing between the frames
-  put(f, box(-176, 0, 176, 7.3, DECK + 7.9, DECK + 8.1, new THREE.MeshStandardMaterial({ color: 0x55595f, roughness: 0.6, transparent: true, opacity: 0.55 })), 'med', { cast: false });
-
-  // the two parking decks: roofs of the lower car park, with ramps and rails
-  const top = new THREE.MeshStandardMaterial({ map: parkingTex(), roughness: 0.95 });
-  const edge = new THREE.MeshStandardMaterial({ map: deckEdgeTex(), roughness: 0.9 });
-  const footprints = [];
-  DECKS.forEach(([u0, u1], k) => {
-    const shape = new THREE.Shape([[u0, 0], [u1, 0], [u1, DECK_V], [u0, DECK_V]].map(([u, v]) => new THREE.Vector2(u, -v)));
-    if (k === 0) {
-      const [[r0, s0], [r1, s1]] = RAMP;
-      shape.holes.push(new THREE.Path([[r0, s0], [r1, s0], [r1, s1], [r0, s1]].map(([u, v]) => new THREE.Vector2(u, -v))));
-    }
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: DECK, bevelEnabled: false });
-    geo.rotateX(-Math.PI / 2);
-    put(f, new THREE.Mesh(geo, [top, edge]), 'med');
-    footprints.push([u0, u1]);
-  });
-  {
-    // ramp down through the south-west deck
-    const [[r0, s0], [r1, s1]] = RAMP;
-    const len = s1 - s0, ramp = new THREE.Mesh(new THREE.BoxGeometry(r1 - r0 - 1, 0.3, Math.hypot(len, DECK)), new THREE.MeshStandardMaterial({ color: 0x5c5b58, roughness: 0.95 }));
-    ramp.position.set((r0 + r1) / 2, DECK / 2, (s0 + s1) / 2);
-    ramp.rotation.x = Math.atan2(DECK, len);
-    put(f, ramp, 'low');
-  }
   const railTex = canvasTex(128, 32, (g, w, h) => {
     g.fillStyle = '#d9dbdc';
     g.fillRect(0, 0, w, 4);
@@ -187,27 +161,142 @@ export function buildMandaHill() {
   });
   railTex.repeat.set(1 / 4, 1);
   const railMat = new THREE.MeshStandardMaterial({ map: railTex, alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.5, roughness: 0.4 });
-  for (const [u0, u1] of DECKS) {
-    const r = new THREE.Mesh(new THREE.PlaneGeometry(u1 - u0, 1.1), railMat);
-    r.position.set((u0 + u1) / 2, DECK + 0.55, DECK_V);
+  // a rail along local u (alongU) or v, at height y
+  const rail = (a0, a1, at, y, alongU = true) => {
+    const r = new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(a1 - a0), 1.1), railMat);
+    if (alongU) r.position.set((a0 + a1) / 2, y + 0.55, at);
+    else { r.position.set(at, y + 0.55, (a0 + a1) / 2); r.rotation.y = Math.PI / 2; }
     put(f, r, 'med', { cast: false });
+  };
+
+  // shopfronts and the street along the front
+  const front = glowing(frontTex(), { roughness: 0.8 });
+  const facade = new THREE.Mesh(new THREE.PlaneGeometry(FACADE_W, H), front);
+  facade.position.set(0.5, H / 2, 0.12);
+  put(f, facade, 'med', { cast: false });
+  put(f, box(-178, 0.1, 176, 2.4, 0, 0.3, paving), 'med', { cast: false }); // pavement at the shops
+  put(f, box(-178, 2.4, 90, STREET, 0, 0.14, asphalt), 'med', { cast: false });
+  // big brand signs, from the founder's photos
+  const sign = (text, color, bg, u, y, w, hgt) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, hgt), new THREE.MeshStandardMaterial({ map: wordTex(text, color, bg), roughness: 0.6 }));
+    m.position.set(u, y, 0.3);
+    put(f, m, 'high', { cast: false });
+  };
+  sign('SHOPRITE', '#d0121b', '#e3dccd', -34, 9.5, 20, 3.6);
+  sign('SHOPRITE', '#d0121b', '#e3dccd', -118, 9.5, 18, 3.3);
+  sign('game', '#b3124e', '#f4f1ea', 40, 10, 9, 2.4);
+
+  // white atrium box and the white entrance faces
+  const [[a0, b0], [a1, b1]] = ATRIUM;
+  put(f, box(a0, b0, a1, b1, H - 1, 19, white), 'high');
+  const logo = new THREE.MeshStandardMaterial({ map: wordTex('MANDA HILL', '#8a2f45', '#f3f2ee', 'bold 130px serif'), roughness: 0.6 });
+  for (const [u0, u1] of [MAIN, ...ENTRANCES]) {
+    const w = u1 - u0 + 0.6;
+    const face = new THREE.Mesh(new THREE.BoxGeometry(w, H + 1.5, 1.4), [white, white, white, white, white, white]);
+    face.position.set((u0 + u1) / 2, (H + 1.5) / 2, 0.5);
+    put(f, face, 'high');
+    const l = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.9, w * 0.17), logo);
+    l.position.set((u0 + u1) / 2, 9.2, 1.25);
+    put(f, l, 'high', { cast: false });
+    // sloping steel canopy out over the street
+    const c = box(u0 - 4, 0, u1 + 4, 8, -0.2, 0.2, dark);
+    c.position.y = H - 1.2;
+    c.rotation.x = 0.12;
+    put(f, c, 'high');
+  }
+  // main entrance: a white block bridged over the street, and the dark
+  // sloping sun-roofs above it
+  put(f, box(MAIN[0], 1.2, MAIN[1], STREET, DECK, H, white), 'high');
+  for (const u of [MAIN[0] + 0.5, MAIN[1] - 0.5]) put(f, box(u - 0.35, STREET - 1, u + 0.35, STREET - 0.3, 0, DECK, white), 'med');
+  const sun1 = box(-18, -6, 20, 18, -0.25, 0.25, dark);
+  sun1.position.y = 18;
+  sun1.rotation.x = -0.1;
+  const sun2 = box(-30, -2, -8, 14, -0.25, 0.25, dark);
+  sun2.position.y = 15.5;
+  sun2.rotation.x = -0.1;
+  put(f, sun1, 'med');
+  put(f, sun2, 'med');
+  for (const [u, v] of [[-17, 16], [19, 16], [-29, 12], [-9, 12]]) put(f, box(u - 0.2, v - 0.2, u + 0.2, v + 0.2, H, 17.5, steel), 'low');
+
+  // portal frames across the street: stone-clad pillars and grey steel
+  const portals = [];
+  const clear = (u) => ![MAIN, ...ENTRANCES].some(([u0, u1]) => u > u0 - 4 && u < u1 + 4) && !(u > DRIVE[0] - 2 && u < DRIVE[1] + 2);
+  for (let u = -174; u <= 88; u += 10) if (clear(u)) portals.push(u);
+  const pillarGeo = new THREE.BoxGeometry(1, 5.5, 1);
+  const postGeo = new THREE.BoxGeometry(0.35, 5, 0.35);
+  const beamGeo = new THREE.BoxGeometry(0.35, 0.45, STREET - 2);
+  const pil = new THREE.InstancedMesh(pillarGeo, stone, portals.length * 2);
+  const pos = new THREE.InstancedMesh(postGeo, steel, portals.length * 2);
+  const bea = new THREE.InstancedMesh(beamGeo, steel, portals.length);
+  const m4 = new THREE.Matrix4();
+  portals.forEach((u, i) => {
+    for (const [k, v] of [[0, 2], [1, STREET - 0.5]]) {
+      pil.setMatrixAt(i * 2 + k, m4.makeTranslation(u, 2.75, v));
+      pos.setMatrixAt(i * 2 + k, m4.makeTranslation(u, 8, v));
+    }
+    bea.setMatrixAt(i, m4.makeTranslation(u, 10.5, STREET / 2 + 0.75));
+  });
+  put(f, pil, 'high');
+  put(f, pos, 'high');
+  put(f, bea, 'high');
+
+  // footbridges from the decks across the street to the side entrances
+  for (const [u0, u1] of ENTRANCES) {
+    if (u0 < DECKS[0][0]) continue;
+    const u = (u0 + u1) / 2;
+    put(f, box(u - 1.8, 1.2, u + 1.8, STREET, DECK - 0.4, DECK, paving), 'high');
+    rail(1.2, STREET, u - 1.8, DECK, false);
+    rail(1.2, STREET, u + 1.8, DECK, false);
   }
 
-  // entrance drive between the decks
-  const drive = box(DRIVE[0], 0, DRIVE[1], DECK_V + 2, 0, 0.12, new THREE.MeshStandardMaterial({ color: 0x46474a, roughness: 0.95 }));
-  put(f, drive, 'med', { cast: false });
+  // the two parking decks, with parking beneath, a ramp and rails
+  const top = new THREE.MeshStandardMaterial({ map: parkingTex(), roughness: 0.95 });
+  const edge = new THREE.MeshStandardMaterial({ map: deckEdgeTex(), roughness: 0.9 });
+  DECKS.forEach(([u0, u1], k) => {
+    const shape = new THREE.Shape([[u0, STREET], [u1, STREET], [u1, DECK_V], [u0, DECK_V]].map(([u, v]) => new THREE.Vector2(u, -v)));
+    if (k === 0) {
+      const [[r0, s0], [r1, s1]] = RAMP;
+      shape.holes.push(new THREE.Path([[r0, s0], [r1, s0], [r1, s1], [r0, s1]].map(([u, v]) => new THREE.Vector2(u, -v))));
+    }
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: DECK, bevelEnabled: false });
+    geo.rotateX(-Math.PI / 2);
+    put(f, new THREE.Mesh(geo, [top, edge]), 'med');
+    rail(u0, u1, DECK_V, DECK);
+    rail(u0, u1, STREET, DECK);
+  });
+  {
+    const [[r0, s0], [r1, s1]] = RAMP;
+    const len = s1 - s0, ramp = new THREE.Mesh(new THREE.BoxGeometry(r1 - r0 - 1, 0.3, Math.hypot(len, DECK)), asphalt);
+    ramp.position.set((r0 + r1) / 2, DECK / 2, (s0 + s1) / 2);
+    ramp.rotation.x = Math.atan2(DECK, len);
+    put(f, ramp, 'med');
+  }
 
-  // sign pylons at the gate
+  // entrance drive between the decks, with a footbridge where it meets the street
+  put(f, box(DRIVE[0], STREET, DRIVE[1], DECK_V + 3, 0, 0.14, asphalt), 'med', { cast: false });
+  put(f, box(DRIVE[0], STREET, DRIVE[1], STREET + 4, DECK - 0.5, DECK, edge), 'high');
+  rail(DRIVE[0], DRIVE[1], STREET + 4, DECK);
+
+  // gate: sign pylons, the flagpole, palms along the road
   const signMat = new THREE.MeshStandardMaterial({ map: signTex(), roughness: 0.6 });
-  const stone = new THREE.MeshStandardMaterial({ color: 0x8c8479, roughness: 0.95 });
-  for (const u of [DRIVE[0] - 4, DRIVE[1] + 4]) {
-    const body = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 1.4), [stone, stone, signMat, signMat, signMat, signMat]);
+  const base = new THREE.MeshStandardMaterial({ color: 0x8c8479, roughness: 0.95 });
+  for (const u of [DRIVE[0] - 5, DRIVE[1] + 5]) {
+    const body = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 1.4), [base, base, signMat, signMat, signMat, signMat]);
     body.position.set(u, 3 + 6, DECK_V + 4);
-    put(f, body, 'med');
-    put(f, box(u - 2, DECK_V + 2.8, u + 2, DECK_V + 5.2, 0, 3, stone), 'med');
+    put(f, body, 'high');
+    put(f, box(u - 2, DECK_V + 2.8, u + 2, DECK_V + 5.2, 0, 3, stone), 'high');
   }
-
-  // palms along the road
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 14, 8), steel);
+  pole.position.set(DRIVE[1] + 1.5, 7, DECK_V - 4);
+  put(f, pole, 'med');
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.6), new THREE.MeshStandardMaterial({
+    map: canvasTex(96, 64, (g, w, h) => {
+      g.fillStyle = '#198a00'; g.fillRect(0, 0, w, h);
+      for (const [i, c] of ['#de2010', '#111', '#ef7d00'].entries()) { g.fillStyle = c; g.fillRect(w * 0.55 + i * w * 0.15, h * 0.35, w * 0.15, h * 0.65); }
+    }, { repeat: false }), side: THREE.DoubleSide,
+  }));
+  flag.position.set(DRIVE[1] + 2.75, 13, DECK_V - 4);
+  put(f, flag, 'med', { cast: false });
   const make = palmFactory();
   const r = rng(29);
   for (let u = -160; u <= 86; u += 9) {
@@ -218,7 +307,6 @@ export function buildMandaHill() {
     put(f, p, 'med');
   }
 
-  // walk footprints: the deck edges (the mall body is added below)
   f.updateMatrixWorld(true);
   const toWorld = (pts) => pts.flatMap(([u, v]) => {
     const p = f.localToWorld(new THREE.Vector3(u, 0, v));
@@ -227,7 +315,7 @@ export function buildMandaHill() {
   return {
     group,
     frame: f,
-    footprints: [MALL.flat(), ...footprints.map(([u0, u1]) => toWorld([[u0, 0], [u1, 0], [u1, DECK_V], [u0, DECK_V]]))],
+    footprints: [MALL.flat(), ...DECKS.map(([u0, u1]) => toWorld([[u0, STREET], [u1, STREET], [u1, DECK_V], [u0, DECK_V]]))],
     setNight(n) {
       front.emissiveIntensity = n * 0.7;
     },
