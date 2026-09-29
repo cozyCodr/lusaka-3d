@@ -8,6 +8,7 @@
 // drive from the road, with the sign pylons and palms at the gate.
 // Sources: docs/landmarks/manda-hill.md.
 import * as THREE from 'three';
+import { CITY_Y } from '../geo.js';
 import { palmFactory } from '../site.js';
 import { rng, tag } from '../util.js';
 import { canvasTex, extrudeFootprint, glowing, siteFrame } from './lib.js';
@@ -198,10 +199,12 @@ export function buildMandaHill() {
   // sloping sun-roofs above it
   put(f, box(MAIN[0], 1.2, MAIN[1], STREET, DECK, H, white), 'high');
   for (const u of [MAIN[0] + 0.5, MAIN[1] - 0.5]) put(f, box(u - 0.35, STREET - 1, u + 0.35, STREET - 0.3, 0, DECK, white), 'med');
-  const sun1 = box(-18, -6, 20, 18, -0.25, 0.25, dark);
+  // the big sun-roofs are pale grey metal (founder's drone photo)
+  const pale = new THREE.MeshStandardMaterial({ color: 0xdcdedf, roughness: 0.5, metalness: 0.3, side: THREE.DoubleSide });
+  const sun1 = box(-18, -6, 20, 18, -0.25, 0.25, pale);
   sun1.position.y = 18;
   sun1.rotation.x = -0.1;
-  const sun2 = box(-30, -2, -8, 14, -0.25, 0.25, dark);
+  const sun2 = box(-30, -2, -8, 14, -0.25, 0.25, pale);
   sun2.position.y = 15.5;
   sun2.rotation.x = -0.1;
   put(f, sun1, 'med');
@@ -351,6 +354,87 @@ export function buildMandaHill() {
     p.scale.set(1.3, 1, 1.3);
     p.position.set(u, 0, DECK_V + 2.5);
     put(f, p, 'med');
+  }
+
+  // a big shade tree at the head of the drive, by the bridge
+  {
+    const [m0, m1, mv] = MEDIAN;
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 5, 7), new THREE.MeshStandardMaterial({ color: 0x5d4b3a, roughness: 1 }));
+    t.position.set((m0 + m1) / 2, 2.5, mv + 1);
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(5.5, 1), new THREE.MeshStandardMaterial({ color: 0x3f6e2c, roughness: 1, flatShading: true }));
+    crown.scale.set(1, 0.75, 1);
+    crown.position.set((m0 + m1) / 2, 8, mv + 1);
+    put(f, t, 'med');
+    put(f, crown, 'med');
+  }
+
+  // The south-west end, facing the ground-level car park: a sandstone-clad
+  // entrance block with the logo, a glazed entrance under a slim canopy, and
+  // bays of ribbed shutter panels with brand signs either side.
+  {
+    const [A, B] = [MALL[MALL.length - 1], MALL[0]]; // the SW end face
+    const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+    const end = new THREE.Group();
+    end.position.set((A[0] + B[0]) / 2, CITY_Y, (A[1] + B[1]) / 2);
+    // local x along the face (A->B), local +z outward (to the SW)
+    end.rotation.y = -Math.atan2(B[1] - A[1], B[0] - A[0]);
+    const nx = -(B[1] - A[1]) / len, nz = (B[0] - A[0]) / len; // normal: check it points away from the mall
+    const mid = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    if ((mid[0] + nx - -220) ** 2 + (mid[1] + nz - 590) ** 2 < (mid[0] - -220) ** 2 + (mid[1] - 590) ** 2) end.rotation.y += Math.PI;
+    group.add(end);
+    const shutters = canvasTex(256, 256, (g, w, h) => {
+      const y = (m) => h - (m / H) * h;
+      g.fillStyle = '#e6dcc4';
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = '#243444';
+      g.fillRect(8, y(4), w - 16, y(0) - y(4)); // shopfront glazing
+      g.fillStyle = '#c9bea6';
+      g.fillRect(8, y(8.6), w - 16, y(4.8) - y(8.6)); // ribbed shutter band
+      g.fillStyle = '#b3a88f';
+      for (let r = y(8.6); r < y(4.8); r += 6) g.fillRect(8, r, w - 16, 2);
+      g.fillStyle = '#d4c5a4';
+      g.fillRect(0, 0, 8, h); // pillar
+    });
+    shutters.repeat.set(len / 12, 1);
+    const shut = new THREE.Mesh(new THREE.PlaneGeometry(len, H), glowing(shutters, { roughness: 0.85 }));
+    shut.position.set(0, H / 2, 0.15);
+    put(end, shut, 'med', { cast: false });
+    const sand = canvasTex(128, 128, (g, w, h) => {
+      const r = rng(13);
+      for (let y = 0; y < h; y += 16) for (let x = (y / 16) % 2 ? -16 : 0; x < w; x += 32) {
+        const v = 185 + Math.floor(r() * 35);
+        g.fillStyle = `rgb(${v},${v - 28},${v - 70})`;
+        g.fillRect(x, y, 31, 15);
+      }
+    });
+    sand.repeat.set(4, 4);
+    const sandMat = new THREE.MeshStandardMaterial({ map: sand, roughness: 0.9 });
+    const W = 22;
+    const block = new THREE.Mesh(new THREE.BoxGeometry(W, H + 1.5, 2), sandMat);
+    block.position.set(0, (H + 1.5) / 2, 1);
+    put(end, block, 'high');
+    const glass = glowing(canvasTex(128, 64, (g, w, h) => {
+      g.fillStyle = '#20303f'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#b8bcc0'; for (let x = 0; x < w; x += 21) g.fillRect(x, 0, 3, h); g.fillRect(0, h * 0.45, w, 3);
+    }, { repeat: false }), { roughness: 0.2, metalness: 0.4 });
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(9, 8), glass);
+    door.position.set(0, 4, 2.02);
+    put(end, door, 'high', { cast: false });
+    put(end, box(-5.5, 2, 5.5, 4.2, 4.5, 5, white), 'high');
+    const logoEnd = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.6), logo);
+    logoEnd.position.set(0, 12.2, 2.03);
+    put(end, logoEnd, 'high', { cast: false });
+    const louvre = new THREE.Mesh(new THREE.PlaneGeometry(9, 2), new THREE.MeshStandardMaterial({ color: 0xc9c6bf, roughness: 0.6 }));
+    louvre.position.set(0, 10, 2.03);
+    put(end, louvre, 'med', { cast: false });
+    const endSign = (text, color, bg, x, y, w) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 0.16), new THREE.MeshStandardMaterial({ map: wordTex(text, color, bg, 'bold 88px sans-serif'), roughness: 0.6 }));
+      m.position.set(x, y, 0.3);
+      put(end, m, 'high', { cast: false });
+    };
+    endSign('INDO ZAMBIA BANK', '#ffffff', '#b3242c', 18, 11.2, 8);
+    endSign('FNB', '#ffffff', '#1e9aa1', 18, 9.6, 6);
+    endSign('FRESHCITY', '#1f7a2e', '#f4f1ea', -20, 10.4, 8);
   }
 
   f.updateMatrixWorld(true);
