@@ -27,9 +27,11 @@ const FACADE_W = 357; // the shopfront panel along the front
 const FRAME = { x: -190.2, z: 619.4, bearing: 139 };
 const STREET = 13; // the street along the front: v 0..STREET
 const DECK = 4.2; // deck level: cars park beneath
-const DECKS = [[-165, -15], [-2, 88]]; // u ranges; v from STREET to DECK_V
+const DECKS = [[-165, -3], [17, 88]]; // u ranges; v from STREET to DECK_V (aerial)
 const DECK_V = 77;
-const DRIVE = [-15, -2];
+const DRIVE = [-3, 17]; // in and out lanes (OSM ways 369606711, 405672369) and a planted median
+const MEDIAN = [5.5, 10, 30]; // u0, u1, v start
+const GATE = [-32, 34]; // no fence or palms here: the slip roads curve out to Great East Road
 const RAMP = [[-135, 30], [-112, 56]]; // opening in the south-west deck, ramp down
 const ATRIUM = [[-20, -44], [22, -6]]; // u/v corners; white box to 19 m
 const MAIN = [-3.3, 8.5]; // main entrance block (OSM), bridged over the street
@@ -280,7 +282,23 @@ export function buildMandaHill() {
 
   // entrance drive between the decks, and the bridge joining the two top
   // car parks over it, near the mall
-  put(f, box(DRIVE[0], STREET, DRIVE[1], DECK_V + 3, 0, 0.14, asphalt), 'med', { cast: false });
+  put(f, box(DRIVE[0], STREET, DRIVE[1], DECK_V, 0, 0.14, asphalt), 'med', { cast: false });
+  {
+    // the planted median down the drive: kerbed hedge and round trees
+    const [m0, m1, mv] = MEDIAN;
+    put(f, box(m0, mv, m1, DECK_V - 1, 0, 0.3, paving), 'med');
+    put(f, box(m0 + 0.4, mv + 0.4, m1 - 0.4, DECK_V - 1.4, 0.3, 1.1, new THREE.MeshStandardMaterial({ color: 0x3f6b2a, roughness: 1 })), 'high');
+    const trunk = new THREE.MeshStandardMaterial({ color: 0x6e5a45, roughness: 1 });
+    const leaf = new THREE.MeshStandardMaterial({ color: 0x4b7a2e, roughness: 1, flatShading: true });
+    for (let v = mv + 4; v < DECK_V - 3; v += 9) {
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 2.6, 6), trunk);
+      t.position.set((m0 + m1) / 2, 2.4, v);
+      const c = new THREE.Mesh(new THREE.IcosahedronGeometry(1.9, 0), leaf);
+      c.position.set((m0 + m1) / 2, 4.6, v);
+      put(f, t, 'med');
+      put(f, c, 'med');
+    }
+  }
   put(f, box(DRIVE[0], STREET + 3, DRIVE[1], STREET + 14, DECK - 0.6, DECK, top), 'high');
   put(f, box(DRIVE[0], STREET + 13.4, DRIVE[1], STREET + 14, DECK - 1.4, DECK - 0.6, white), 'high'); // edge beam
   rail(DRIVE[0], DRIVE[1], STREET + 3, DECK);
@@ -288,14 +306,14 @@ export function buildMandaHill() {
   // gate: sign pylons, the flagpole, palms along the road
   const signMat = new THREE.MeshStandardMaterial({ map: signTex(), roughness: 0.6 });
   const base = new THREE.MeshStandardMaterial({ color: 0x8c8479, roughness: 0.95 });
-  for (const u of [DRIVE[0] - 5, DRIVE[1] + 5]) {
+  for (const u of [DRIVE[0] - 4, DRIVE[1] + 4]) {
     const body = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 1.4), [base, base, signMat, signMat, signMat, signMat]);
-    body.position.set(u, 3 + 6, DECK_V + 4);
+    body.position.set(u, 3 + 6, DECK_V + 1.5);
     put(f, body, 'high');
-    put(f, box(u - 2, DECK_V + 2.8, u + 2, DECK_V + 5.2, 0, 3, stone), 'high');
+    put(f, box(u - 2, DECK_V + 0.3, u + 2, DECK_V + 2.7, 0, 3, stone), 'high');
   }
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 14, 8), steel);
-  pole.position.set(DRIVE[1] + 1.5, 7, DECK_V - 4);
+  pole.position.set((MEDIAN[0] + MEDIAN[1]) / 2, 7, DECK_V - 2);
   put(f, pole, 'med');
   const flag = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.6), new THREE.MeshStandardMaterial({
     map: canvasTex(96, 64, (g, w, h) => {
@@ -303,14 +321,14 @@ export function buildMandaHill() {
       for (const [i, c] of ['#de2010', '#111', '#ef7d00'].entries()) { g.fillStyle = c; g.fillRect(w * 0.55 + i * w * 0.15, h * 0.35, w * 0.15, h * 0.65); }
     }, { repeat: false }), side: THREE.DoubleSide,
   }));
-  flag.position.set(DRIVE[1] + 2.75, 13, DECK_V - 4);
+  flag.position.set((MEDIAN[0] + MEDIAN[1]) / 2 + 1.25, 13, DECK_V - 2);
   put(f, flag, 'med', { cast: false });
   // short bollards linked by a sagging chain along the road edge, in front
   // of the palms (founder's description), either side of the drive
   const FENCE_V = DECK_V + 5.2, SPAN = 2.4, POST_H = 0.75;
   const posts = [];
   const chainMat = new THREE.MeshStandardMaterial({ color: 0x3b3d40, roughness: 0.5, metalness: 0.6 });
-  for (const [u0, u1] of [[DECKS[0][0], DRIVE[0] - 7], [DRIVE[1] + 7, DECKS[1][1]]]) {
+  for (const [u0, u1] of [[DECKS[0][0], GATE[0]], [GATE[1], DECKS[1][1]]]) {
     const n = Math.round((u1 - u0) / SPAN), pts = [];
     for (let i = 0; i <= n; i++) {
       const u = u0 + ((u1 - u0) * i) / n;
@@ -328,7 +346,7 @@ export function buildMandaHill() {
   const make = palmFactory();
   const r = rng(29);
   for (let u = -160; u <= 86; u += 9) {
-    if (u > DRIVE[0] - 8 && u < DRIVE[1] + 8) continue;
+    if (u > GATE[0] - 2 && u < GATE[1] + 2) continue;
     const p = make(6.5 + r() * 2, r);
     p.scale.set(1.3, 1, 1.3);
     p.position.set(u, 0, DECK_V + 2.5);
