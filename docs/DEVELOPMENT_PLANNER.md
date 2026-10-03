@@ -155,7 +155,7 @@ mid-range phone as well as a laptop (see Mobile below).
 - [ ] Polish: loading screen, ambient sound (optional, off by default)
 
 **Mobile**
-- [ ] Quality tiers detected at start (and switchable in the menu): phones get lower pixel ratio, smaller shadow map, shorter tile radius, fewer trees, no ambient occlusion
+- [x] Quality tiers (src/quality.js): Low, Medium, High picked from the device at start (phones: Medium, or Low with ≤ 4 GB or ≤ 4 cores), switchable in the menu under Controls or with ?quality=; lower tiers draw fewer pixels, smaller or no shadows, no bloom, less city with closer haze, fewer workers (tree density hook in place)
 - [ ] Touch controls feel natural (pinch, two-finger turn, tap to glide); the menu fits a phone screen
 - [ ] **Verify:** 30+ fps on a mid-range Android phone and an iPhone over mobile data, 60 fps on a laptop; the founder signs off on the look
 

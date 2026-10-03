@@ -7,7 +7,38 @@ export const cls = {
   switchTrackOn: 'bg-amber-500',
   switchKnob: 'absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform',
   switchKnobOn: 'translate-x-4',
+  segWrap: 'mx-4 my-1.5 grid gap-1 rounded-xl bg-white/5 p-1',
+  segOn: 'rounded-lg px-2 py-1.5 text-sm transition-colors bg-amber-500 text-stone-950 font-medium',
+  segOff: 'rounded-lg px-2 py-1.5 text-sm transition-colors text-stone-300 hover:bg-white/10',
 };
+
+// A row of mutually exclusive choices. options: [[value, label, title?], ...].
+// Returns the element and set(value) to change the highlighted choice.
+export function segmented(label, options, current, onPick) {
+  const wrap = document.createElement('div');
+  wrap.className = cls.segWrap;
+  wrap.style.gridTemplateColumns = `repeat(${options.length}, minmax(0, 1fr))`;
+  wrap.setAttribute('role', 'radiogroup');
+  wrap.setAttribute('aria-label', label);
+  const buttons = options.map(([value, text, title]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'radio');
+    if (title) b.title = title;
+    b.textContent = text;
+    b.addEventListener('click', () => onPick(value));
+    wrap.append(b);
+    return [value, b];
+  });
+  const set = (v) => {
+    for (const [value, b] of buttons) {
+      b.setAttribute('aria-checked', String(value === v));
+      b.className = value === v ? cls.segOn : cls.segOff;
+    }
+  };
+  set(current);
+  return { el: wrap, set };
+}
 
 // A menu row that runs an action.
 export function menuItem(text, onClick) {
@@ -69,33 +100,13 @@ const MODE_LABELS = { map: 'Map', fly: 'Fly', walk: 'Walk' };
 
 // Segmented Map / Fly / Walk switch bound to the store.
 export function modeSwitch(store, onPick) {
-  const wrap = document.createElement('div');
-  wrap.className = 'mx-4 my-1.5 grid grid-cols-3 gap-1 rounded-xl bg-white/5 p-1';
-  wrap.setAttribute('role', 'radiogroup');
-  wrap.setAttribute('aria-label', 'Camera mode');
-  const buttons = Object.entries(MODE_LABELS).map(([mode, label], i) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.setAttribute('role', 'radio');
-    b.title = `${label} (${i + 1})`;
-    b.textContent = label;
-    b.addEventListener('click', () => {
-      onPick?.();
-      store.getState().setMode(mode);
-    });
-    wrap.append(b);
-    return [mode, b];
+  const options = Object.entries(MODE_LABELS).map(([mode, label], i) => [mode, label, `${label} (${i + 1})`]);
+  const seg = segmented('Camera mode', options, store.getState().mode, (mode) => {
+    onPick?.();
+    store.getState().setMode(mode);
   });
-  const render = ({ mode }) => {
-    for (const [m, b] of buttons) {
-      const on = m === mode;
-      b.setAttribute('aria-checked', String(on));
-      b.className = `rounded-lg px-2 py-1.5 text-sm transition-colors ${on ? 'bg-amber-500 text-stone-950 font-medium' : 'text-stone-300 hover:bg-white/10'}`;
-    }
-  };
-  render(store.getState());
-  store.subscribe(render);
-  return wrap;
+  store.subscribe(({ mode }) => seg.set(mode));
+  return seg.el;
 }
 
 // Help overlay (toggle with ?) and a short hint whenever the mode changes.

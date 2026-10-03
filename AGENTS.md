@@ -27,6 +27,8 @@ licensing.
   full URLs).
   - `main.js` — renderer, sky, lighting, camera moves, menu wiring, and the
     `window.lusaka` debug handle (including `capture` for screenshots).
+  - `quality.js` — Low / Medium / High tiers; read `quality` for anything
+    costly (pixel ratio, shadows, tile radius, tree density) so phones stay smooth.
   - `city/tiles.js` + `city/worker.js` — stream the OSM city in 1 km tiles
     (full near the focus, far beyond; radii grow with altitude).
   - `controls/rig.js` — Map / Fly / Walk camera modes; the mode lives in the

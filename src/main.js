@@ -11,15 +11,17 @@ import { createRig } from './controls/rig.js';
 import { CITY_Y, heightAt, SITE, sunVector } from './geo.js';
 import { buildLandmarks } from './landmarks/index.js';
 import { buildSite } from './site.js';
+import { isAuto, quality, setTier, tierName, TIERS } from './quality.js';
 import { store } from './store.js';
-import { menuItem, menuToggle, modeHint, modeSwitch, setupHelp, setupMenu } from './ui.js';
+import { menuItem, menuToggle, modeHint, modeSwitch, segmented, setupHelp, setupMenu } from './ui.js';
 import { lerp, smoothstep } from './util.js';
 
 // ---------- renderer, scene, camera ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Quality tier (quality.js): phones draw fewer pixels, softer shadows and less city.
+const renderer = new THREE.WebGLRenderer({ antialias: quality.antialias, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, quality.pixelRatio));
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = quality.shadows;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.getElementById('stage').appendChild(renderer.domElement);
@@ -53,6 +55,7 @@ scene.add(cityGround());
 const city = createTileManager({
   scene,
   footprints,
+  quality,
   onMesh: (m) => {
     if (!confidenceOn) return;
     m.userData.orig = m.material;
@@ -78,8 +81,8 @@ sky.material.uniforms.mieCoefficient.value = 0.004;
 sky.material.uniforms.mieDirectionalG.value = 0.85;
 
 const sun = new THREE.DirectionalLight(0xffffff, 3);
-sun.castShadow = true;
-sun.shadow.mapSize.set(4096, 4096);
+sun.castShadow = quality.shadows;
+sun.shadow.mapSize.set(quality.shadowMap, quality.shadowMap);
 Object.assign(sun.shadow.camera, { left: -350, right: 350, top: 350, bottom: -350, near: 1, far: 1600 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.04;
@@ -144,7 +147,7 @@ function setTime(t) {
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.2, 0.55, 0.85);
-composer.addPass(bloom);
+if (quality.bloom) composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
 // ---------- controls and flyover ----------
@@ -290,6 +293,12 @@ document.getElementById('layers').append(menuToggle('Confidence view', setConfid
 document.getElementById('controls').append(
   modeSwitch(store, () => endFly()),
   menuItem('Keyboard & mouse', go(() => help.toggle(true))),
+  Object.assign(document.createElement('p'), {
+    className: 'px-4 pb-0.5 pt-2 text-xs text-stone-400',
+    textContent: `Quality${isAuto ? ` (auto: ${quality.label})` : ''}`,
+  }),
+  segmented('Quality', [['auto', 'Auto', 'Pick for this device'], ...Object.entries(TIERS).map(([k, t]) => [k, t.label])],
+    isAuto ? 'auto' : tierName, (k) => k !== (isAuto ? 'auto' : tierName) && setTier(k)).el,
 );
 
 // ---------- loop ----------
@@ -348,6 +357,7 @@ async function capture(name, view, { time = 0.12, width = 1600, height = 900 } =
   return res.status;
 }
 
+const fogScale = quality.farR[0] / TIERS.high.farR[0];
 const clock = new THREE.Clock();
 renderer.setAnimationLoop((now) => {
   const dt = Math.min(clock.getDelta(), 0.1);
@@ -358,8 +368,9 @@ renderer.setAnimationLoop((now) => {
   const altitude = Math.max(0, camera.position.y - CITY_Y);
   const focusPoint = rig.mode === 'map' || fly ? controls.target : camera.position;
   city.update(focusPoint, altitude, now);
-  scene.fog.near = 500 + altitude * 1.5;
-  scene.fog.far = 5000 + altitude * 4;
+  // haze closes in on lower tiers so the edge of the loaded city stays hidden
+  scene.fog.near = (500 + altitude * 1.5) * fogScale;
+  scene.fog.far = (5000 + altitude * 4) * fogScale;
   if (now - (showStatus.t ?? 0) > 1000) {
     showStatus.t = now;
     showStatus();

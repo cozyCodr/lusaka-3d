@@ -5,7 +5,6 @@
 import * as THREE from 'three';
 import { CITY_Y } from '../terrain.js';
 
-const WORKERS = 3;
 const HYSTERESIS = 1.15; // unload only once this much further out than the load radius
 
 // Worn asphalt: soft patches of lighter and darker surface in world space,
@@ -30,7 +29,8 @@ diffuseColor.rgb *= 0.84 + 0.22 * roadNoise(vRoadXZ / 7.0) + 0.08 * roadNoise(vR
   return mat;
 }
 
-export function createTileManager({ scene, footprints, onMesh = () => {}, base = './data/tiles' }) {
+export function createTileManager({ scene, footprints, quality, onMesh = () => {}, base = './data/tiles' }) {
+  const { fullR: [full0, full1], farR: [far0, far1], workers } = quality;
   const group = new THREE.Group();
   group.name = 'city';
   scene.add(group);
@@ -47,7 +47,7 @@ export function createTileManager({ scene, footprints, onMesh = () => {}, base =
   const jobs = new Map();
   let nextId = 1, index = null, stats = { full: 0, far: 0, buildings: 0 };
 
-  const pool = Array.from({ length: WORKERS }, () => {
+  const pool = Array.from({ length: workers }, () => {
     const w = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
     w.busy = false;
     w.onmessage = ({ data }) => {
@@ -137,8 +137,8 @@ export function createTileManager({ scene, footprints, onMesh = () => {}, base =
   function update(focus, altitude, now = performance.now()) {
     if (!index || now - last < 300) return;
     last = now;
-    const fullR = THREE.MathUtils.clamp(900 + altitude * 1.2, 900, 2200);
-    const farR = THREE.MathUtils.clamp(5500 + altitude * 2.5, 5500, 14000);
+    const fullR = THREE.MathUtils.clamp(full0 + altitude * 1.2, full0, full1);
+    const farR = THREE.MathUtils.clamp(far0 + altitude * 2.5, far0, far1);
     const wanted = [];
     for (const t of tiles.values()) {
       const d = distTo(t, focus.x, focus.z);
