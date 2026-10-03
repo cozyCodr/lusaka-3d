@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P6 — Tier 1 landmarks: Levy Junction, UNZA and the hotels next** (P2 controls mostly done 2026-09-26; joystick, URL views and click-to-select remain) (founder call, 2026-09-26: Tier 1 order approved, build in order; ask the founder for reference photos before calling a landmark done).
+**Current priority: P10 — The experience: trees first** (founder call, 2026-10-03: make the whole city look good and give people something to do; start with trees, then facades and lighting, then the guided tour and click-to-learn; P6 landmarks continue alongside as photos arrive).
 
 ---
 
@@ -134,6 +134,30 @@ Tier 1 checklist there (reference notes, OSM outline, model, confidence tags).
 - [ ] Brighter lamp glow on the Parliament walkway
 - [ ] Seasonal look: dry-season haze vs rainy-season green
 - [ ] **Verify:** morning, noon, dusk and night all look intentional at city and street scale
+
+## P10 — The experience
+
+Make the whole city look good, not just the landmarks, and give visitors
+something to do. Phones are a first-class target: every item is checked on a
+mid-range phone as well as a laptop (see Mobile below).
+
+**Look**
+- [ ] Trees: instanced jacarandas, flamboyants, mangoes and palms along avenues and in residential plots, kept off roads and buildings; fewer and simpler far away
+- [ ] Building facades by type (OSM tags): windows on offices, iron roofs and boundary walls on houses, shopfronts on retail
+- [ ] Lighting: ambient occlusion, image-based sky light, better shadows, a warmer grade; golden hour by default
+- [ ] Ground: varied red dirt, dry grass and pavement instead of one flat green (terrain itself is P7)
+- [ ] Life: cars moving on main roads, a few pedestrians at the malls, flags moving
+
+**Experience**
+- [ ] Guided tour: a cinematic flight from landmark to landmark with a short card at each stop
+- [ ] Click to learn: landmark cards; name, street and type for any OSM building
+- [ ] Search and share: fly to a place by name; links that open at a view
+- [ ] Polish: loading screen, ambient sound (optional, off by default)
+
+**Mobile**
+- [ ] Quality tiers detected at start (and switchable in the menu): phones get lower pixel ratio, smaller shadow map, shorter tile radius, fewer trees, no ambient occlusion
+- [ ] Touch controls feel natural (pinch, two-finger turn, tap to glide); the menu fits a phone screen
+- [ ] **Verify:** 30+ fps on a mid-range Android phone and an iPhone over mobile data, 60 fps on a laptop; the founder signs off on the look
 
 ## Backlog (unordered)
 
