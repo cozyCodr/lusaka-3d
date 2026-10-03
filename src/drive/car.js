@@ -121,11 +121,24 @@ export async function loadCar({ color = 0xeeeeea } = {}) {
     m.needsUpdate = true;
   });
 
+  // headlight beams: a spotlight from each lamp, dipped onto the road ahead (left-hand
+  // traffic dips to the left). They stay in the scene at zero by day, so turning them
+  // on at dusk does not recompile every shader.
+  const beams = [1, -1].map((sx) => {
+    const spot = new THREE.SpotLight(0xfff1d8, 0, 110, 0.4, 0.55, 1);
+    spot.position.set(sx * 0.64, 0.72, 2.3);
+    spot.target.position.set(sx * 0.9 + 0.5, 0, 30);
+    spot.castShadow = false;
+    group.add(spot, spot.target);
+    return spot;
+  });
+
   return {
     group,
     wheels,
     // 0 day … 1 night; brake and reverse 0 or 1
     setLights(night, brake = 0, reverse = 0) {
+      for (const b of beams) b.intensity = night * 450;
       group.updateMatrixWorld();
       lamps.toCar.value.copy(group.matrixWorld).invert();
       lamps.night.value = night;
