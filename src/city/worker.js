@@ -21,6 +21,7 @@ const WALLS = [
 ];
 const IRON_ROOFS = [0x8d8f8f, 0x8a4b32, 0x4f6f55, 0x4b6177, 0x9b3b2e, 0x7b7d7f];
 const FLAT_ROOF = 0xb9b3a8;
+const SHED_ROOF = 0xa9aba7; // galvanised iron on warehouses and workshops
 // Road kinds (tools/osm_tiles.py): 0 primary/trunk, 1 secondary/tertiary,
 // 2 residential, 3 service (3 m wide: track), 4 footpaths, 5 runways/taxiways.
 const ROAD_COLORS = [0x3e3f41, 0x434446, 0x48494b, 0x4e4f51, 0xaaa59c, 0x46474a];
@@ -50,26 +51,33 @@ function rng(seed) {
   };
 }
 
+const NO_FACADE = [0, 0, 0, 0];
+
 class Batch {
   constructor() {
     this.pos = [];
     this.nrm = [];
     this.col = [];
+    this.fac = [];
   }
-  tri(a, b, c, color) {
+  // f: optional facade coordinates per corner, [u, v, kind, seed] (see FACADES)
+  tri(a, b, c, color, f) {
     const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
     const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
     let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
     const l = Math.hypot(nx, ny, nz) || 1;
     nx /= l; ny /= l; nz /= l;
-    for (const p of [a, b, c]) {
+    [a, b, c].forEach((p, i) => {
       this.pos.push(p[0], p[1], p[2]);
       this.nrm.push(nx, ny, nz);
       this.col.push(color[0], color[1], color[2]);
-    }
+      if (f) this.fac.push(...f[i]);
+    });
   }
   out() {
-    return { position: new Float32Array(this.pos), normal: new Float32Array(this.nrm), color: new Float32Array(this.col) };
+    const o = { position: new Float32Array(this.pos), normal: new Float32Array(this.nrm), color: new Float32Array(this.col) };
+    if (this.fac.length) o.facade = new Float32Array(this.fac);
+    return o;
   }
 }
 
@@ -87,6 +95,82 @@ function signedArea(pts) {
     a += x0 * z1 - x1 * z0;
   }
   return a / 2;
+}
+
+// Facades are drawn in the building shader (tiles.js) from per-vertex
+// coordinates: u counts window bays along a wall (a whole number per wall, so
+// no window wraps a corner), v counts floors from the ground, kind picks the
+// window pattern and seed varies lit windows at night. Roofs use u for the
+// corrugation of iron sheets.
+// Facade kinds: 0 plain, 1 house, 2 flats, 3 shops, 4 offices, 5 schools and
+// hospitals, 6 churches, 7 sheds and warehouses, 8 iron roof.
+// Per building type: [kind, floor height, bay width] (null floor: one tall storey).
+const FACADES = [[1, 3, 3.6], [2, 3, 3.4], [3, 4, 4.5], [4, 3.5, 1.8], [5, 3.5, 3.2], [6, null, 3], [7, null, 6], [0, 3, 4]];
+const facadeFor = (type, h) => (type === 8 ? (h < 5.5 ? FACADES[0] : h < 10 ? FACADES[4] : FACADES[3]) : FACADES[type] ?? FACADES[7]);
+const CORRUGATION = 0.8; // metres per sheet rib, as drawn
+const PITCH = Math.tan((22 * Math.PI) / 180), EAVE = 0.45;
+
+function convexHull(pts) {
+  const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const half = (list) => list.reduce((h, q) => {
+    while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], q) <= 0) h.pop();
+    h.push(q);
+    return h;
+  }, []);
+  return [...half(p).slice(0, -1), ...half(p.reverse()).slice(0, -1)];
+}
+
+// Smallest rectangle round a footprint: centre, long axis (ux, uz), length, width.
+function orientedBox(pts) {
+  const hull = convexHull(pts);
+  let best = null;
+  for (let i = 0; i < hull.length; i++) {
+    const [x0, z0] = hull[i], [x1, z1] = hull[(i + 1) % hull.length];
+    const l = Math.hypot(x1 - x0, z1 - z0);
+    if (l < 1e-6) continue;
+    const ux = (x1 - x0) / l, uz = (z1 - z0) / l;
+    let s0 = Infinity, s1 = -Infinity, t0 = Infinity, t1 = -Infinity;
+    for (const [x, z] of hull) {
+      const s = x * ux + z * uz, t = -x * uz + z * ux;
+      s0 = Math.min(s0, s); s1 = Math.max(s1, s); t0 = Math.min(t0, t); t1 = Math.max(t1, t);
+    }
+    const area = (s1 - s0) * (t1 - t0);
+    if (!best || area < best.area) {
+      const sc = (s0 + s1) / 2, tc = (t0 + t1) / 2;
+      best = { area, cx: sc * ux - tc * uz, cz: sc * uz + tc * ux, ux, uz, L: s1 - s0, W: t1 - t0 };
+    }
+  }
+  if (best && best.W > best.L) Object.assign(best, { ux: -best.uz, uz: best.ux, L: best.W, W: best.L });
+  return best;
+}
+
+// A hipped iron roof over a near-rectangular house, with eaves and a soffit.
+function hipRoof(b, box, y, color, seed) {
+  const { cx, cz, ux, uz } = box;
+  const a = box.L / 2 + EAVE, w = box.W / 2 + EAVE;
+  const r = Math.max(0, a - w), top = y + w * PITCH;
+  const P = (s, t, h) => [cx + s * ux - t * uz, h, cz + s * uz + t * ux];
+  const F = (u) => [u / CORRUGATION, 0, 8, seed];
+  // a face pointing up (or down, for the soffit)
+  const up = (p, q, o, f, col = color, dir = 1) => {
+    const ny = (q[2] - p[2]) * (o[0] - p[0]) - (q[0] - p[0]) * (o[2] - p[2]);
+    if (ny * dir > 0) b.tri(p, q, o, col, f);
+    else b.tri(p, o, q, col, [f[0], f[2], f[1]]);
+  };
+  const e = y; // eave height
+  // long slopes: ribs run down the slope, so u runs along the ridge
+  for (const t of [-w, w]) {
+    up(P(-a, t, e), P(a, t, e), P(r, 0, top), [F(-a), F(a), F(r)]);
+    up(P(-a, t, e), P(r, 0, top), P(-r, 0, top), [F(-a), F(r), F(-r)]);
+  }
+  // hip ends: u runs across
+  for (const s of [-1, 1]) up(P(s * a, -w, e), P(s * a, w, e), P(s * r, 0, top), [F(-w), F(w), F(0)]);
+  // soffit, so the roof is not hollow from below
+  const dark = color.map((v) => v * 0.55);
+  const none = [NO_FACADE, NO_FACADE, NO_FACADE];
+  up(P(-a, -w, e), P(a, w, e), P(a, -w, e), none, dark, -1);
+  up(P(-a, -w, e), P(-a, w, e), P(a, w, e), none, dark, -1);
 }
 
 function buildings(list, ox, oz, seed, wantFootprints) {
@@ -109,18 +193,42 @@ function buildings(list, ox, oz, seed, wantFootprints) {
     const y0 = gMin - 0.4, y1 = gMax + h;
     const pal = WALLS[type] ?? WALLS[8];
     const wall = rgb(pal[Math.floor(r() * pal.length)]).map((v) => Math.min(1, v * (0.96 + r() * 0.08)));
-    const roof = rgb(type === 0 || (type === 8 && h < 5) ? IRON_ROOFS[Math.floor(r() * IRON_ROOFS.length)] : FLAT_ROOF);
+    const area = Math.abs(signedArea(pts));
+    const house = type === 0 || (type === 8 && h < 5.5 && area < 400);
+    const iron = house || type === 6;
+    const roof = rgb(house ? IRON_ROOFS[Math.floor(r() * IRON_ROOFS.length)] : type === 6 ? SHED_ROOF : FLAT_ROOF);
+    const bseed = r();
+    // walls, in whole bays and floors
+    const [kind, fh, bay] = facadeFor(type, h);
+    const floors = fh ? Math.max(1, Math.round((y1 - gMin) / fh)) : 1;
+    const v = (y) => ((y - gMin) / (y1 - gMin)) * floors;
     for (let i = 0; i < pts.length; i++) {
       const [ax, az] = pts[i], [bx, bz] = pts[(i + 1) % pts.length];
-      b.tri([ax, y0, az], [ax, y1, az], [bx, y1, bz], wall);
-      b.tri([ax, y0, az], [bx, y1, bz], [bx, y0, bz], wall);
+      const bays = Math.round(Math.hypot(bx - ax, bz - az) / bay);
+      const u0 = bays ? 0 : -1, u1 = bays || -1; // walls too short for a window stay blank
+      const f = [[u0, v(y0), kind, bseed], [u0, v(y1), kind, bseed], [u1, v(y1), kind, bseed], [u1, v(y0), kind, bseed]];
+      b.tri([ax, y0, az], [ax, y1, az], [bx, y1, bz], wall, [f[0], f[1], f[2]]);
+      b.tri([ax, y0, az], [bx, y1, bz], [bx, y0, bz], wall, [f[0], f[2], f[3]]);
     }
+    // roof: hipped on rectangular houses, flat elsewhere (iron on houses and sheds)
+    const box = house && pts.length <= 12 ? orientedBox(pts) : null;
+    if (box && area > 0.85 * box.L * box.W && box.W > 3) {
+      hipRoof(b, box, y1 - 0.3, roof, bseed);
+      continue;
+    }
+    let ux = 1, uz = 0, longest = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const [ax, az] = pts[i], [bx, bz] = pts[(i + 1) % pts.length];
+      const l = Math.hypot(bx - ax, bz - az);
+      if (l > longest) [longest, ux, uz] = [l, (bx - ax) / l, (bz - az) / l];
+    }
+    const rf = (p) => (iron ? [(p[0] * ux + p[2] * uz) / CORRUGATION, 0, 8, bseed] : NO_FACADE);
     const idx = earcut(pts.flat());
     for (let i = 0; i < idx.length; i += 3) {
       const p = [pts[idx[i]], pts[idx[i + 1]], pts[idx[i + 2]]].map(([x, z]) => [x, y1, z]);
       const cross = (p[1][0] - p[0][0]) * (p[2][2] - p[0][2]) - (p[1][2] - p[0][2]) * (p[2][0] - p[0][0]);
-      if (cross < 0) b.tri(p[0], p[1], p[2], roof);
-      else b.tri(p[0], p[2], p[1], roof);
+      if (cross < 0) b.tri(p[0], p[1], p[2], roof, p.map(rf));
+      else b.tri(p[0], p[2], p[1], roof, [p[0], p[2], p[1]].map(rf));
     }
   }
   return { batch: b.out(), footprints };
@@ -369,6 +477,7 @@ self.onmessage = async ({ data: job }) => {
     out.trees = density > 0 ? trees(d, ox, oz, tile, density, seed) : new Float32Array(0);
     const transfer = [];
     for (const k of ['buildings', 'roads', 'areas']) transfer.push(out[k].position.buffer, out[k].normal.buffer, out[k].color.buffer);
+    if (out.buildings.facade) transfer.push(out.buildings.facade.buffer);
     for (const f of out.footprints) transfer.push(f.buffer);
     transfer.push(out.trees.buffer);
     self.postMessage(out, transfer);

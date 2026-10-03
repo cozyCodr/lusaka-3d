@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P10 — The experience: building facades and lighting next** (founder call, 2026-10-03: make the whole city look good and give people something to do; start with trees, then facades and lighting, then the guided tour and click-to-learn; P6 landmarks continue alongside as photos arrive).
+**Current priority: P10 — The experience: ground variety and the guided tour next** (founder call, 2026-10-03: make the whole city look good and give people something to do; start with trees, then facades and lighting, then the guided tour and click-to-learn; P6 landmarks continue alongside as photos arrive).
 
 ---
 
@@ -143,8 +143,10 @@ mid-range phone as well as a laptop (see Mobile below).
 
 **Look**
 - [x] Trees (src/city/trees.js, placed in the tile worker): msasa/acacia, jacaranda in flower, flamboyant, mango, palm and eucalyptus; avenues along main and residential roads, yards round houses, OSM woods and parks, scattered bush; a 2 m occupancy grid keeps them off roads, pavements, buildings, car parks, pitches and water, and a hull round each landmark keeps them off the hand-built grounds. ~77k on High at 60 fps (laptop), a tenth on Low; far tiles get a light scatter
-- [ ] Building facades by type (OSM tags): windows on offices, iron roofs and boundary walls on houses, shopfronts on retail
-- [ ] Lighting: ambient occlusion, image-based sky light, better shadows, a warmer grade; golden hour by default
+- [x] Building facades by type (OSM tags), drawn in the building shader from per-vertex bay and floor coordinates (no textures): windows sized for houses, flats, offices (ribbon glazing), schools and hospitals, churches and sheds; shopfronts with signboards on retail; hipped iron roofs on rectangular houses, corrugated iron on the rest and on warehouses; a darker plinth at the ground; a share of windows lit at night; distant walls fade to an average so they do not shimmer
+- [ ] Boundary walls round houses (needs plot outlines or a road-aware guess)
+- [x] Lighting: warmer low sun and golden haze, a colour grade (gentle contrast, warmth, vignette), golden hour by default (time 0.08), wall-base darkening as cheap contact occlusion; the sky light was already image-based
+- [ ] Screen-space ambient occlusion on High (GTAO needs work with the logarithmic depth buffer)
 - [ ] Ground: varied red dirt, dry grass and pavement instead of one flat green (terrain itself is P7)
 - [ ] Life: cars moving on main roads, a few pedestrians at the malls, flags moving
 

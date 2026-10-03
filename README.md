@@ -32,6 +32,7 @@ more — modelled by hand from photographs.
 | ![Embassy Park](docs/screenshots/embassy-park.jpg) **Embassy Park** — the Sata, Mwanawasa and Chiluba mausoleums | ![Mulungushi International Conference Centre](docs/screenshots/mulungushi.jpg) **Mulungushi Conference Centre** — the Kenneth Kaunda Wing, with the 1970 Old Wing and the East Wing behind |
 | ![Manda Hill Mall](docs/screenshots/manda-hill.jpg) **Manda Hill Mall** — Zambia's first mall, with its parking decks on Great East Road | ![Indo Zambia Bank head office](docs/screenshots/indo-zambia-bank.jpg) **Indo Zambia Bank** — the head office on Great East Road |
 | ![East Park Mall](docs/screenshots/east-park.jpg) **East Park Mall** — with the Galaxy Casino facade on Thabo Mbeki Road | ![Acacia Park](docs/screenshots/acacia-park.jpg) **Acacia Park** — Ecobank's pinwheel drum and the FNB head office |
+| ![Suburbs west of the centre](docs/screenshots/city-suburbs.jpg) **The OSM city** — hipped iron roofs, windows by building type, and trees in every yard | ![Cairo Road at dusk](docs/screenshots/city-dusk.jpg) **Dusk on Cairo Road** — a share of the city's windows lights up |
 
 Each landmark has reference notes in [`docs/landmarks/`](docs/landmarks)
 saying what it was built from and which parts are measured, estimated or

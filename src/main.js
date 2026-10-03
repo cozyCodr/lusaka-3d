@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { buildAssembly } from './building.js';
 import { cityGround, createTileManager } from './city/tiles.js';
 import { createFootprintIndex } from './collide.js';
@@ -152,6 +153,7 @@ const warm = new THREE.Color(0xffa860);
 const white = new THREE.Color(0xfff6ea);
 const fogDay = new THREE.Color(0xd4d9d6);
 const fogDusk = new THREE.Color(0x3b3445);
+const fogGold = new THREE.Color(0xe3cfae); // warm haze while the sun is low
 
 // t: 0 = morning (sun low in the east, lighting the front), 0.5 = noon, 1 = dusk.
 function setTime(t) {
@@ -162,18 +164,19 @@ function setTime(t) {
   placeSun();
 
   const day = smoothstep(elevation / 12);
-  const low = 1 - smoothstep((elevation - 5) / 30);
+  const low = 1 - smoothstep((elevation - 5) / 42);
   const night = smoothstep((4 - elevation) / 8);
   sun.intensity = 3.4 * day;
   sun.color.copy(white).lerp(warm, low);
   hemi.intensity = lerp(0.1, 0.45, day);
-  scene.fog.color.copy(fogDay).lerp(fogDusk, night);
+  scene.fog.color.copy(fogDay).lerp(fogGold, low * 0.7).lerp(fogDusk, night);
   renderer.toneMappingExposure = lerp(0.55, 0.75, night);
   bloom.strength = 0.12 + night * 0.9;
 
   assembly.setNight(night);
   site.setNight(night);
   for (const lm of landmarks) lm.setNight(night);
+  city.setNight(night);
 }
 
 // ---------- post ----------
@@ -182,6 +185,23 @@ composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.2, 0.55, 0.85);
 if (quality.bloom) composer.addPass(bloom);
 composer.addPass(new OutputPass());
+// Grade, on the final image: a gentle S-curve, a touch of warmth and
+// saturation, and a soft vignette, so the city reads as a photograph rather
+// than a flat model.
+composer.addPass(new ShaderPass({
+  uniforms: { tDiffuse: { value: null } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+void main() {
+  vec4 t = texture2D(tDiffuse, vUv);
+  vec3 c = mix(t.rgb, t.rgb * t.rgb * (3.0 - 2.0 * t.rgb), 0.3);
+  c *= vec3(1.035, 1.0, 0.955);
+  float l = dot(c, vec3(0.299, 0.587, 0.114));
+  c = mix(vec3(l), c, 1.12);
+  c *= 1.0 - 0.3 * smoothstep(0.4, 0.9, distance(vUv, vec2(0.5)));
+  gl_FragColor = vec4(clamp(c, 0.0, 1.0), t.a);
+}`,
+}));
 
 // ---------- controls and flyover ----------
 // Map bounds: the tiled OSM area (tools/osm_tiles.py BBOX).
@@ -344,13 +364,13 @@ addEventListener('resize', () => {
 
 // Debug handle for inspecting views from the console.
 window.lusaka = {
-  camera, controls, rig, store, city, landmarks, capture,
+  camera, controls, rig, store, city, landmarks, capture, renderer, composer,
   views: { city: CITY_VIEW, assembly: { position: path.getPointAt(1), target: assemblyLook } },
 };
 
 // Save a still of a view to docs/screenshots/<name>.jpg (needs `tools/serve.py --capture`).
-// view: { position, target } in world metres; time: 0 morning … 1 dusk.
-async function capture(name, view, { time = 0.12, width = 1600, height = 900 } = {}) {
+// view: { position, target } in world metres; time: 0 morning … 1 dusk (default: the opening golden hour).
+async function capture(name, view, { time = 0.08, width = 1600, height = 900 } = {}) {
   endFly();
   store.getState().setMode('map');
   slider.value = time * 100;

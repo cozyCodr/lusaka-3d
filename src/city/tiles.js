@@ -30,6 +30,73 @@ diffuseColor.rgb *= 0.84 + 0.22 * roadNoise(vRoadXZ / 7.0) + 0.08 * roadNoise(vR
   return mat;
 }
 
+// Facades (worker.js, FACADES): windows drawn from per-vertex bay and floor
+// coordinates, so a whole city needs no textures. Distant walls blend to the
+// average of glass and wall instead of shimmering; at night a share of the
+// windows lights up. Iron roofs get their ribs from the same coordinates.
+const night = { value: 0 };
+function facades(mat) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uNight = night;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute vec4 facade;\nvarying vec4 vFac;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFac = facade;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+varying vec4 vFac;
+uniform float uNight;
+float facHash(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 15731.743); }
+// window rectangle in a bay and floor: x0, x1, y0, y1
+vec4 facWindow(float k, float floorNo) {
+  if (k < 1.5) return vec4(0.3, 0.7, 0.3, 0.72);            // house
+  if (k < 2.5) return vec4(0.22, 0.78, 0.3, 0.75);          // flats
+  if (k < 3.5) return floorNo < 0.5 ? vec4(0.08, 0.92, 0.06, 0.68) : vec4(0.2, 0.8, 0.3, 0.72); // shopfronts below
+  if (k < 4.5) return vec4(0.06, 0.94, 0.3, 0.9);           // office ribbon glazing
+  if (k < 5.5) return vec4(0.14, 0.86, 0.32, 0.76);         // schools, hospitals
+  if (k < 6.5) return vec4(0.4, 0.6, 0.22, 0.8);            // tall church windows
+  return vec4(0.08, 0.92, 0.8, 0.9);                        // clerestory strip on sheds
+}
+float facBox(vec2 f, vec4 r, vec2 w) {
+  return smoothstep(r.x - w.x, r.x + w.x, f.x) * (1.0 - smoothstep(r.y - w.x, r.y + w.x, f.x)) *
+    smoothstep(r.z - w.y, r.z + w.y, f.y) * (1.0 - smoothstep(r.w - w.y, r.w + w.y, f.y));
+}
+float facGlass = 0.0, facLit = 0.0;`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  float k = floor(vFac.z + 0.5);
+  vec2 c = vFac.xy, w = fwidth(c);
+  if (k > 0.5 && k < 7.5) {
+    vec2 f = fract(c), cell = floor(c);
+    vec4 r = facWindow(k, cell.y);
+    float far = smoothstep(0.2, 0.55, max(w.x, w.y)); // a bay only a few pixels wide
+    float m = c.x >= 0.0 && c.y >= 0.0 ? facBox(f, r, w) : 0.0;
+    // shopfronts: a mullion down the middle of each pane, so they read as glass, not garage doors
+    if (k > 2.5 && k < 3.5 && cell.y < 0.5) m *= smoothstep(0.012, 0.012 + 2.0 * w.x, abs(f.x - 0.5));
+    float share = (r.y - r.x) * (r.w - r.z);
+    float on = step(facHash(cell + vFac.w * 113.0), k > 3.5 && k < 4.5 ? 0.45 : 0.3);
+    facGlass = mix(m, share * 0.85, far);
+    facLit = mix(m * on, share * 0.3, far);
+    // shop signs: a coloured fascia band over the shopfronts
+    if (k > 2.5 && k < 3.5 && cell.y < 0.5 && c.x >= 0.0) {
+      vec3 sign = vec3(facHash(vec2(vFac.w, 1.0)), facHash(vec2(vFac.w, 2.0)), facHash(vec2(vFac.w, 3.0)));
+      float band = smoothstep(0.76, 0.78, f.y) * (1.0 - smoothstep(0.93, 0.95, f.y)) * (1.0 - far);
+      diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.35), sign * sign, 0.6) * 0.75, band * 0.85);
+    }
+    vec3 glass = k > 3.5 && k < 4.5 ? vec3(0.05, 0.09, 0.11) : vec3(0.045, 0.05, 0.055);
+    diffuseColor.rgb = mix(diffuseColor.rgb, glass, facGlass);
+    // a darker plinth where the walls meet the ground
+    diffuseColor.rgb *= mix(0.72, 1.0, smoothstep(-0.05, 0.3, c.y));
+  } else if (k > 7.5) {
+    // corrugated iron: ribs catch the light, fading out with distance
+    diffuseColor.rgb *= 1.0 + 0.09 * sin(c.x * 6.2832) * (1.0 - smoothstep(0.15, 0.45, w.x));
+  }
+}`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.2, facGlass);')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.7, 0.4) * 1.4 * facLit * uNight;');
+  };
+  return mat;
+}
+
 export function createTileManager({ scene, footprints, quality, clearings = () => false, onMesh = () => {}, base = './data/tiles' }) {
   const { fullR: [full0, full1], farR: [far0, far1], workers } = quality;
   const group = new THREE.Group();
@@ -37,7 +104,7 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
   scene.add(group);
 
   const mats = {
-    buildings: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88 }),
+    buildings: facades(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88 })),
     roads: asphalt(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide })),
     areas: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
   };
@@ -67,6 +134,7 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
     g.setAttribute('position', new THREE.BufferAttribute(batch.position, 3));
     g.setAttribute('normal', new THREE.BufferAttribute(batch.normal, 3));
     g.setAttribute('color', new THREE.BufferAttribute(batch.color, 3));
+    if (batch.facade) g.setAttribute('facade', new THREE.BufferAttribute(batch.facade, 4));
     g.computeBoundingSphere();
     const m = new THREE.Mesh(g, mats[kind]);
     m.castShadow = kind === 'buildings';
@@ -188,6 +256,10 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
     group,
     ready,
     update,
+    // 0 day … 1 night: lights a share of the city's windows
+    setNight(n) {
+      night.value = n;
+    },
     get stats() {
       return { ...stats, queued: queue.length + jobs.size, total: tiles.size };
     },

@@ -30,7 +30,9 @@ licensing.
   - `quality.js` — Low / Medium / High tiers; read `quality` for anything
     costly (pixel ratio, shadows, tile radius, tree density) so phones stay smooth.
   - `city/tiles.js` + `city/worker.js` — stream the OSM city in 1 km tiles
-    (full near the focus, far beyond; radii grow with altitude).
+    (full near the focus, far beyond; radii grow with altitude). Windows,
+    shopfronts and roof ribs are drawn in the building shader in `tiles.js`
+    from per-vertex facade coordinates the worker writes (`FACADES`).
   - `city/trees.js` — tree models; the worker places them per tile, clear of
     roads, buildings and paved areas, and `main.js` keeps them off landmarks.
   - `controls/rig.js` — Map / Fly / Walk camera modes; the mode lives in the
