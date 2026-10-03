@@ -97,7 +97,7 @@ float facGlass = 0.0, facLit = 0.0;`)
   return mat;
 }
 
-export function createTileManager({ scene, footprints, quality, clearings = () => false, clearingHulls = [], onMesh = () => {}, base = './data/tiles' }) {
+export function createTileManager({ scene, footprints, wallIndex = null, quality, clearings = () => false, clearingHulls = [], onMesh = () => {}, base = './data/tiles' }) {
   const { fullR: [full0, full1], farR: [far0, far1], workers } = quality;
   const group = new THREE.Group();
   group.name = 'city';
@@ -154,7 +154,10 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
       if (!m.userData.sharedGeometry) m.geometry.dispose();
     }
     t.meshes = [];
-    if (t.level === 'full') footprints.removeGroup(t.key);
+    if (t.level === 'full') {
+      footprints.removeGroup(t.key);
+      wallIndex?.removeGroup(t.key);
+    }
     if (t.level) stats[t.level]--;
     stats.buildings -= t.buildings ?? 0;
     t.level = null;
@@ -179,7 +182,10 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
       onMesh(m);
       t.meshes.push(m);
     }
-    if (job.level === 'full') for (const fp of data.footprints) footprints.add(fp, job.key);
+    if (job.level === 'full') {
+      for (const fp of data.footprints) footprints.add(fp, job.key);
+      if (data.wallSegs?.length) wallIndex?.add(data.wallSegs, job.key);
+    }
     // trees, kept off landmark buildings and grounds the worker cannot see
     if (data.trees?.length) {
       const keep = (x, z) => !footprints.blocked(x, z, 2) && !clearings(x, z);

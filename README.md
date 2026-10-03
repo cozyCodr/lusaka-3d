@@ -13,8 +13,12 @@ more — modelled by hand from photographs.
   37 × 31 km, from Matero to Kabulonga to the airport, streamed in as you move.
 - **Hand-built landmarks** — modelled from reference photos and measured
   against the map; every part is tagged by how sure we are of it.
-- **Get around your way** — Map, Fly (drone) and Walk (street level, with
-  walls you cannot walk through) modes; double-click anywhere to go there.
+- **Get around your way** — Map, Fly (drone), Walk (street level, with
+  walls you cannot walk through) and Drive modes; double-click anywhere to
+  go there.
+- **Drive** — a Toyota Corolla with real physics: suspension, tyre grip, a
+  4-speed automatic, drag, brakes and a handbrake; buildings and walls stop
+  you. Keyboard on a laptop, on-screen steering and pedals on a phone.
 - **Morning to dusk** — a time-of-day slider; windows and lamps light up at night.
 - **Runs anywhere** — plain HTML and JavaScript, no install, no build step.
 
@@ -73,7 +77,11 @@ names in `index.html` or `src/`, run `npm install && npm run build:css`.
 2. **Landmarks** are three.js models in [`src/landmarks/`](src/landmarks),
    placed on their OpenStreetMap outlines and built from reference photos.
    The tiler skips their OSM footprints so nothing is drawn twice.
-3. **Confidence** — turn on *Layers → Confidence view* to see which parts are
+3. **Drive mode** uses [Rapier](https://rapier.rs) (Apache-2.0, loaded from
+   jsDelivr the first time you drive) for its raycast vehicle, with a
+   drivetrain on top in [`src/drive/drive.js`](src/drive/drive.js).
+   Colliders are made only round the car, from the tiles' footprints and walls.
+4. **Confidence** — turn on *Layers → Confidence view* to see which parts are
    measured or photographed (green), estimated (amber) or guessed (red).
 
 Rebuild the tiles from a fresh extract (~250 MB download; the build takes

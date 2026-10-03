@@ -7,14 +7,15 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { buildAssembly } from './building.js';
 import { cityGround, createTileManager } from './city/tiles.js';
-import { createFootprintIndex } from './collide.js';
+import { createFootprintIndex, createSegmentIndex } from './collide.js';
+import { createDrive } from './drive/drive.js';
 import { createRig } from './controls/rig.js';
 import { CITY_Y, heightAt, SITE, sunVector } from './geo.js';
 import { buildLandmarks } from './landmarks/index.js';
 import { buildSite } from './site.js';
 import { isAuto, quality, setTier, tierName, TIERS } from './quality.js';
 import { store } from './store.js';
-import { menuItem, menuToggle, modeHint, modeSwitch, segmented, setupHelp, setupMenu } from './ui.js';
+import { driveHud, menuItem, menuToggle, modeHint, modeSwitch, segmented, setupHelp, setupMenu } from './ui.js';
 import { lerp, smoothstep } from './util.js';
 
 // ---------- renderer, scene, camera ----------
@@ -46,6 +47,7 @@ for (const lm of landmarks) scene.add(lm.group);
 
 // Walk-mode collisions: every OSM footprint plus the hand-built landmarks.
 const footprints = createFootprintIndex();
+const wallIndex = createSegmentIndex(); // plot walls and OSM walls, for the car
 for (const lm of landmarks) for (const fp of lm.footprints) footprints.add(fp);
 // National Assembly ring, from its OSM outline.
 footprints.add([-18.8, -36.0, 44.8, -1.9, 20.2, 43.2, -43.3, 9.1]);
@@ -93,6 +95,7 @@ scene.add(cityGround());
 const city = createTileManager({
   scene,
   footprints,
+  wallIndex,
   quality,
   clearings,
   clearingHulls,
@@ -183,6 +186,7 @@ function setTime(t) {
   site.setNight(night);
   for (const lm of landmarks) lm.setNight(night);
   city.setNight(night);
+  drive.setNight(night);
 }
 
 // ---------- post ----------
@@ -218,6 +222,31 @@ const rig = createRig({
 });
 const controls = rig.map;
 controls.target.set(0, 8, 0);
+
+// Drive mode: a car with real physics (src/drive/drive.js), loaded on first use.
+const drive = createDrive({
+  scene, camera, dom: renderer.domElement, heightAt, footprints, walls: wallIndex,
+  siteNear: (x, z, r) => (Math.hypot(x - SITE.x, z - SITE.z) < r ? SITE : null),
+  onStatus: (text) => {
+    const hint = document.getElementById('mode-hint');
+    if (text) hint.textContent = text;
+    hint.classList.toggle('opacity-0', !text);
+  },
+});
+const hud = driveHud(drive.touch);
+store.subscribe((s, prev) => {
+  if (s.mode === prev.mode) return;
+  if (s.mode === 'drive') {
+    // start where you are looking, facing the way the camera faces
+    const at = prev.mode === 'map' ? controls.target : camera.position;
+    const dir = camera.getWorldDirection(new THREE.Vector3());
+    drive.start(at.x, at.z, Math.atan2(dir.x, dir.z));
+    hud.show(true);
+  } else if (prev.mode === 'drive') {
+    drive.stop();
+    hud.show(false);
+  }
+});
 
 // Flyover path in the site's local frame, then carried into the world.
 const W = site.walk;
@@ -290,6 +319,7 @@ function pickPoint(clientX, clientY) {
 renderer.domElement.addEventListener('dblclick', (e) => {
   const p = pickPoint(e.clientX, e.clientY);
   if (!p) return;
+  if (rig.mode === 'drive') return;
   if (rig.mode === 'walk') return rig.walkTo(p);
   // Glide in, keeping the current viewing direction, to a comfortable distance.
   const off = camera.position.clone().sub(controls.target);
@@ -302,7 +332,7 @@ const help = setupHelp();
 modeHint(store);
 addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
-  const modes = { Digit1: 'map', Digit2: 'fly', Digit3: 'walk' };
+  const modes = { Digit1: 'map', Digit2: 'fly', Digit3: 'walk', Digit4: 'drive' };
   if (modes[e.code]) {
     endFly();
     store.getState().setMode(modes[e.code]);
@@ -370,7 +400,7 @@ addEventListener('resize', () => {
 
 // Debug handle for inspecting views from the console.
 window.lusaka = {
-  camera, controls, rig, store, city, landmarks, capture, renderer, composer,
+  camera, controls, rig, store, city, landmarks, capture, renderer, composer, drive,
   views: { city: CITY_VIEW, assembly: { position: path.getPointAt(1), target: assemblyLook } },
 };
 
@@ -422,7 +452,10 @@ renderer.setAnimationLoop((now) => {
   const dt = Math.min(clock.getDelta(), 0.1);
   site.update(clock.elapsedTime);
   if (fly) stepFly(now);
-  else rig.update(dt);
+  else if (drive.active) {
+    drive.update(dt);
+    hud.set(drive.state);
+  } else rig.update(dt);
   // Stream tiles around what the camera is looking at; see further when higher up.
   const altitude = Math.max(0, camera.position.y - CITY_Y);
   const focusPoint = rig.mode === 'map' || fly ? controls.target : camera.position;

@@ -37,7 +37,10 @@ licensing.
     estimates round houses (`plot_walls` in `tools/osm_tiles.py`).
   - `city/trees.js` — tree models; the worker places them per tile, clear of
     roads, buildings and paved areas, and `main.js` keeps them off landmarks.
-  - `controls/rig.js` — Map / Fly / Walk camera modes; the mode lives in the
+  - `drive/` — Drive mode: `car.js` (the procedural Corolla) and `drive.js`
+    (Rapier raycast vehicle, drivetrain, chase camera, colliders streamed
+    round the car from `collide.js`'s footprint and wall-segment indexes).
+  - `controls/rig.js` — Map / Fly / Walk camera modes (it stands aside in Drive); the mode lives in the
     zustand store in `store.js`, shared with the menu in `ui.js`.
   - `terrain.js` — worker-safe ground height; `geo.js` re-exports it with
     three.js-side helpers. `collide.js` — footprint index for Walk mode.

@@ -86,12 +86,12 @@
     <!-- Controls help, toggled with ? or from the menu. -->
     <div id="help" class="hidden">
     <div id="help-backdrop" class="fixed inset-0 z-20 grid place-items-center bg-black/30 p-4">
-      <div class="w-full max-w-lg rounded-2xl bg-stone-950/90 p-5 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
+      <div class="w-full max-w-2xl rounded-2xl bg-stone-950/90 p-5 text-stone-100 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-semibold tracking-tight">Getting around</h2>
           <button id="help-close" type="button" aria-label="Close help" class="grid h-8 w-8 place-items-center rounded-full text-stone-300 hover:bg-white/10">✕</button>
         </div>
-        <div class="mt-3 grid gap-4 text-xs text-stone-300 sm:grid-cols-3">
+        <div class="mt-3 grid grid-cols-2 gap-4 text-xs text-stone-300 sm:grid-cols-4">
           <div>
             <p class="mb-1.5 font-medium text-amber-300">Map · 1</p>
             <p>Drag to pan</p><p>Right-drag to turn and tilt in place</p><p>Scroll to zoom to the cursor</p><p>WASD / arrows to move</p><p>Q / E turn · R / F tilt</p>
@@ -103,6 +103,10 @@
           <div>
             <p class="mb-1.5 font-medium text-amber-300">Walk · 3</p>
             <p>Drag to look</p><p>WASD / arrows to walk</p><p>Shift to run</p><p>Buildings block the way</p><p>Q / E turn</p>
+          </div>
+          <div>
+            <p class="mb-1.5 font-medium text-amber-300">Drive · 4</p>
+            <p>W / ↑ accelerate</p><p>S / ↓ brake, then reverse</p><p>A / D or ← / → steer</p><p>Space handbrake</p><p>R to reset · drag to look round</p>
           </div>
         </div>
         <p class="mt-4 border-t border-white/10 pt-3 text-xs text-stone-400">

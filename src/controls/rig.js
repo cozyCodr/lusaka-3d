@@ -7,6 +7,7 @@
 //          speed grows with altitude.
 //   walk — eye height on the ground, drag to look, WASD, Shift to run;
 //          building footprints block the way.
+//   drive — the car (src/drive/drive.js) moves the camera; the rig stands aside.
 // The rig never lets the camera below the ground or out of the map.
 import * as THREE from 'three';
 import { MapControls } from 'three/addons/controls/MapControls.js';
@@ -103,7 +104,7 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store, pick 
 
   // Look-drag for fly and walk (map mode uses MapControls' own handlers).
   dom.addEventListener('pointerdown', (e) => {
-    if (store.getState().mode === 'map' || !enabled) return;
+    if (['map', 'drive'].includes(store.getState().mode) || !enabled) return;
     dragging = { x: e.clientX, y: e.clientY, id: e.pointerId };
     dom.setPointerCapture(e.pointerId);
   });
@@ -146,16 +147,17 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store, pick 
   // ---------- modes ----------
   function enterMode(mode, prev) {
     map.enabled = enabled && mode === 'map';
+    if (mode === 'drive') return;
     camera.near = NEAR[mode];
     camera.updateProjectionMatrix();
     if (mode === 'map') {
       // Orbit around the ground point ahead of the camera.
       const dir = camera.getWorldDirection(new THREE.Vector3());
-      const ahead = prev === 'walk' ? 40 : Math.max(60, camera.position.y * 1.5);
+      const ahead = prev === 'walk' || prev === 'drive' ? 40 : Math.max(60, camera.position.y * 1.5);
       const t = camera.position.clone().addScaledVector(dir, ahead);
       t.y = heightAt(t.x, t.z);
       map.target.copy(t);
-      if (prev === 'walk') camera.position.addScaledVector(dir, -30).add(new THREE.Vector3(0, 25, 0));
+      if (prev === 'walk' || prev === 'drive') camera.position.addScaledVector(dir, -30).add(new THREE.Vector3(0, 25, 0));
       map.update();
     } else {
       anglesFromCamera();
@@ -186,7 +188,7 @@ export function createRig({ camera, dom, heightAt, collide, bounds, store, pick 
   // ---------- per frame ----------
   const tmp = new THREE.Vector3();
   function update(dt) {
-    if (!enabled) return;
+    if (!enabled || mode === 'drive') return;
     const boost = keys.has('ShiftLeft') || keys.has('ShiftRight');
     const f = forwardAxis(), s = strafeAxis();
 

@@ -343,6 +343,7 @@ const inHulls = (hulls, x, z) => hulls.some((h) => x > h.x0 && x < h.x1 && z > h
 // Returns two batches: mapped (OSM) and estimated, which carry different confidence.
 function walls(list, ox, oz, seed, hulls) {
   const mapped = new Batch(), est = new Batch();
+  const segs = []; // for the car's colliders: x0, z0, x1, z1, half thickness, height
   const r = rng(seed ^ 0x2545f491);
   for (const rec of list) {
     const kind = rec[0];
@@ -356,6 +357,7 @@ function walls(list, ox, oz, seed, hulls) {
       const [ax, az] = pts[i - 1], [bx, bz] = pts[i];
       const len = Math.hypot(bx - ax, bz - az);
       if (len < 0.05 || inHulls(hulls, (ax + bx) / 2, (az + bz) / 2)) continue;
+      segs.push(ax, az, bx, bz, T / 2, h);
       const nx = (-(bz - az) / len) * (T / 2), nz = ((bx - ax) / len) * (T / 2);
       const ga = heightAt(ax, az), gb = heightAt(bx, bz);
       const lift = kind === 4 ? 0.05 : -0.3;
@@ -370,7 +372,7 @@ function walls(list, ox, oz, seed, hulls) {
       if (i === pts.length - 1) { b.tri(B, C, C2, col); b.tri(B, C2, B2, col); }
     }
   }
-  return { mapped: mapped.out(), estimated: est.out() };
+  return { mapped: mapped.out(), estimated: est.out(), segs: new Float32Array(segs) };
 }
 
 // ---------- trees ----------
@@ -534,6 +536,7 @@ self.onmessage = async ({ data: job }) => {
     const w = walls(d.w ?? [], ox, oz, seed, clearings);
     out.walls = w.mapped;
     out.plotWalls = w.estimated;
+    out.wallSegs = w.segs;
     // far tiles (main roads and big buildings only) get a lighter scatter so the horizon is not bare
     const density = level === 'full' ? treeDensity : treeDensity * 0.3;
     out.trees = density > 0 ? trees(d, ox, oz, tile, density, seed) : new Float32Array(0);
@@ -541,7 +544,7 @@ self.onmessage = async ({ data: job }) => {
     for (const k of ['buildings', 'roads', 'areas', 'walls', 'plotWalls']) transfer.push(out[k].position.buffer, out[k].normal.buffer, out[k].color.buffer);
     if (out.buildings.facade) transfer.push(out.buildings.facade.buffer);
     for (const f of out.footprints) transfer.push(f.buffer);
-    transfer.push(out.trees.buffer);
+    transfer.push(out.trees.buffer, out.wallSegs.buffer);
     self.postMessage(out, transfer);
   } catch (err) {
     self.postMessage({ id, error: String(err) });

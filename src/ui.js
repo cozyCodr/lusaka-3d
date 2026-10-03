@@ -10,6 +10,8 @@ export const cls = {
   segWrap: 'mx-4 my-1.5 grid gap-1 rounded-xl bg-white/5 p-1',
   segOn: 'rounded-lg px-2 py-1.5 text-sm transition-colors bg-amber-500 text-stone-950 font-medium',
   segOff: 'rounded-lg px-2 py-1.5 text-sm transition-colors text-stone-300 hover:bg-white/10',
+  hud: 'pointer-events-none fixed bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-baseline gap-2 rounded-2xl bg-stone-950/70 px-4 py-2 text-stone-100 shadow-lg ring-1 ring-white/10 backdrop-blur-md',
+  pedal: 'pointer-events-auto grid select-none place-items-center rounded-2xl bg-stone-950/55 text-sm font-medium text-stone-100 shadow-lg ring-1 ring-white/15 backdrop-blur-md touch-none data-[on=true]:bg-amber-500/80 data-[on=true]:text-stone-950',
 };
 
 // A row of mutually exclusive choices. options: [[value, label, title?], ...].
@@ -96,7 +98,7 @@ export function setupMenu() {
   return { close: () => set(false) };
 }
 
-const MODE_LABELS = { map: 'Map', fly: 'Fly', walk: 'Walk' };
+const MODE_LABELS = { map: 'Map', fly: 'Fly', walk: 'Walk', drive: 'Drive' };
 
 // Segmented Map / Fly / Walk switch bound to the store.
 export function modeSwitch(store, onPick) {
@@ -124,6 +126,7 @@ const HINTS = {
   map: 'Map · drag to pan · right-drag to turn in place · scroll to zoom · ? for help',
   fly: 'Fly · drag to look · WASD to move · Space / C up and down · Shift to boost',
   walk: 'Walk · drag to look · WASD to move · Shift to run · double-click to jump there',
+  drive: 'Drive · W / S or arrows to drive and brake · A / D to steer · Space handbrake · R to reset',
 };
 
 export function modeHint(store) {
@@ -141,4 +144,53 @@ export function modeHint(store) {
     last = s.mode;
   });
   return { show: () => show(store.getState()) };
+}
+
+// Drive mode: speed and gear, and on touch screens steering buttons and pedals.
+// touch: the drive module's { left, right, gas, brake } flags.
+export function driveHud(touch) {
+  const root = document.createElement('div');
+  root.className = 'hidden';
+  const hud = document.createElement('div');
+  hud.className = cls.hud;
+  const speed = Object.assign(document.createElement('span'), { className: 'text-2xl font-semibold tabular-nums' });
+  const unit = Object.assign(document.createElement('span'), { className: 'text-xs text-stone-400', textContent: 'km/h' });
+  const gear = Object.assign(document.createElement('span'), { className: 'ml-2 rounded-md bg-white/10 px-1.5 text-sm font-medium tabular-nums' });
+  hud.append(speed, unit, gear);
+  root.append(hud);
+  if (matchMedia('(pointer: coarse)').matches) {
+    const pad = (label, key, pos) => {
+      const b = Object.assign(document.createElement('button'), { type: 'button', textContent: label, className: `${cls.pedal} fixed ${pos}` });
+      b.setAttribute('aria-label', key);
+      const set = (on) => {
+        touch[key] = on;
+        b.dataset.on = String(on);
+      };
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        b.setPointerCapture(e.pointerId);
+        set(true);
+      });
+      for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => set(false));
+      return b;
+    };
+    root.append(
+      pad('◀', 'left', 'bottom-6 left-4 h-20 w-16'),
+      pad('▶', 'right', 'bottom-6 left-24 h-20 w-16'),
+      pad('Brake', 'brake', 'bottom-6 right-24 h-20 w-16'),
+      pad('Gas', 'gas', 'bottom-6 right-4 h-28 w-16'),
+    );
+    hud.classList.replace('bottom-6', 'bottom-32');
+  }
+  document.body.append(root);
+  return {
+    show(on) {
+      root.classList.toggle('hidden', !on);
+      if (!on) for (const k of Object.keys(touch)) touch[k] = false;
+    },
+    set({ kmh, gear: g }) {
+      speed.textContent = kmh;
+      gear.textContent = g;
+    },
+  };
 }
