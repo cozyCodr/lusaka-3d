@@ -49,6 +49,38 @@ for (const lm of landmarks) for (const fp of lm.footprints) footprints.add(fp);
 // National Assembly ring, from its OSM outline.
 footprints.add([-18.8, -36.0, 44.8, -1.9, 20.2, 43.2, -43.3, 9.1]);
 
+// City trees keep off each landmark's grounds: the convex hull of its
+// footprints grown by a margin, and the Parliament hill.
+const clearings = (() => {
+  const hulls = [];
+  for (const lm of landmarks) {
+    const pts = lm.footprints.flatMap((fp) => Array.from({ length: fp.length / 2 }, (_, i) => [fp[2 * i], fp[2 * i + 1]]));
+    if (pts.length < 3) continue;
+    pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = (list) => list.reduce((h, p) => {
+      while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop();
+      h.push(p);
+      return h;
+    }, []);
+    const lower = half(pts), upper = half([...pts].reverse());
+    const hull = [...lower.slice(0, -1), ...upper.slice(0, -1)];
+    const cx = hull.reduce((a, p) => a + p[0], 0) / hull.length, cz = hull.reduce((a, p) => a + p[1], 0) / hull.length;
+    const grown = hull.map(([x, z]) => {
+      const d = Math.hypot(x - cx, z - cz) || 1;
+      return [x + ((x - cx) / d) * 8, z + ((z - cz) / d) * 8];
+    });
+    const xs = grown.map((p) => p[0]), zs = grown.map((p) => p[1]);
+    hulls.push({ pts: grown, x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) });
+  }
+  const inHull = (h, x, z) => h.pts.every((a, i) => {
+    const b = h.pts[(i + 1) % h.pts.length];
+    return (b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (x - a[0]) >= 0;
+  });
+  return (x, z) => Math.hypot(x - SITE.x, z - SITE.z) < 160 ||
+    hulls.some((h) => x > h.x0 && x < h.x1 && z > h.z0 && z < h.z1 && inHull(h, x, z));
+})();
+
 const status = document.getElementById('status');
 // The OSM city streams in 1 km tiles around the camera (see city/tiles.js).
 scene.add(cityGround());
@@ -56,6 +88,7 @@ const city = createTileManager({
   scene,
   footprints,
   quality,
+  clearings,
   onMesh: (m) => {
     if (!confidenceOn) return;
     m.userData.orig = m.material;

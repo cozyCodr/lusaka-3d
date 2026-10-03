@@ -6,7 +6,7 @@ Work priorities in order. Tick a box only when the item works in the app
 to **Completed** with a dated one-line summary only when every box,
 including **Verify**, is ticked.
 
-**Current priority: P10 — The experience: trees first** (founder call, 2026-10-03: make the whole city look good and give people something to do; start with trees, then facades and lighting, then the guided tour and click-to-learn; P6 landmarks continue alongside as photos arrive).
+**Current priority: P10 — The experience: building facades and lighting next** (founder call, 2026-10-03: make the whole city look good and give people something to do; start with trees, then facades and lighting, then the guided tour and click-to-learn; P6 landmarks continue alongside as photos arrive).
 
 ---
 
@@ -142,7 +142,7 @@ something to do. Phones are a first-class target: every item is checked on a
 mid-range phone as well as a laptop (see Mobile below).
 
 **Look**
-- [ ] Trees: instanced jacarandas, flamboyants, mangoes and palms along avenues and in residential plots, kept off roads and buildings; fewer and simpler far away
+- [x] Trees (src/city/trees.js, placed in the tile worker): msasa/acacia, jacaranda in flower, flamboyant, mango, palm and eucalyptus; avenues along main and residential roads, yards round houses, OSM woods and parks, scattered bush; a 2 m occupancy grid keeps them off roads, pavements, buildings, car parks, pitches and water, and a hull round each landmark keeps them off the hand-built grounds. ~77k on High at 60 fps (laptop), a tenth on Low; far tiles get a light scatter
 - [ ] Building facades by type (OSM tags): windows on offices, iron roofs and boundary walls on houses, shopfronts on retail
 - [ ] Lighting: ambient occlusion, image-based sky light, better shadows, a warmer grade; golden hour by default
 - [ ] Ground: varied red dirt, dry grass and pavement instead of one flat green (terrain itself is P7)

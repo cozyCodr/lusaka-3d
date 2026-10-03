@@ -4,6 +4,7 @@
 // the haze; nothing beyond. Geometry is built in a small pool of workers.
 import * as THREE from 'three';
 import { CITY_Y } from '../terrain.js';
+import { treeMeshes } from './trees.js';
 
 const HYSTERESIS = 1.15; // unload only once this much further out than the load radius
 
@@ -29,7 +30,7 @@ diffuseColor.rgb *= 0.84 + 0.22 * roadNoise(vRoadXZ / 7.0) + 0.08 * roadNoise(vR
   return mat;
 }
 
-export function createTileManager({ scene, footprints, quality, onMesh = () => {}, base = './data/tiles' }) {
+export function createTileManager({ scene, footprints, quality, clearings = () => false, onMesh = () => {}, base = './data/tiles' }) {
   const { fullR: [full0, full1], farR: [far0, far1], workers } = quality;
   const group = new THREE.Group();
   group.name = 'city';
@@ -78,7 +79,8 @@ export function createTileManager({ scene, footprints, quality, onMesh = () => {
   function clear(t) {
     for (const m of t.meshes) {
       group.remove(m);
-      m.geometry.dispose();
+      if (m.isInstancedMesh) m.dispose(); // frees the instance buffers
+      if (!m.userData.sharedGeometry) m.geometry.dispose();
     }
     t.meshes = [];
     if (t.level === 'full') footprints.removeGroup(t.key);
@@ -106,6 +108,15 @@ export function createTileManager({ scene, footprints, quality, onMesh = () => {
       t.meshes.push(m);
     }
     if (job.level === 'full') for (const fp of data.footprints) footprints.add(fp, job.key);
+    // trees, kept off landmark buildings and grounds the worker cannot see
+    if (data.trees?.length) {
+      const keep = (x, z) => !footprints.blocked(x, z, 2) && !clearings(x, z);
+      for (const m of treeMeshes(data.trees, { keep, shadows: quality.treeShadows && job.level === 'full' })) {
+        group.add(m);
+        onMesh(m);
+        t.meshes.push(m);
+      }
+    }
     t.level = job.level;
     t.buildings = data.count;
     stats[t.level]++;
@@ -121,7 +132,7 @@ export function createTileManager({ scene, footprints, quality, onMesh = () => {
       const id = nextId++;
       jobs.set(id, job);
       w.busy = true;
-      w.postMessage({ id, url: new URL(`${base}/${job.level}/${job.key}.json`, location.href).href, tx: t.tx, tz: t.tz, tile: index.tile, level: job.level });
+      w.postMessage({ id, url: new URL(`${base}/${job.level}/${job.key}.json`, location.href).href, tx: t.tx, tz: t.tz, tile: index.tile, level: job.level, treeDensity: quality.trees });
     }
   }
 

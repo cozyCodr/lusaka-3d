@@ -31,6 +31,8 @@ licensing.
     costly (pixel ratio, shadows, tile radius, tree density) so phones stay smooth.
   - `city/tiles.js` + `city/worker.js` — stream the OSM city in 1 km tiles
     (full near the focus, far beyond; radii grow with altitude).
+  - `city/trees.js` — tree models; the worker places them per tile, clear of
+    roads, buildings and paved areas, and `main.js` keeps them off landmarks.
   - `controls/rig.js` — Map / Fly / Walk camera modes; the mode lives in the
     zustand store in `store.js`, shared with the menu in `ui.js`.
   - `terrain.js` — worker-safe ground height; `geo.js` re-exports it with

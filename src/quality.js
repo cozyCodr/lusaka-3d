@@ -15,6 +15,7 @@ export const TIERS = {
     farR: [3000, 7000],
     workers: 2,
     trees: 0.25, // share of trees drawn
+    treeShadows: false,
   },
   medium: {
     label: 'Medium',
@@ -27,6 +28,7 @@ export const TIERS = {
     farR: [4500, 10000],
     workers: 2,
     trees: 0.55,
+    treeShadows: false,
   },
   high: {
     label: 'High',
@@ -39,6 +41,7 @@ export const TIERS = {
     farR: [5500, 14000],
     workers: 3,
     trees: 1,
+    treeShadows: true,
   },
 };
 
