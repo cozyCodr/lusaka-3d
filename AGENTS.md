@@ -33,6 +33,8 @@ licensing.
     (full near the focus, far beyond; radii grow with altitude). Windows,
     shopfronts and roof ribs are drawn in the building shader in `tiles.js`
     from per-vertex facade coordinates the worker writes (`FACADES`).
+    Walls: OSM walls and fences as mapped, plus plot walls the tiler
+    estimates round houses (`plot_walls` in `tools/osm_tiles.py`).
   - `city/trees.js` — tree models; the worker places them per tile, clear of
     roads, buildings and paved areas, and `main.js` keeps them off landmarks.
   - `controls/rig.js` — Map / Fly / Walk camera modes; the mode lives in the

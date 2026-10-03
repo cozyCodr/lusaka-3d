@@ -32,7 +32,7 @@ more — modelled by hand from photographs.
 | ![Embassy Park](docs/screenshots/embassy-park.jpg) **Embassy Park** — the Sata, Mwanawasa and Chiluba mausoleums | ![Mulungushi International Conference Centre](docs/screenshots/mulungushi.jpg) **Mulungushi Conference Centre** — the Kenneth Kaunda Wing, with the 1970 Old Wing and the East Wing behind |
 | ![Manda Hill Mall](docs/screenshots/manda-hill.jpg) **Manda Hill Mall** — Zambia's first mall, with its parking decks on Great East Road | ![Indo Zambia Bank head office](docs/screenshots/indo-zambia-bank.jpg) **Indo Zambia Bank** — the head office on Great East Road |
 | ![East Park Mall](docs/screenshots/east-park.jpg) **East Park Mall** — with the Galaxy Casino facade on Thabo Mbeki Road | ![Acacia Park](docs/screenshots/acacia-park.jpg) **Acacia Park** — Ecobank's pinwheel drum and the FNB head office |
-| ![Suburbs west of the centre](docs/screenshots/city-suburbs.jpg) **The OSM city** — hipped iron roofs, windows by building type, and trees in every yard | ![Cairo Road at dusk](docs/screenshots/city-dusk.jpg) **Dusk on Cairo Road** — a share of the city's windows lights up |
+| ![Walled plots in Chilenje](docs/screenshots/city-plot-walls.jpg) **The OSM city** — Chilenje's walled plots and gates, hipped iron roofs, windows by building type | ![Cairo Road at dusk](docs/screenshots/city-dusk.jpg) **Dusk on Cairo Road** — a share of the city's windows lights up |
 
 Each landmark has reference notes in [`docs/landmarks/`](docs/landmarks)
 saying what it was built from and which parts are measured, estimated or
@@ -76,11 +76,12 @@ names in `index.html` or `src/`, run `npm install && npm run build:css`.
 3. **Confidence** — turn on *Layers → Confidence view* to see which parts are
    measured or photographed (green), estimated (amber) or guessed (red).
 
-Rebuild the tiles from a fresh extract (~250 MB download):
+Rebuild the tiles from a fresh extract (~250 MB download; the build takes
+about 40 minutes, most of it estimating plot walls):
 
 ```bash
 curl -L -o data/raw/zambia-latest.osm.pbf https://download.geofabrik.de/africa/zambia-latest.osm.pbf
-pip install osmium
+pip install osmium shapely
 python3 tools/osm_tiles.py data/raw/zambia-latest.osm.pbf data/tiles
 ```
 

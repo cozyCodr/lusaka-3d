@@ -97,7 +97,7 @@ float facGlass = 0.0, facLit = 0.0;`)
   return mat;
 }
 
-export function createTileManager({ scene, footprints, quality, clearings = () => false, onMesh = () => {}, base = './data/tiles' }) {
+export function createTileManager({ scene, footprints, quality, clearings = () => false, clearingHulls = [], onMesh = () => {}, base = './data/tiles' }) {
   const { fullR: [full0, full1], farR: [far0, far1], workers } = quality;
   const group = new THREE.Group();
   group.name = 'city';
@@ -107,8 +107,11 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
     buildings: facades(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88 })),
     roads: asphalt(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, side: THREE.DoubleSide })),
     areas: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide }),
+    walls: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }),
   };
-  const CONF = { buildings: 'med', roads: 'high', areas: 'high' };
+  mats.plotWalls = mats.walls;
+  // walls mapped in OSM are data; plot walls are estimated from the street layout
+  const CONF = { buildings: 'med', roads: 'high', areas: 'high', walls: 'high', plotWalls: 'low' };
 
   const tiles = new Map(); // key -> { tx, tz, level, meshes, pending }
   const queue = [];
@@ -137,7 +140,7 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
     if (batch.facade) g.setAttribute('facade', new THREE.BufferAttribute(batch.facade, 4));
     g.computeBoundingSphere();
     const m = new THREE.Mesh(g, mats[kind]);
-    m.castShadow = kind === 'buildings';
+    m.castShadow = kind === 'buildings' || kind === 'walls' || kind === 'plotWalls';
     m.receiveShadow = true;
     m.userData.conf = CONF[kind];
     m.matrixAutoUpdate = false;
@@ -168,7 +171,8 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
       return;
     }
     clear(t);
-    for (const kind of ['areas', 'roads', 'buildings']) {
+    for (const kind of ['areas', 'roads', 'buildings', 'walls', 'plotWalls']) {
+      if (!data[kind]) continue;
       const m = toMesh(kind, data[kind]);
       if (!m) continue;
       group.add(m);
@@ -200,7 +204,7 @@ export function createTileManager({ scene, footprints, quality, clearings = () =
       const id = nextId++;
       jobs.set(id, job);
       w.busy = true;
-      w.postMessage({ id, url: new URL(`${base}/${job.level}/${job.key}.json`, location.href).href, tx: t.tx, tz: t.tz, tile: index.tile, level: job.level, treeDensity: quality.trees });
+      w.postMessage({ id, url: new URL(`${base}/${job.level}/${job.key}.json`, location.href).href, tx: t.tx, tz: t.tz, tile: index.tile, level: job.level, treeDensity: quality.trees, clearings: clearingHulls });
     }
   }
 

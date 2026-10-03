@@ -321,6 +321,58 @@ function areas(list, ox, oz) {
   return b.out();
 }
 
+// ---------- walls ----------
+// Wall records (tools/osm_tiles.py): kinds 0 wall, 1 fence, 2 hedge mapped in
+// OSM; 3 estimated plot wall, 4 gate. Plot walls are what imagery shows round
+// nearly every house: plastered or bare block, a little over head height.
+// Per kind: [height, thickness, colours].
+const WALL_KINDS = [
+  [2.2, 0.22, [0xd9cdb4, 0xc8c0b0, 0xe3ddd0, 0xa9a59b]],
+  [1.8, 0.06, [0x5a5c5a, 0x6b6d69]],
+  [1.7, 1.0, [0x48693a, 0x557a40]],
+  [2.3, 0.22, [0xd9cdb4, 0xe6e1d6, 0xc9bfa8, 0x9d9a92, 0xc9a46c, 0xcfae9a, 0xb7b2a8]],
+  [2.0, 0.1, [0x2f3134, 0x3a3d40, 0x5b3a2a]],
+];
+
+const inHulls = (hulls, x, z) => hulls.some((h) => x > h.x0 && x < h.x1 && z > h.z0 && z < h.z1 &&
+  h.pts.every((a, i) => {
+    const b = h.pts[(i + 1) % h.pts.length];
+    return (b[0] - a[0]) * (z - a[1]) - (b[1] - a[1]) * (x - a[0]) >= 0;
+  }));
+
+// Returns two batches: mapped (OSM) and estimated, which carry different confidence.
+function walls(list, ox, oz, seed, hulls) {
+  const mapped = new Batch(), est = new Batch();
+  const r = rng(seed ^ 0x2545f491);
+  for (const rec of list) {
+    const kind = rec[0];
+    const [H, T, pal] = WALL_KINDS[kind] ?? WALL_KINDS[0];
+    const b = kind >= 3 ? est : mapped;
+    const col = rgb(pal[Math.floor(r() * pal.length)]).map((v) => v * (0.94 + r() * 0.1));
+    const top = col.map((v) => Math.min(1, v * 1.12)); // coping catches the light
+    const h = kind === 3 ? H + r() * 0.4 : H;
+    const pts = densify(points(rec, 1, ox, oz), 8);
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, az] = pts[i - 1], [bx, bz] = pts[i];
+      const len = Math.hypot(bx - ax, bz - az);
+      if (len < 0.05 || inHulls(hulls, (ax + bx) / 2, (az + bz) / 2)) continue;
+      const nx = (-(bz - az) / len) * (T / 2), nz = ((bx - ax) / len) * (T / 2);
+      const ga = heightAt(ax, az), gb = heightAt(bx, bz);
+      const lift = kind === 4 ? 0.05 : -0.3;
+      const A = [ax + nx, ga + lift, az + nz], B = [bx + nx, gb + lift, bz + nz], C = [bx - nx, gb + lift, bz - nz], D = [ax - nx, ga + lift, az - nz];
+      const up = (p, g) => [p[0], g + h, p[2]];
+      const A2 = up(A, ga), B2 = up(B, gb), C2 = up(C, gb), D2 = up(D, ga);
+      b.tri(A, B, B2, col); b.tri(A, B2, A2, col); // one side
+      b.tri(C, D, D2, col); b.tri(C, D2, C2, col); // the other
+      b.tri(A2, B2, C2, top); b.tri(A2, C2, D2, top); // top
+      // ends, only where the run starts and stops (joins are hidden inside the wall)
+      if (i === 1) { b.tri(D, A, A2, col); b.tri(D, A2, D2, col); }
+      if (i === pts.length - 1) { b.tri(B, C, C2, col); b.tri(B, C2, B2, col); }
+    }
+  }
+  return { mapped: mapped.out(), estimated: est.out() };
+}
+
 // ---------- trees ----------
 // Lusaka is a green city: avenues of jacaranda and flamboyant, mango and
 // broad-crowned trees in every yard, woodland in the parks. Trees are placed
@@ -381,6 +433,13 @@ function trees(d, ox, oz, tile, density, seed) {
       const [x, z] = pts[0];
       const i = Math.floor((x - ox) / 20), j = Math.floor((z - oz) / 20);
       if (i >= 0 && j >= 0 && i < H && j < H) houses[j * H + i]++;
+    }
+  }
+  // walls and hedges, with room for a trunk beside them
+  for (const rec of d.w ?? []) {
+    for (const [x, z] of densify(points(rec, 1, ox, oz), 1)) {
+      const c = cell(x, z);
+      if (c >= 0) blocked[c] = 1;
     }
   }
   // roads and their pavements, plus a little room for the crown
@@ -463,7 +522,7 @@ function trees(d, ox, oz, tile, density, seed) {
 }
 
 self.onmessage = async ({ data: job }) => {
-  const { id, url, tx, tz, tile, level, treeDensity = 0 } = job;
+  const { id, url, tx, tz, tile, level, treeDensity = 0, clearings = [] } = job;
   try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`${res.status} ${url}`);
@@ -472,11 +531,14 @@ self.onmessage = async ({ data: job }) => {
     const seed = (tx * 73856093) ^ (tz * 19349663);
     const bld = buildings(d.b, ox, oz, seed, level === 'full');
     const out = { id, count: d.b.length, buildings: bld.batch, roads: roads(d.r, ox, oz, level === 'full'), areas: areas(d.a, ox, oz), footprints: bld.footprints };
+    const w = walls(d.w ?? [], ox, oz, seed, clearings);
+    out.walls = w.mapped;
+    out.plotWalls = w.estimated;
     // far tiles (main roads and big buildings only) get a lighter scatter so the horizon is not bare
     const density = level === 'full' ? treeDensity : treeDensity * 0.3;
     out.trees = density > 0 ? trees(d, ox, oz, tile, density, seed) : new Float32Array(0);
     const transfer = [];
-    for (const k of ['buildings', 'roads', 'areas']) transfer.push(out[k].position.buffer, out[k].normal.buffer, out[k].color.buffer);
+    for (const k of ['buildings', 'roads', 'areas', 'walls', 'plotWalls']) transfer.push(out[k].position.buffer, out[k].normal.buffer, out[k].color.buffer);
     if (out.buildings.facade) transfer.push(out.buildings.facade.buffer);
     for (const f of out.footprints) transfer.push(f.buffer);
     transfer.push(out.trees.buffer);

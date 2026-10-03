@@ -9,7 +9,9 @@ x = east, z = south; tile (tx, tz) covers x in [tx*1000, tx*1000+1000) and z
 likewise. Coordinates inside a tile are integer decimetres relative to the
 tile's corner, to keep files small.
 
-  full: every building, road and land-use area in the tile.
+  full: every building, road and land-use area in the tile, plus walls:
+        the walls, fences and hedges mapped in OSM, and estimated plot walls
+        round houses where none are mapped (see plot_walls).
   far:  buildings >= 250 m2 or >= 12 m tall, main roads, large areas.
 
 Data (c) OpenStreetMap contributors, ODbL.
@@ -22,6 +24,9 @@ import sys
 from collections import defaultdict
 
 import osmium
+from shapely import STRtree, set_precision
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import linemerge, unary_union
 
 LAT0, LON0 = -15.3922718, 28.3090371
 KX = 111320 * math.cos(math.radians(LAT0))
@@ -60,6 +65,7 @@ ROAD_FIXES = {
     680357976: (3, 10.6),  # MICC: the drive along the palm avenue is ~10.6 m of concrete, not a 4 m lane
     405672365: None,       # MICC: a "service road" through the palm avenue; the model draws the walk there
 }
+BARRIERS = {"wall": 0, "fence": 1, "hedge": 2}  # wall record kinds; 3 estimated plot wall, 4 gate
 AEROWAYS = {"runway": (5, 45), "taxiway": (5, 20), "taxilane": (5, 12)}  # drawn like roads
 AREAS = {  # tag value -> kind: 0 grass, 1 pitch, 2 water, 3 wood, 4 paved, 5 runway
     "grass": 0, "park": 0, "garden": 0, "recreation_ground": 0, "golf_course": 0, "farmland": 0,
@@ -108,7 +114,7 @@ def height(tags, pts, rnd):
 class Collector(osmium.SimpleHandler):
     def __init__(self):
         super().__init__()
-        self.buildings, self.roads, self.areas = [], [], []
+        self.buildings, self.roads, self.areas, self.barriers = [], [], [], []
 
     def area(self, a):
         tags = a.tags
@@ -137,6 +143,11 @@ class Collector(osmium.SimpleHandler):
             self.areas.append((AREAS[v], pts))
 
     def way(self, w):
+        if w.tags.get("barrier") in BARRIERS:
+            coords = [(n.location.lat, n.location.lon) for n in w.nodes if n.location.valid()]
+            if len(coords) >= 2 and any(in_bbox(*c) for c in coords):
+                self.barriers.append((BARRIERS[w.tags["barrier"]], [xz(*c) for c in coords]))
+            return
         hw = w.tags.get("highway")
         aw = w.tags.get("aeroway")
         spec = ROAD_FIXES[w.id] if w.id in ROAD_FIXES else ROADS.get(hw) or AEROWAYS.get(aw)
@@ -166,7 +177,7 @@ def main(src, dst):
     c.apply_file(src, locations=True, idx="flex_mem")
     print(f"buildings {len(c.buildings)}, roads {len(c.roads)}, areas {len(c.areas)}", file=sys.stderr)
 
-    full = defaultdict(lambda: {"b": [], "r": [], "a": []})
+    full = defaultdict(lambda: {"b": [], "r": [], "a": [], "w": []})
     far = defaultdict(lambda: {"b": [], "r": [], "a": []})
 
     for t, h, pts in c.buildings:
@@ -179,17 +190,14 @@ def main(src, dst):
             far[(tx, tz)]["b"].append(rec)
 
     for kind, width, pts in c.roads:
-        # Split into per-tile runs by segment midpoint; runs share their end points.
-        run, run_tile = [pts[0]], None
-        for a, b in zip(pts, pts[1:]):
-            t = tile_of((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
-            if run_tile is not None and t != run_tile:
-                emit(full, far, run_tile, kind, width, run)
-                run = [a]
-            run_tile = t
-            run.append(b)
-        if run_tile is not None:
-            emit(full, far, run_tile, kind, width, run)
+        for t, run in split_runs(pts):
+            emit(full, far, t, kind, width, run)
+
+    for kind, pts in c.barriers:
+        for t, run in split_runs(pts):
+            full[t]["w"].append([kind] + quant(run, *t))
+    for t, kind, pts in plot_walls(c):
+        full[t]["w"].append([kind] + quant(pts, *t))
 
     for kind, pts in c.areas:
         cx = sum(p[0] for p in pts) / len(pts)
@@ -220,6 +228,164 @@ def main(src, dst):
     with open(os.path.join(dst, "index.json"), "w") as fh:
         json.dump(index, fh, separators=(",", ":"))
     print(f"{len(full)} tiles", file=sys.stderr)
+
+
+def split_runs(pts):
+    """Split a line into per-tile runs by segment midpoint; runs share their end points."""
+    run, run_tile = [pts[0]], None
+    for a, b in zip(pts, pts[1:]):
+        t = tile_of((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        if run_tile is not None and t != run_tile:
+            yield run_tile, run
+            run = [a]
+        run_tile = t
+        run.append(b)
+    if run_tile is not None:
+        yield run_tile, run
+
+
+# ---------- estimated plot walls ----------
+# On imagery nearly every house in Lusaka stands in a walled plot: a straight
+# wall along the street a couple of metres back from the road edge, with a
+# gate where the drive comes in, side walls running straight back from the
+# street, and a rear wall shared with the plot behind (about 15 x 25 m in
+# Chilenje, 40 x 60 m and more in Kabulonga and Rhodes Park). OSM maps only
+# some of them, so where none are mapped the plots are estimated, squared to
+# the nearest street: the front at the street wall line, the sides halfway to
+# the neighbours along the street, the back halfway to the building behind
+# (or a depth that grows with the house), then cut back from other streets
+# and open spaces. Packed compounds, where walls are rare, are left open.
+# Kinds: 3 plot wall, 4 gate.
+PAVEMENT = {0: 2.2, 1: 1.8, 2: 0.35, 3: 0.3, 4: 0, 5: 0}  # as drawn by src/city/worker.js
+SETBACK = {0: 2.5, 1: 2.0, 2: 1.6}  # verge between the road edge and the wall (service ways are mostly drives)
+FRONT_MAX = 45  # houses further than this from a street get no plot
+GATE = 3.6
+
+
+def is_house(t, h, area):
+    # houses, and the offices, shops and clinics in house-sized buildings (Rhodes Park, Longacres)
+    return t not in (6, 7) and h < 6.5 and 50 <= area < 600
+
+
+def plot_walls(c, only=None):
+    sites, houses = [], []
+    for t, h, pts in c.buildings:
+        if len(pts) < 3:
+            continue
+        poly = Polygon(pts).buffer(0)
+        if poly.is_empty or poly.area < 50:  # outbuildings share their house's plot
+            continue
+        sites.append(poly)
+        houses.append(is_house(t, h, poly.area))
+    ways = [(LineString(pts), w / 2 + PAVEMENT[k] + SETBACK[k]) for k, w, pts in c.roads
+            if k in SETBACK and len(pts) >= 2]
+    streets = [l.buffer(off, cap_style="flat") for l, off in ways]
+    opens = [Polygon(pts).buffer(0) for _, pts in c.areas if len(pts) >= 3]  # parks, pitches, water, paving
+    blds = [Polygon(pts).buffer(0.5) for _, _, pts in c.buildings if len(pts) >= 3]
+    mapped = [LineString(pts).buffer(3) for _, pts in c.barriers]
+    lists = {"site": sites, "way": [l for l, _ in ways], "street": streets, "open": opens, "bld": blds, "mapped": mapped}
+    trees = {k: STRtree(v) for k, v in lists.items()}
+    near = lambda k, g: [lists[k][i] for i in trees[k].query(g)]
+
+    def plot_of(i):
+        house = sites[i]
+        cen = house.centroid
+        # the nearest street sets the frame: t along it, n away from it towards the house
+        best = None
+        for j in trees["way"].query(cen.buffer(FRONT_MAX + 10)):
+            line, off = ways[j]
+            d = line.distance(cen)
+            if d - off < FRONT_MAX and (best is None or d - off < best[0]):
+                best = (d - off, j)
+        if best is None:
+            return None
+        line, off = ways[best[1]]
+        s = line.project(cen)
+        p0, p1 = line.interpolate(max(0, s - 2)), line.interpolate(min(line.length, s + 2))
+        tx_, tz_ = p1.x - p0.x, p1.y - p0.y
+        l = math.hypot(tx_, tz_)
+        if l < 1e-6:
+            return None
+        tx_, tz_ = tx_ / l, tz_ / l
+        foot = line.interpolate(s)
+        nx, nz = -tz_, tx_
+        if (cen.x - foot.x) * nx + (cen.y - foot.y) * nz < 0:
+            nx, nz = -nx, -nz
+        frame = lambda x, z: ((x - foot.x) * tx_ + (z - foot.y) * tz_, (x - foot.x) * nx + (z - foot.y) * nz)
+        rng_ = lambda poly: [frame(x, z) for x, z in poly.exterior.coords]
+        hp = rng_(house)
+        ht0, ht1 = min(p[0] for p in hp), max(p[0] for p in hp)
+        hn0, hn1 = min(p[1] for p in hp), max(p[1] for p in hp)
+        front = off
+        if hn0 < front:  # the house reaches the street wall line (mapping offsets): no plot
+            return None
+        width, depth = ht1 - ht0, hn1 - hn0
+        t0, t1 = ht0 - max(3, 0.5 * width), ht1 + max(3, 0.5 * width)
+        back = hn1 + min(25, max(5, 0.8 * depth))
+        others = []
+        for j in trees["site"].query(house.buffer(60)):
+            if j == i:
+                continue
+            q = rng_(sites[j])
+            others.append((min(p[0] for p in q), max(p[0] for p in q), min(p[1] for p in q), max(p[1] for p in q)))
+        for a0, a1, b0, b1 in others:  # neighbours along the street
+            if b1 > hn0 - 3 and b0 < hn1 + 3:
+                if a1 <= ht0:
+                    t0 = max(t0, (a1 + ht0) / 2)
+                elif a0 >= ht1:
+                    t1 = min(t1, (ht1 + a0) / 2)
+        for a0, a1, b0, b1 in others:  # buildings behind
+            if a1 > t0 + 1 and a0 < t1 - 1 and b0 >= hn1 - 0.5:
+                back = min(back, (hn1 + b0) / 2)
+        if t1 - t0 < 8 or back - front < 8:  # too tight: a packed compound
+            return None
+        world = lambda t, n: (foot.x + t * tx_ + n * nx, foot.y + t * tz_ + n * nz)
+        rect = Polygon([world(t0, front), world(t1, front), world(t1, back), world(t0, back)])
+        gate = Point(world(min(max((ht0 + ht1) / 2, t0 + GATE), t1 - GATE), front))
+        return rect, (gate, tx_, tz_)
+
+    tiles = only or sorted({tile_of(p.centroid.x, p.centroid.y) for p, hs in zip(sites, houses) if hs})
+    print(f"plot walls: {len(tiles)} tiles", file=sys.stderr)
+    out = []
+    for n, (tx, tz) in enumerate(tiles):
+        cell_box = box(tx * TILE, tz * TILE, (tx + 1) * TILE, (tz + 1) * TILE)
+        ctx = cell_box.buffer(60, join_style="mitre")
+        street = unary_union(near("street", ctx))
+        opened = unary_union(near("open", ctx))
+        plots, gates = [], []
+        taken = Polygon()
+        # bigger houses claim their plots first; later plots stop at earlier ones, so plots never overlap
+        for i in sorted(trees["site"].query(ctx), key=lambda i: -sites[i].area):
+            if not houses[i]:
+                continue
+            r = plot_of(i)
+            if not r:
+                continue
+            rect, gate = r
+            plot = rect.difference(street).difference(opened).difference(taken)
+            parts = [g for g in getattr(plot, "geoms", [plot]) if g.geom_type == "Polygon" and g.intersects(sites[i].centroid)]
+            if not parts:
+                continue
+            plots.append(parts[0])
+            taken = taken.union(parts[0].buffer(0.05))
+            if parts[0].exterior.distance(gate[0]) < 0.6:
+                gates.append(gate)
+        if not plots:
+            continue
+        # neighbours share their side and rear lines; snapping merges the copies
+        lines = unary_union([set_precision(p.exterior, 0.25) for p in plots])
+        lines = linemerge(lines) if lines.geom_type == "MultiLineString" else lines
+        cut = unary_union(near("bld", ctx) + near("mapped", ctx) + [g.buffer(GATE / 2) for g, _, _ in gates])
+        lines = lines.difference(cut).intersection(cell_box)
+        for g in getattr(lines, "geoms", [lines]):
+            if g.geom_type == "LineString" and g.length > 1:
+                out.append(((tx, tz), 3, list(g.simplify(0.2).coords)))
+        for g, ux, uz in gates:  # the gate spans the gap, along the street
+            if cell_box.contains(g):
+                out.append(((tx, tz), 4, [(g.x - ux * GATE / 2, g.y - uz * GATE / 2), (g.x + ux * GATE / 2, g.y + uz * GATE / 2)]))
+        if n % 50 == 0:
+            print(f"  plot walls {n}/{len(tiles)}", file=sys.stderr)
+    return out
 
 
 def emit(full, far, t, kind, width, run):
