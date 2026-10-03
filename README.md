@@ -18,7 +18,9 @@ more — modelled by hand from photographs.
   go there.
 - **Drive** — a Toyota Corolla with real physics: suspension, tyre grip, a
   4-speed automatic, drag, brakes and a handbrake; buildings and walls stop
-  you. Keyboard on a laptop, on-screen steering and pedals on a phone.
+  you. Keyboard on a laptop; on a phone, a steering wheel you turn with your
+  thumb and analog pedals. Car model: "Toyota Corolla 2020" by ItsDiyor,
+  CC BY 4.0 ([details](data/models/README.md)).
 - **Morning to dusk** — a time-of-day slider; windows and lamps light up at night.
 - **Runs anywhere** — plain HTML and JavaScript, no install, no build step.
 

@@ -1,4 +1,4 @@
-// Drive mode: a Corolla you can drive round the city.
+// Drive mode: a Corolla you can drive round the city (the model: car.js).
 //
 // Physics is Rapier (WASM, loaded the first time you drive) with its raycast
 // vehicle: four suspension rays with springs, dampers and tyre grip, on a
@@ -10,7 +10,7 @@
 // the car: building footprints and walls from the streamed tiles, the
 // landmarks' footprints, and the ground (the Parliament hill as a heightfield).
 import * as THREE from 'three';
-import { buildCar, CAR } from './car.js';
+import { CAR, loadCar } from './car.js';
 
 const RAPIER_URL = 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/+esm';
 
@@ -26,10 +26,13 @@ const BRAKE = 10500; // N in all, about 0.9 g
 const FRONT_BRAKE = 0.65;
 const STEER_MAX = 0.6; // rad at standstill, falling with speed
 const GRIP = 1.6, HANDBRAKE_GRIP = 0.7;
-const SUSPENSION = { rest: 0.3, travel: 0.2, stiffness: 30, compression: 2.2, relaxation: 2.5, maxForce: 22000 };
-const HARD_Y = 0.62; // suspension hard points, above the ground
+// damping near 0.7 of critical (√stiffness, per unit mass), as on a road car: settles without bobbing
+const SUSPENSION = { rest: 0.3, travel: 0.2, stiffness: 30, compression: 3.8, relaxation: 4.2, maxForce: 22000 };
+const HARD_Y = CAR.hubY + 0.3; // suspension hard points: the hubs at full droop, plus the rest length
 const RADIUS = 140; // colliders are kept this close to the car
 const STEP = 1 / 60;
+const ROAD_TOP = 0.1; // the road surface above the ground
+const SPIN_CAP = 0.28; // rad per frame shown, under half the rim's 36° spoke spacing
 
 const torqueAt = (rpm) => {
   for (let i = 1; i < TORQUE.length; i++) {
@@ -43,14 +46,12 @@ const torqueAt = (rpm) => {
 const approach = (v, target, up, down, dt) => (v < target ? Math.min(target, v + (target > 0 || v < 0 ? up : down) * dt) : Math.max(target, v - (target < 0 || v > 0 ? up : down) * dt));
 
 export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints, walls, onStatus = () => {} }) {
-  let R = null, world = null, body = null, vehicle = null, loading = null;
-  const car = buildCar();
-  car.group.visible = false;
-  scene.add(car.group);
+  let R = null, world = null, body = null, vehicle = null, loading = null, car = null;
 
   // ---------- input ----------
   const keys = new Set();
-  const touch = { left: false, right: false, gas: false, brake: false };
+  // on-screen controls (ui.js driveHud): analog pedals 0…1, a steering wheel -1…1 (+ is left)
+  const touch = { gas: 0, brake: 0, steer: 0, steering: false };
   let active = false;
   addEventListener('keydown', (e) => {
     if (!active || e.metaKey || e.ctrlKey) return;
@@ -79,22 +80,28 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
 
   // ---------- physics ----------
   async function load() {
-    onStatus('Loading car physics…');
-    R = (await import(RAPIER_URL)).default;
+    onStatus('Loading the car…');
+    const [rapier, model] = await Promise.all([import(RAPIER_URL), loadCar()]);
+    R = rapier.default;
     await R.init();
+    car = model;
+    car.group.visible = false;
+    scene.add(car.group);
     world = new R.World({ x: 0, y: -9.81, z: 0 });
     world.timestep = STEP;
     // the city floor; the Parliament hill is added as a heightfield when near it
-    world.createCollider(R.ColliderDesc.cuboid(40000, 1, 40000).setTranslation(0, heightAt(1e5, 1e5) - 1, 0).setFriction(1));
+    // roads are drawn ~0.1 m above the ground (worker.js ROAD_LIFT), so the physics floor is too
+    world.createCollider(R.ColliderDesc.cuboid(40000, 1, 40000).setTranslation(0, heightAt(1e5, 1e5) - 1 + ROAD_TOP, 0).setFriction(1));
     body = world.createRigidBody(R.RigidBodyDesc.dynamic().setAngularDamping(0.6).setCanSleep(false).setCcdEnabled(true));
     // chassis box from the sills to the waistline; mass and a low centre of mass set explicitly
-    const hx = CAR.width / 2 - 0.04, hy = 0.32, hz = CAR.length / 2 - 0.05;
+    const hx = CAR.width / 2 - 0.04, hy = 0.32, hz = CAR.length / 2 - 0.06;
     const I = (a, b) => (MASS / 12) * (4 * a * a + 4 * b * b);
     world.createCollider(R.ColliderDesc.cuboid(hx, hy, hz).setTranslation(0, 0.7, 0)
-      .setMassProperties(MASS, { x: 0, y: COM_Y, z: 0.1 }, { x: I(hy, hz), y: I(hx, hz), z: I(hx, hy) }, { w: 1, x: 0, y: 0, z: 0 })
+      // the centre of mass sits forward of centre: the engine is over the front axle
+      .setMassProperties(MASS, { x: 0, y: COM_Y, z: 0.15 }, { x: I(hy, hz), y: I(hx, hz), z: I(hx, hy) }, { w: 1, x: 0, y: 0, z: 0 })
       .setFriction(0.3).setRestitution(0.1), body);
     // a roof box so rolling over or hitting a low wall does not pass through the cabin
-    world.createCollider(R.ColliderDesc.cuboid(hx - 0.1, 0.2, 1.0).setTranslation(0, 1.2, -0.1).setDensity(0), body);
+    world.createCollider(R.ColliderDesc.cuboid(hx - 0.12, 0.2, 1.05).setTranslation(0, 1.22, -0.15).setDensity(0), body);
     vehicle = world.createVehicleController(body);
     vehicle.indexUpAxis = 1;
     vehicle.setIndexForwardAxis = 2; // a setter in the Rapier API
@@ -157,15 +164,25 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
       const n = 100, size = 400;
       const h = new Float32Array((n + 1) * (n + 1));
       for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) h[j * (n + 1) + i] = heightAt(near.x - size / 2 + (j * size) / n, near.z - size / 2 + (i * size) / n);
-      hill = world.createCollider(R.ColliderDesc.heightfield(n, n, h, { x: size, y: 1, z: size }, R.HeightFieldFlags.FIX_INTERNAL_EDGES).setTranslation(near.x, 0, near.z).setFriction(1));
+      hill = world.createCollider(R.ColliderDesc.heightfield(n, n, h, { x: size, y: 1, z: size }, R.HeightFieldFlags.FIX_INTERNAL_EDGES).setTranslation(near.x, ROAD_TOP, near.z).setFriction(1));
     } else if (!near && hill) {
       world.removeCollider(hill, false);
       hill = null;
     }
   }
 
+  // body pose: the last two physics steps, and the blend between them that is drawn
+  const mkPose = () => ({ p: new THREE.Vector3(), q: new THREE.Quaternion() });
+  const prev = mkPose(), curr = mkPose(), pose = mkPose();
+  function readPose(o) {
+    const t = body.translation(), r = body.rotation();
+    o.p.set(t.x, t.y, t.z);
+    o.q.set(r.x, r.y, r.z, r.w);
+  }
+
   // ---------- drivetrain ----------
   const state = { gear: 0, reverse: false, shift: 0, rpm: IDLE, speed: 0 };
+  const steerAngle = [0, 0];
   let acc = 0;
   function physicsStep(dt) {
     const v = vehicle.currentVehicleSpeed(); // m/s along the car, signed
@@ -207,12 +224,13 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
       const turnR = CAR.wheelbase / Math.tan(Math.abs(lock));
       const inner = Math.atan(CAR.wheelbase / (turnR - CAR.track / 2)), outer = Math.atan(CAR.wheelbase / (turnR + CAR.track / 2));
       const s = Math.sign(lock); // + turns left: the left wheel (index 0) is inside
-      vehicle.setWheelSteering(0, s * (s > 0 ? inner : outer));
-      vehicle.setWheelSteering(1, s * (s > 0 ? outer : inner));
+      steerAngle[0] = s * (s > 0 ? inner : outer);
+      steerAngle[1] = s * (s > 0 ? outer : inner);
     } else {
-      vehicle.setWheelSteering(0, 0);
-      vehicle.setWheelSteering(1, 0);
+      steerAngle[0] = steerAngle[1] = 0;
     }
+    vehicle.setWheelSteering(0, steerAngle[0]);
+    vehicle.setWheelSteering(1, steerAngle[1]);
 
     // drag and rolling resistance, as an impulse at the centre of mass
     const lv = body.linvel();
@@ -235,11 +253,17 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
   }
   function place(x, z, yaw) {
     for (let r = 0, a = 0; r < 120 && !clearAt(x, z); r += 1.5, a += 2.4) { x += Math.cos(a) * r * 0.3; z += Math.sin(a) * r * 0.3; }
-    body.setTranslation({ x, y: heightAt(x, z) + 0.5, z }, true);
+    body.setTranslation({ x, y: heightAt(x, z) + ROAD_TOP + 0.5, z }, true);
     body.setRotation({ w: Math.cos(yaw / 2), x: 0, y: Math.sin(yaw / 2), z: 0 }, true);
     body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     Object.assign(state, { gear: 0, reverse: false, shift: 0 });
+    readPose(curr);
+    for (const o of [prev, pose]) {
+      o.p.copy(curr.p);
+      o.q.copy(curr.q);
+    }
+    acc = 0;
     camYaw = yaw;
     syncColliders(true);
   }
@@ -256,8 +280,8 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
   const camPos = new THREE.Vector3(), look = new THREE.Vector3(), q = new THREE.Quaternion(), tmp = new THREE.Vector3();
   const ray = { origin: { x: 0, y: 0, z: 0 }, dir: { x: 0, y: 0, z: 0 } };
   function chase(dt, snap = false) {
-    const p = body.translation(), r = body.rotation();
-    q.set(r.x, r.y, r.z, r.w);
+    const p = pose.p;
+    q.copy(pose.q);
     const fwd = tmp.set(0, 0, 1).applyQuaternion(q);
     const heading = Math.atan2(fwd.x, fwd.z);
     const lv = body.linvel();
@@ -301,33 +325,50 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
   function update(dt) {
     if (!active || !vehicle) return;
     // smooth the digital inputs (units per second)
-    const up = held('KeyW', 'ArrowUp') || touch.gas ? 1 : 0;
-    const down = held('KeyS', 'ArrowDown') || touch.brake ? 1 : 0;
-    const steer = (held('KeyA', 'ArrowLeft') || touch.left ? 1 : 0) - (held('KeyD', 'ArrowRight') || touch.right ? 1 : 0);
+    const up = Math.max(held('KeyW', 'ArrowUp') ? 1 : 0, touch.gas);
+    const down = Math.max(held('KeyS', 'ArrowDown') ? 1 : 0, touch.brake);
     input.throttle = approach(input.throttle, up, 4, 8, dt);
     input.brake = approach(input.brake, down, 6, 10, dt);
-    const steerRate = 3 / (1 + Math.abs(state.speed) / 20);
-    input.steer = approach(input.steer, steer, steerRate, 6, dt);
+    if (touch.steering) input.steer = touch.steer; // the on-screen wheel is already analog
+    else {
+      const steer = (held('KeyA', 'ArrowLeft') ? 1 : 0) - (held('KeyD', 'ArrowRight') ? 1 : 0);
+      const steerRate = 3 / (1 + Math.abs(state.speed) / 20);
+      input.steer = approach(input.steer, steer, steerRate, 6, dt);
+    }
 
+    // fixed physics steps; what is drawn sits between the last two, so the car glides
+    // instead of stuttering when the screen refreshes at a different rate (e.g. 120 Hz)
     acc = Math.min(acc + dt, STEP * 4);
     while (acc >= STEP) {
+      prev.p.copy(curr.p);
+      prev.q.copy(curr.q);
       physicsStep(STEP);
+      readPose(curr);
       acc -= STEP;
     }
+    const alpha = acc / STEP;
+    pose.p.lerpVectors(prev.p, curr.p, alpha);
+    pose.q.slerpQuaternions(prev.q, curr.q, alpha);
     syncColliders();
 
     // the model follows the body; wheels follow their suspension, steering and roll
-    const p = body.translation(), r = body.rotation();
-    car.group.position.set(p.x, p.y, p.z);
-    car.group.quaternion.set(r.x, r.y, r.z, r.w);
+    car.group.position.copy(pose.p);
+    car.group.quaternion.copy(pose.q);
     car.wheels.forEach((w, i) => {
+      // pivot: down the suspension and turned by the steering; spin: about the axle.
+      // Rapier's rotation grows by v·dt/r as the car rolls forward, and +x rolls the
+      // top of the tyre forward. Shown as is, a spoked rim turning 25–50° a frame
+      // strobes and seems to turn backwards (the wagon-wheel effect), so the shown
+      // turn per frame is capped below half the spoke spacing: always fast and forward.
       const len = vehicle.wheelSuspensionLength(i) ?? SUSPENSION.rest;
       w.steer.position.y = HARD_Y - len;
-      w.steer.rotation.y = vehicle.wheelSteering(i) ?? 0;
-      spin[i] = vehicle.wheelRotation(i) ?? spin[i];
-      w.roll.rotation.x = spin[i];
+      w.steer.rotation.y = i < 2 ? steerAngle[i] : 0;
+      const r = vehicle.wheelRotation(i) ?? spin[i];
+      const step = THREE.MathUtils.clamp(r - spin[i], -SPIN_CAP, SPIN_CAP);
+      spin[i] = r;
+      w.roll.rotation.x = (w.roll.rotation.x + step) % (Math.PI * 2);
     });
-    car.setLights(night, input.brake > 0.1 && !state.reverse ? 1 : 0);
+    car.setLights(night, (state.reverse ? input.throttle : input.brake) > 0.1 ? 1 : 0, state.reverse ? 1 : 0);
     chase(dt);
   }
 
@@ -358,13 +399,13 @@ export function createDrive({ scene, camera, dom, heightAt, siteNear, footprints
     stop() {
       active = false;
       keys.clear();
-      car.group.visible = false;
+      if (car) car.group.visible = false;
       body?.setEnabled(false);
       camera.fov = 42;
       camera.updateProjectionMatrix();
     },
     update,
-    debug: () => ({ R, world, body, vehicle, colliders }),
+    debug: () => ({ R, world, body, vehicle, colliders, car }),
     setNight(n) {
       night = n;
     },

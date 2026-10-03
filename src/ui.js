@@ -11,7 +11,7 @@ export const cls = {
   segOn: 'rounded-lg px-2 py-1.5 text-sm transition-colors bg-amber-500 text-stone-950 font-medium',
   segOff: 'rounded-lg px-2 py-1.5 text-sm transition-colors text-stone-300 hover:bg-white/10',
   hud: 'pointer-events-none fixed bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-baseline gap-2 rounded-2xl bg-stone-950/70 px-4 py-2 text-stone-100 shadow-lg ring-1 ring-white/10 backdrop-blur-md',
-  pedal: 'pointer-events-auto grid select-none place-items-center rounded-2xl bg-stone-950/55 text-sm font-medium text-stone-100 shadow-lg ring-1 ring-white/15 backdrop-blur-md touch-none data-[on=true]:bg-amber-500/80 data-[on=true]:text-stone-950',
+  pedal: 'pointer-events-auto fixed z-10 origin-bottom select-none touch-none drop-shadow-[0_6px_10px_rgb(0_0_0/0.45)] transition-[filter] duration-75',
 };
 
 // A row of mutually exclusive choices. options: [[value, label, title?], ...].
@@ -146,8 +146,36 @@ export function modeHint(store) {
   return { show: () => show(store.getState()) };
 }
 
-// Drive mode: speed and gear, and on touch screens steering buttons and pedals.
-// touch: the drive module's { left, right, gas, brake } flags.
+// Drive mode: speed and gear, and on touch screens a steering wheel and pedals.
+// touch: the drive module's { gas, brake, steer, steering } (pedals 0…1, steer
+// -1…1 with + to the left).
+const SVG = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">${body}</svg>`;
+const metal = (id) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c3c8cd"/><stop offset=".5" stop-color="#8a9096"/><stop offset="1" stop-color="#55595e"/></linearGradient>`;
+// A pedal: brushed-metal plate, a ribbed rubber pad on it.
+function pedalSvg(w, h, id) {
+  const ribs = Array.from({ length: Math.floor((h - 28) / 12) }, (_, i) =>
+    `<rect x="12" y="${16 + i * 12}" width="${w - 24}" height="5" rx="2.5" fill="#1b1b1b"/><rect x="12" y="${16 + i * 12}" width="${w - 24}" height="1" fill="#4a4a4a"/>`).join('');
+  return SVG(w, h, `<defs>${metal(id)}</defs>
+    <rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="12" fill="url(#${id})" stroke="#2c2f33" stroke-width="2"/>
+    <rect x="8" y="9" width="${w - 16}" height="${h - 18}" rx="8" fill="#2a2a2a"/>${ribs}`);
+}
+// A three-spoke wheel with a marker at twelve o'clock.
+const WHEEL = SVG(150, 150, `<defs>${metal('wheel-metal')}</defs>
+  <circle cx="75" cy="75" r="66" fill="none" stroke="#1d1d1f" stroke-width="16"/>
+  <circle cx="75" cy="75" r="66" fill="none" stroke="#3a3a3d" stroke-width="2" stroke-dasharray="3 5"/>
+  <path d="M75 75 L14 84 M75 75 L136 84 M75 75 L75 138" stroke="#2a2a2d" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="75" cy="75" r="20" fill="url(#wheel-metal)" stroke="#1d1d1f" stroke-width="3"/>
+  <rect x="71" y="5" width="8" height="12" rx="2" fill="#f59e0b"/>`);
+
+// Keep a finger's events on the control even if it slides off (when the browser allows).
+const capture = (el, e) => {
+  try {
+    el.setPointerCapture(e.pointerId);
+  } catch {
+    // not a live pointer (e.g. synthetic); the control tracks the finger itself
+  }
+};
+
 export function driveHud(touch) {
   const root = document.createElement('div');
   root.className = 'hidden';
@@ -159,34 +187,97 @@ export function driveHud(touch) {
   hud.append(speed, unit, gear);
   root.append(hud);
   if (matchMedia('(pointer: coarse)').matches) {
-    const pad = (label, key, pos) => {
-      const b = Object.assign(document.createElement('button'), { type: 'button', textContent: label, className: `${cls.pedal} fixed ${pos}` });
-      b.setAttribute('aria-label', key);
-      const set = (on) => {
-        touch[key] = on;
-        b.dataset.on = String(on);
+    // pedals: press lower on the pedal for more; the pad tips forward as it goes down
+    const pedal = (key, label, w, h, pos) => {
+      const b = document.createElement('div');
+      b.className = `${cls.pedal} ${pos}`;
+      b.setAttribute('role', 'button');
+      b.setAttribute('aria-label', label);
+      b.innerHTML = pedalSvg(w, h, `pedal-${key}`);
+      const set = (v) => {
+        touch[key] = v;
+        b.style.transform = `perspective(300px) rotateX(${18 * v}deg) translateY(${4 * v}px)`;
+        b.style.filter = `brightness(${1 - 0.25 * v})`;
       };
+      const press = (e) => {
+        const r = b.getBoundingClientRect();
+        set(0.5 + 0.5 * Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
+      };
+      let finger = null;
       b.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        b.setPointerCapture(e.pointerId);
-        set(true);
+        finger = e.pointerId;
+        capture(b, e);
+        press(e);
+        navigator.vibrate?.(8);
       });
-      for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => set(false));
+      b.addEventListener('pointermove', (e) => e.pointerId === finger && press(e));
+      for (const ev of ['pointerup', 'pointercancel']) b.addEventListener(ev, (e) => {
+        if (e.pointerId !== finger) return;
+        finger = null;
+        set(0);
+      });
       return b;
     };
+    // steering wheel: turn it with a thumb, up to 135° each way; it springs back when let go
+    const wheel = document.createElement('div');
+    wheel.className = `${cls.pedal} bottom-5 left-4 rounded-full`;
+    wheel.setAttribute('role', 'slider');
+    wheel.setAttribute('aria-label', 'Steering wheel');
+    wheel.innerHTML = WHEEL;
+    let angle = 0, grab = null;
+    const draw = () => {
+      wheel.firstElementChild.style.transform = `rotate(${angle}deg)`;
+      const a = Math.abs(angle) < 3 ? 0 : angle;
+      touch.steer = -Math.sign(a) * Math.abs(a / 135) ** 1.4; // clockwise turns right
+    };
+    const at = (e) => {
+      const r = wheel.getBoundingClientRect();
+      return (Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180) / Math.PI;
+    };
+    wheel.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      capture(wheel, e);
+      grab = { last: at(e), id: e.pointerId };
+      touch.steering = true;
+    });
+    wheel.addEventListener('pointermove', (e) => {
+      if (!grab || e.pointerId !== grab.id) return;
+      const now = at(e);
+      let d = now - grab.last;
+      d = ((d + 540) % 360) - 180; // unwrap
+      grab.last = now;
+      angle = Math.max(-135, Math.min(135, angle + d));
+      draw();
+    });
+    const release = (e) => {
+      if (!grab || e.pointerId !== grab.id) return;
+      grab = null;
+      let t = performance.now();
+      const back = (now) => {
+        if (grab) return;
+        angle *= Math.exp(-10 * Math.min(0.05, (now - t) / 1000));
+        t = now;
+        if (Math.abs(angle) < 0.5) angle = 0;
+        draw();
+        if (angle) requestAnimationFrame(back);
+        else touch.steering = false;
+      };
+      requestAnimationFrame(back);
+    };
+    for (const ev of ['pointerup', 'pointercancel']) wheel.addEventListener(ev, release);
     root.append(
-      pad('◀', 'left', 'bottom-6 left-4 h-20 w-16'),
-      pad('▶', 'right', 'bottom-6 left-24 h-20 w-16'),
-      pad('Brake', 'brake', 'bottom-6 right-24 h-20 w-16'),
-      pad('Gas', 'gas', 'bottom-6 right-4 h-28 w-16'),
+      wheel,
+      pedal('brake', 'Brake', 92, 84, 'bottom-6 right-24'),
+      pedal('gas', 'Accelerator', 64, 128, 'bottom-6 right-4'),
     );
-    hud.classList.replace('bottom-6', 'bottom-32');
+    hud.classList.replace('bottom-6', 'bottom-44');
   }
   document.body.append(root);
   return {
     show(on) {
       root.classList.toggle('hidden', !on);
-      if (!on) for (const k of Object.keys(touch)) touch[k] = false;
+      if (!on) Object.assign(touch, { gas: 0, brake: 0, steer: 0, steering: false });
     },
     set({ kmh, gear: g }) {
       speed.textContent = kmh;

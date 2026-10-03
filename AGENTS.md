@@ -37,7 +37,8 @@ licensing.
     estimates round houses (`plot_walls` in `tools/osm_tiles.py`).
   - `city/trees.js` — tree models; the worker places them per tile, clear of
     roads, buildings and paved areas, and `main.js` keeps them off landmarks.
-  - `drive/` — Drive mode: `car.js` (the procedural Corolla) and `drive.js`
+  - `drive/` — Drive mode: `car.js` (the Corolla model, `data/models/corolla.glb`,
+    CC BY 4.0, prepared by `tools/prepare_car.mjs`) and `drive.js`
     (Rapier raycast vehicle, drivetrain, chase camera, colliders streamed
     round the car from `collide.js`'s footprint and wall-segment indexes).
   - `controls/rig.js` — Map / Fly / Walk camera modes (it stands aside in Drive); the mode lives in the
